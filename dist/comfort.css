@@ -1,0 +1,257 @@
+/* Daylight at the tavern. Open space, illustrated details, and readable paper. */
+:root {
+  color-scheme: light;
+  --bg: #faf6ec; --surface: #fffdf7; --surface-raised: #f0eddf;
+  --line: #dedbcb; --line-light: #c7cbb7; --text: #344236;
+  --muted: #626a5d; --dim: #6f7668; --gold: #965a20;
+  --gold-hover: #7b4417; --green: #36775c; --red: #a84335;
+  --coral: #b94f38; --leaf: #39765e; --sky: #366d89; --lavender: #746099;
+}
+body { background: var(--bg); font-size: 15px; }
+::selection { background: #f5d681; color: #314536; }
+.skip-link { background: #376f8b; color: #fff; }
+h1,h2,h3 { color: var(--text); }
+:focus-visible { outline-color: #376f8b; }
+.button { border-radius: 24px; min-height: 44px; padding: 11px 20px; font-size: 13px; }
+.button.primary { background: var(--coral); border-color: transparent; color: #fffdf7; box-shadow: 0 3px 0 #923d2c; }
+.button.primary:hover:not(:disabled) { background: #a74330; transform: translateY(-1px); }
+.button.outline { color: #2e6650; background: #f0f5e8; border-color: #a8c0a5; box-shadow: none; }
+.button.outline:hover:not(:disabled) { color: #244f3d; background: #e0edda; border-color: #789e7b; }
+.button.subtle { color: #66705e; background: #e9ecdf; border-color: transparent; }
+.button.danger { color: #913f31; background: #f8e3d7; border-color: #dba18b; }
+.button:disabled { opacity: .67; }
+.text-button { color: #356a53; font-size: 12px; }
+.text-button:hover { color: #a44b34; }
+.icon-button:hover { background: #ecebdc; border-color: transparent; color: #425941; }
+.progress { background: #e2e7d8; height: 5px; }
+.progress>span { background: #6ca084; }
+
+/* Navigation stays quiet; color belongs to the places and the things you earn. */
+.sidebar { background: #f0efdf; border: 0; width: 220px; padding: 29px 18px 20px; }
+.brand { margin-bottom: 38px; gap: 8px; }
+.brand>span { color: #35533c; font-size: 23px; }
+.brand small,.sidebar-label { color: #6d775f; }
+.nav-link { color: #66715e; border: 0; border-radius: 25px; font-size: 13px; padding: 12px 14px; }
+.nav-link .icon { color: #748464; }
+.nav-link:hover { background: #e5e9d6; color: #345440; }
+.nav-link.active { background: #d7e7cb; color: #2f593f; box-shadow: none; }
+.nav-link.active .icon { color: #366d4e; }
+.nav-count { background: #fff8df; border: 0; color: #725e2b; border-radius: 50%; }
+.side-note { border: 0; margin: 22px 0 14px; padding: 0; }
+.side-note .tea-illustration { width: 112px; height: 105px; }
+.side-note p { color: #6a745d; font-size: 15px; margin-top: 0; }
+.side-note>span { color: #707960; }
+.tea-steam { animation: kettle-steam 5s ease-in-out infinite; }
+.steam-b { animation-delay: -1.6s; }.steam-c { animation-delay: -3.2s; }
+.settings-link { color: #5e6d58; }
+.player-card { border-color: #d6dcc6; }
+.avatar { border: 0; border-radius: 50%; background: #e2d8ad; }
+.small-row { color: #636e5b; }
+.workspace { margin-left: 220px; }
+.topbar { background: transparent; border-color: #e6e3d7; height: 68px; }
+.breadcrumb { color: #747766; }.breadcrumb strong { color: #4d624c; }.breadcrumb span { color: #aeb59f; }
+.stat-pill { border: 0; border-radius: 18px; background: #f8e7d5; color: #875734; }
+.stat-pill b,.stat-pill .icon { color: #9a542e; }
+.coin-pill { background: #f8edba; }.coin-pill b,.coin-pill .icon { color: #805d20; }
+.xp-pill { background: #e0eddb; }.xp-pill b,.xp-pill .icon { color: #386b4b; }
+main { padding: 30px 38px 24px; max-width: 1400px; }
+.page-heading .eyebrow { color: #8d5c3f; font-size: 9px; letter-spacing: 1.1px; }
+.page-heading p:not(.eyebrow) { font-size: 13px; }
+.page-heading h1 { font-size: 31px; letter-spacing: -.7px; }
+.tavern-heading { margin-bottom: 20px; }.tavern-heading h1 { font-size: 25px; letter-spacing: -.4px; }
+.open-sign { color: #597250; }.open-sign>span,.online-dot,.live-dot,.save-dot { background: #79a270; }
+.footer { border-color: #dfdfcf; color: #69715f; font-size: 10px; margin-top: 28px; }
+.footer .icon,.footer-settings { color: #617457; }
+
+/* A room with a view, rather than another rectangular dashboard tile. */
+.tavern-welcome { display: grid; grid-template-columns: 1.05fr 1fr; align-items: center; gap: 26px; padding: 8px 0 14px; }
+.welcome-copy { padding: 16px 0 22px; }
+.welcome-kicker { display: flex; align-items: center; gap: 7px; color: #5a7957; font-size: 12px; }
+.welcome-kicker .icon { width: 17px; height: 17px; }
+.welcome-copy h2 { font-size: clamp(32px,3.3vw,49px); line-height: 1.16; letter-spacing: -1.2px; margin: 15px 0 17px; color: #3f5c43; }
+.welcome-copy>p { max-width: 370px; font-size: 14px; line-height: 1.9; margin-bottom: 23px; }
+.welcome-time { display: flex; align-items: center; gap: 7px; color: #687363; font-size: 11px; margin-top: 16px; }
+.welcome-time .icon { width: 14px; height: 14px; }
+.welcome-illustration { position: relative; padding: 25px 17px 28px; min-width: 0; }
+.tavern-window { position: relative; overflow: hidden; height: 320px; border-radius: 48% 48% 8px 8px; border: 8px solid #e7d8b6; background: #e7c892; box-shadow: 0 0 0 1px #cab990,0 8px 0 #d0bb92; }
+.tavern-window>img { height: 100%; width: 100%; object-fit: cover; object-position: 70% 50%; }
+.window-glow { position: absolute; inset: 0; background: #f0c57415; box-shadow: inset 0 0 55px #ffdc831a; animation: hearth-glow 6s ease-in-out infinite; pointer-events: none; }
+.window-sill { position: absolute; left: 6px; right: 6px; height: 15px; bottom: 17px; background: #bea879; border-radius: 4px 4px 9px 9px; border-bottom: 4px solid #a98e60; }
+.welcome-bunting { position: absolute; left: -14px; top: -5px; width: calc(100% + 28px); height: auto; z-index: 2; transform: rotate(-3deg); pointer-events: none; }
+.welcome-friend { position: absolute; bottom: 22px; right: 25px; z-index: 3; display: flex; align-items: flex-end; gap: 8px; }
+.welcome-friend .pet-sprite { width: 76px; height: 76px; filter: drop-shadow(0 3px 0 #4f3b2633); }
+.welcome-friend>span { background: #fff7dc; color: #695b39; padding: 7px 10px; border-radius: 13px 13px 13px 2px; margin-bottom: 18px; font: italic 11px var(--serif); box-shadow: 0 2px 8px #674e2520; }
+.welcome-flower { position: absolute; z-index: 2; font-size: 45px; line-height: 1; color: #da8c73; }
+.flower-left { left: -4px; bottom: 10px; transform: rotate(-14deg); }.flower-right { right: 3px; top: 106px; font-size: 29px; color: #dbb24b; }
+.journey-stats { background: transparent; border: 0; border-radius: 0; padding: 22px 0 25px; margin: 0 0 26px; border-bottom: 1px solid #dddfce; gap: 26px; }
+.journey-stats>div { justify-content: flex-start; border: 0; gap: 12px; }
+.journey-stats>div>.icon { width: 38px; height: 38px; padding: 9px; border-radius: 50%; color: #a45d3d; background: #f5e0cf; }
+.journey-stats>div:nth-child(2)>.icon { color: #52754a; background: #e1ebd5; }
+.journey-stats>div:nth-child(3)>.icon { color: #726292; background: #eae2ef; }
+.journey-stats strong { color: #435b42; font-size: 17px; }.journey-stats strong small { color: #777c69; }
+.journey-stats>div>span>span { color: #67725e; font-size: 10px; }
+.dashboard-grid { grid-template-columns: minmax(0,1fr) 285px; gap: 42px; }
+.section-heading { margin-bottom: 17px; }.section-heading h2 { font-size: 23px; }
+.section-heading>.eyebrow { color: #7b826b; }
+.next-section { margin-bottom: 31px; }
+.next-quest-card { position: relative; border: 0; border-radius: 2px 16px 16px 2px; background: #f4e7c5; padding: 24px 19px 23px 23px; gap: 16px; box-shadow: -4px 0 #c77c5b; }
+.next-quest-card:hover { background: #f0dfb4; transform: translateY(-2px); }
+.quest-book { background: #85a98d; border: 0; color: #fff9df; box-shadow: 4px 3px 0 #5a8060; border-radius: 2px 6px 6px 2px; transform: rotate(-5deg); }
+.quest-book>.icon { color: #fff9df; }.next-quest-text>.eyebrow { color: #82663e; }
+.next-quest-text>strong { color: #4c5036; font-size: 20px; margin: 5px 0; }.next-quest-text>span:last-child { color: #6f6d50; font-size: 12px; }
+.reward-xp { color: #397353; }.reward-coins { color: #865a1b; }.reward-xp,.reward-coins { font-size: 11px; }
+.circle-arrow { border: 0; background: #fcf4df; color: #7e6941; }
+.chapter-preview-grid { display: flex; flex-direction: column; gap: 0; position: relative; }
+.chapter-preview-grid::before { content: ''; position: absolute; left: 27px; top: 32px; bottom: 40px; border-left: 2px dashed #b4c6a5; }
+.chapter-stop { position: relative; display: flex; gap: 17px; align-items: center; width: 100%; text-align: left; padding: 18px 0; border: 0; border-radius: 12px; background: transparent; }
+.chapter-stop:hover { background: #f0f0df; }.chapter-stop:focus-visible { outline-offset: 2px; }
+.chapter-emblem { width: 55px; height: 55px; flex: none; border: 5px solid var(--bg); border-radius: 50%; background: #efdaab; color: #8d6532; box-shadow: none; }
+.green .chapter-emblem { color: #396f4e; background: #d6e7ca; border-color: var(--bg); }.blue .chapter-emblem { color: #426f88; background: #d9eaf0; border-color: var(--bg); }.purple .chapter-emblem { color: #766199; background: #e7def0; border-color: var(--bg); }.rose .chapter-emblem { color: #a4614a; background: #f3dfd5; border-color: var(--bg); }
+.chapter-stop-copy { flex: 1; min-width: 0; }.chapter-stop-copy>.eyebrow { color: #798067; font-size: 8px; letter-spacing: .9px; display: block; }
+.chapter-stop-copy>strong { display: block; font: 500 20px/1.4 var(--serif); color: #3e5943; margin: 4px 0; }
+.chapter-stop-copy>span:last-child { display: block; font-size: 12px; line-height: 1.7; color: #687461; }
+.chapter-stop-progress { display: flex; align-items: center; gap: 12px; color: #637356; font-size: 11px; white-space: nowrap; padding-right: 8px; }
+.chapter-stop-progress .icon { width: 16px; height: 16px; }.chapter-stop.locked .chapter-stop-progress { color: #818576; }
+.chapter-stop.finished .chapter-emblem { color: #fffdf2; background: #6e9e76; }
+.innkeeper-note { display: block; margin: 28px 0 0; padding: 20px 0 4px; border-top: 1px solid #e0dfcd; }
+.innkeeper-note .pet-sprite { background: #e8e2ca; border: 0; border-radius: 50%; }
+.innkeeper-note strong { color: #52684e; }.innkeeper-note small { color: #747f69; font-size: 7px; }
+.innkeeper-note p { color: #68765f; font-size: 14px; max-width: 550px; margin: 15px 0 0; }
+.dashboard-aside { gap: 32px; }.panel { border: 0; background: transparent; padding: 20px 0; border-radius: 0; }
+.panel-label { color: #63765c; font-size: 8px; letter-spacing: 1px; }.panel-label>.icon { color: #7b9665; }
+.companion-panel { background: transparent; padding: 0; text-align: center; }
+.companion-panel .panel-label { justify-content: center; }.companion-panel h2 { justify-content: center; color: #405f46; }
+.pet-type { background: #eaf0de; border: 0; border-radius: 12px; color: #64745a; }
+.pet-habitat.companion-meadow { background: none; height: 180px; align-items: flex-end; padding-bottom: 20px; margin-top: 7px; }
+.companion-garden { position: absolute; width: 100%; height: 100%; inset: 0; z-index: 0; }
+.companion-meadow .pet-sprite { height: 105px; width: 105px; }
+.pet-ground { background: #66884d2b; z-index: 0; bottom: 21px; }
+.companion-panel .pet-quote { color: #62745b; font: italic 13px/1.8 var(--serif); margin: 11px 13px 15px; min-height: 0; }
+.companion-panel>.text-button { border: 0; padding-top: 0; font-size: 11px; }
+.daily-panel { position: relative; padding: 26px 23px 23px; background: #f5e7b3; border: 0; border-radius: 1px 2px 14px 3px; transform: rotate(1deg); box-shadow: 0 5px 0 #c6bb9522; }
+.daily-panel .panel-label { color: #7b6539; font-size: 7px; }.daily-panel .panel-label .icon { color: #ae7340; }
+.daily-panel h2 { color: #595332; font-size: 23px; margin-top: 17px; }.daily-panel p { color: #71653f; font-size: 12px; }
+.daily-panel .button { font-size: 11px; min-height: 39px; border-color: #bcb67d; background: #fff7d9; color: #63603d; }
+.daily-panel .rewards { gap: 17px; margin: 16px 0; }.daily-note { text-align: left; color: #786e4d; font-size: 9px; }
+.paper-tape { position: absolute; width: 67px; height: 19px; top: -9px; left: calc(50% - 33px); background: #acc6a6b3; transform: rotate(-8deg); }
+.reassurance { color: #6e7964; font-size: 11px; margin-top: 38px; }.reassurance .icon { color: #78976b; }
+
+/* The other rooms share the same daylight and softer, unboxed presentation. */
+.completion-pill,.balance-badge { border: 0; background: #e7efdc; color: #486c43; border-radius: 22px; }
+.companion-banner { border: 0; background: #e7efdc; color: #5d7456; border-radius: 3px 20px 20px 3px; }
+.companion-banner strong,.companion-banner>.icon { color: #3c714e; }
+.pet-shop-grid { gap: 30px; }.pet-shop-card,.pet-shop-card.equipped { background: transparent; border: 0; border-radius: 0; padding: 16px 8px 24px; }
+.pet-shop-card .pet-habitat { border-radius: 48% 48% 15% 15%; background: #f4e6be; margin: 14px 0; }
+.pet-shop-card.green .pet-habitat { background: #e0ebd0; }.pet-shop-card.rose .pet-habitat { background: #f2ded1; }.pet-shop-card.blue .pet-habitat { background: #dfeaf0; }.pet-shop-card.purple .pet-habitat { background: #e9def0; }
+.pet-shop-card.equipped .pet-habitat { outline: 2px dashed #91a777; outline-offset: 5px; }
+.active-badge { background: #dceacb; border: 0; color: #4c713e; border-radius: 10px; }
+.pet-shop-top>.icon { color: #78846a; }.pet-shop-top .eyebrow { color: #758068; }.pet-species { color: #718364; }
+.pet-shop-card>p { color: #62705c; font-size: 13px; }.pet-requirement,.pet-price { color: #67725b; }.pixel-star { color: #ac7d25; }
+.achievement-grid { grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 42px; row-gap: 12px; }
+.achievement-card,.achievement-card.earned { background: transparent; border: 0; border-bottom: 1px solid #dfdfcd; border-radius: 0; padding: 26px 0 24px 87px; min-height: 180px; }
+.achievement-medal { position: absolute; top: 30px; left: 0; height: 65px; width: 65px; border: 0; border-radius: 50%; background: #e8eadf; color: #7d8774; box-shadow: none; }
+.earned .achievement-medal { color: #9a6727; background: #f1da8b; box-shadow: 0 0 0 5px #f5ebc6; }
+.earned .achievement-medal::after { content: ''; position: absolute; top: 53px; width: 27px; height: 30px; background: #d98468; clip-path: polygon(0 0,100% 0,90% 100%,50% 78%,10% 100%); z-index: -1; }
+.achievement-status { position: static; font-size: 7px; color: #747e68; margin-bottom: 9px; }.earned .achievement-status { color: #377553; }
+.achievement-card h2 { font-size: 21px; min-height: 0; }.achievement-card p { min-height: 0; color: #64705e; font-size: 12px; }
+.achievement-progress { color: #758061; margin-top: 15px; font-size: 10px; }.achievement-card .progress { height: 4px; }
+.practice-layout { gap: 35px; }.practice-layout>aside>.panel { background: #f2ebd4; padding: 24px; border-radius: 3px 18px 18px 3px; }
+select { color: #4e634d; background: #fffdf5; border-color: #c9d1bb; border-radius: 15px; }
+.editor { background: #fffdf6; border-color: #c3cfb8; border-radius: 10px; box-shadow: 0 5px 0 #e4e8d8; }
+.editor-toolbar { background: #e6efde; color: #516c4b; border-color: #cfdac4; }.editor-toolbar>span:last-child { color: #63795b; }.code-dot { background: #80a570; }
+.line-numbers { background: #f0f3e8; color: #7f8e73; }.code-input { background: #fffdf6; color: #344d3c; caret-color: #a64c36; font-size: 13px; }
+.code-input:focus { box-shadow: inset 0 0 0 2px #99b791; }.editor-footer { background: #f6f6ec; border-color: #dce3d1; color: #6e7e62; }
+.output-panel { background: #f4f6eb; border: 0; border-radius: 4px 14px 14px 4px; }.output-heading { background: #e4ebd7; color: #627653; }
+.output-panel pre { color: #356247; }.output-panel .output-error { color: #a94f34; }.output-panel.practice-done { animation: output-bloom .7s ease-out; }
+.output-panel.practice-done .output-heading { color: #326a48; }.runtime-note { color: #6e7765; }.cheat-sheet dt { color: #657252; }
+.cheat-sheet dd { background: #fff9e8; border: 0; color: #5c6344; border-radius: 3px; }.practice-pet p { color: #6e7d60; }
+
+/* Lessons read like pages at a workbench. */
+dialog { background: #fffdf5; border: 1px solid #d1d6bd; border-radius: 20px; box-shadow: 0 22px 80px #38433338; }
+dialog::backdrop { background: #40513c73; backdrop-filter: blur(5px); }
+.dialog-top { background: #edf0e0; border-color: #dfe4cf; }.dialog-top .eyebrow { color: #63734f; }
+.quest-modal-heading h2 { color: #3f5c42; }.quest-modal-heading>p { color: #6f7a61; font-size: 13px; }
+.quest-modal-heading .rewards { border-color: #e4e4d3; }.replay-label { color: #7a806c; }
+.lesson-label { color: #697d53; font-size: 10px; }.lesson-pane>p { color: #58644e; font-size: 13px; line-height: 1.95; }
+.lesson-pane>.lesson-stage { color: #9b6041!important; }.lesson-pane>.lesson-prerequisites { color: #5f7955!important; }
+.lesson-pane { border-color: #e0e4d1; }.example-code { color: #425d41; background: #edf2e3; border: 0; border-left: 3px solid #97b58b; border-radius: 0 8px 8px 0; font-size: 12px; }
+.lesson-companion strong { color: #5e784e; }.lesson-companion span { color: #718060; }
+.hint,.hint.solution { background: #f4efd9; border: 0; color: #79643a; border-radius: 7px; }
+.hint.solution { background: #edf0e2; color: #647453; }.hint p,.hint pre { color: #5f654b; }.hint summary::after { color: #94673a; }
+.challenge-pane h3 { color: #43533d; font-size: 14px; }.challenge-pane .code-input,.challenge-pane .line-numbers { font-size: 12px; }
+.answer-option { color: #516346; background: #f7f8ee; border: 1px solid #d3ddc6; border-radius: 12px; font-size: 13px; padding: 15px; }
+.answer-option:hover { background: #eaf1df; border-color: #a1bc8e; }.answer-option.selected { background: #deebd3; border-color: #6f9b5d; color: #345735; }
+.answer-letter { border: 0; border-radius: 50%; color: #5b7450; background: #e5edd9; width: 28px; height: 28px; }
+.selected .answer-letter { color: #fffef3; background: #6c945c; border: 0; }.answer-indicator { border-color: #9eb28d; }
+.selected .answer-indicator { background: #f5faf0; border-color: #648b53; box-shadow: 0 0 0 1px #648b53; }
+.feedback { background: #e8f2dc; border-color: #b0cca0; border-radius: 10px; }.feedback strong { color: #39704b; }.feedback p,.feedback pre,.feedback>span { color: #5b6849; }
+.feedback.error { background: #faedda; border-color: #e0b58f; }.feedback.error strong { color: #995d38; }
+.notice { background: #faebcf; border-color: #e1c8a0; color: #876235; }.notice.success { background: #e3eed5; color: #426d46; border-color: #acc49c; }
+.success-medal { color: #fffdf0; background: #74a780; border: 0; box-shadow: 0 0 0 8px #e6eed9; animation: medal-pop .65s ease-out; }
+.success-screen>.eyebrow,.success-screen>p:not(.eyebrow) { color: #677953; }.success-screen h2 { color: #3f6748; }.success-rewards { color: #768361; }
+.success-pet { color: #627b50; }.success-pet .pet-sprite { animation: happy-hop .65s ease-in-out 3; }
+.level-up { color: #916123; background: #f7eab4; border: 0; border-radius: 25px; }.success-output { color: #4d734c; background: #edf3e3; border-color: #d2dfc2; }
+.field-label,.toggle-row small { color: #6c7a5a; }input[type=text],input:not([type]) { background: #f6f7ec; border-color: #b6c6a4; color: #415b3b; border-radius: 9px; }
+.toggle-row,.settings-divider { border-color: #dfe5cd; }.reset-details summary { color: #9a5b3c; }.settings-footnote { color: #788266!important; }
+.toast { background: #fff9e5; color: #59623f; border: 1px solid #d5d5b1; box-shadow: 0 5px 25px #53613b1c; border-radius: 16px; }.toast>.icon { color: #af7a31; }
+
+/* Keep the colorful world itself intact; give its frame the daylight palette. */
+.region-nav-heading { color: #707b60; }.region-nav { scrollbar-color: #9bb285 #eceede; }
+.region-button { background: transparent; border-color: transparent; color: #67765b; border-radius: 20px; }
+.region-button>span:first-child,.region-button>.icon { color: #7c896b; }.region-button:hover { color: #446242; background: #eaf0de; border-color: transparent; }
+.region-button.selected { color: #3a6843; background: #dcebcf; border-color: transparent; }.region-button.selected>span:first-child { color: #4d7a4c; }
+.world-shell { border: 5px solid #fffdf1; border-radius: 18px; box-shadow: 0 6px 24px #5c704421; background: #edf1df; }
+.world-topline,.world-bottomline { background: #edf1df; color: #68795b; border-color: #d4dfc4; }
+.world-topline>span>.icon,.world-topline .world-weather .icon { color: #768f5e; }.world-topline b,.world-topline .world-weather { color: #516e4a; }
+.world-divider,.world-bottomline>span>span { color: #9bad8b; }.world-bottomline>div { color: #687b5a; }
+.world-quest-preview { background: transparent; border: 0; border-radius: 0; padding: 24px 4px; gap: 22px; }
+.destination-emblem { background: #ddeaca; border: 0; color: #5d8050; border-radius: 50%; box-shadow: none; }
+.destination-description .eyebrow { color: #7b8a62; }.destination-description h2 { color: #425d3e; }.destination-description p { color: #65765a; font-size: 13px; }
+.destination-meta>span,.destination-meta>span:nth-child(3) { color: #6a7a50; font-size: 10px; }.destination-action>span { color: #6e7e5e; font-size: 11px; }
+.world-footnote { color: #788569; }.world-footnote .icon { color: #7a9966; }
+.journey-receipt { background: #e5efd8; border: 0; border-radius: 5px 26px 26px 5px; padding: 26px; box-shadow: -4px 0 #7da071; }
+.receipt-seal { background: #719b6c; color: #fffdef; border: 0; }.journey-receipt .eyebrow { color: #64804e; }.journey-receipt h2 { color: #45683f; }
+.journey-receipt p:not(.eyebrow) { color: #627652; font-size: 12px; }.receipt-rewards>span { color: #876528; }.receipt-rewards>span:first-child { color: #467444; }
+.receipt-achievements>span { color: #79632c; background: #f7ecc5; border: 0; border-radius: 20px; }.receipt-output { color: #63814f; }.receipt-output pre { color: #47673e; background: #f4f8e9; border-color: #ccdcb9; }
+
+/* A brief, dismissible celebration. Never controls or grants game progress. */
+.completion-celebration { position: fixed; z-index: 950; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 13px; width: min(470px,calc(100vw - 32px)); padding: 15px 32px 15px 16px; color: #3d6047; background: #fff9e8; border: 2px solid #d1dfb8; border-bottom: 5px solid #92b583; border-radius: 24px 24px 24px 7px; box-shadow: 0 10px 36px #314d392b; isolation: isolate; animation: celebrate-enter .4s ease-out,celebrate-exit .35s ease-in 4.4s forwards; }
+.celebration-graphic { position: relative; width: 100px; height: 95px; flex: none; }.reward-chest { width: 95px; height: 95px; }
+.chest-coins { animation: coin-bounce .75s ease-out 3; transform-origin: center; }
+.celebration-friend { position: absolute; width: 49px; height: 49px; bottom: -3px; right: -9px; }.celebration-friend .pet-sprite { width: 49px; height: 49px; animation: happy-hop .55s ease-in-out 5; }
+.celebration-heart { position: absolute; color: #d77765; right: -3px; top: 4px; font-size: 15px; animation: heart-float 1.3s ease-out 3; }
+.celebration-copy { min-width: 0; }.celebration-copy>strong { display: block; font: 500 24px/1.3 var(--serif); color: #416548; }
+.celebration-copy>span { display: block; font-size: 11px; color: #6b795d; margin-top: 5px; }
+.celebration-copy>small { display: flex; gap: 5px; align-items: center; font-size: 10px; line-height: 1.5; color: #927239; margin-top: 7px; }
+.celebration-copy>small .icon { height: 13px; width: 13px; }
+.celebration-rewards { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.celebration-rewards>span { display: flex; align-items: center; gap: 5px; color: #8c631f; font-size: 13px; font-weight: 650; animation: reward-pop .55s ease-out .2s both; }
+.celebration-rewards>span:first-child { color: #4a7d4c; }.celebration-rewards .icon { width: 16px; height: 16px; }
+.celebration-close { position: absolute; top: 7px; right: 7px; display: grid; place-items: center; width: 28px; height: 28px; background: #eef0dd; border: 0; border-radius: 50%; color: #6b7c5a; }.celebration-close .icon { width: 14px; height: 14px; }
+.celebration-sprinkles { position: absolute; inset: -90px -25px -30px; z-index: -1; pointer-events: none; }
+.celebration-piece { position: absolute; left: var(--x); top: 0; height: 11px; width: 7px; background: var(--color); opacity: 0; animation: confetti-drift 2.6s ease-out var(--delay) both; }
+.piece-1 { height: 12px; width: 12px; clip-path: polygon(50% 0,61% 35%,100% 50%,61% 64%,50% 100%,39% 64%,0 50%,39% 35%); }.piece-2 { border-radius: 50%; width: 6px; height: 6px; }
+.completion-celebration.still,.completion-celebration.still * { animation: none!important; }.completion-celebration.still .celebration-sprinkles { display: none; }
+@keyframes kettle-steam { 0%,100% { opacity: .3; transform: translateY(2px); } 50% { opacity: .7; transform: translateY(-4px); } }
+@keyframes hearth-glow { 0%,100% { opacity: .4; } 50% { opacity: .9; } }
+@keyframes happy-hop { 0%,100% { transform: translateY(0) rotate(-3deg); } 40% { transform: translateY(-10px) rotate(5deg); } 70% { transform: translateY(0) scale(1.06,.94); } }
+@keyframes coin-bounce { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-11px); } }
+@keyframes heart-float { from { opacity: 0; transform: translateY(8px) scale(.6); } 35% { opacity: 1; } to { opacity: 0; transform: translateY(-13px) scale(1.1); } }
+@keyframes confetti-drift { 0% { opacity: 0; transform: translate(0,-40px) rotate(0); } 12% { opacity: 1; } 85% { opacity: .8; } 100% { opacity: 0; transform: translate(var(--drift),245px) rotate(var(--turn)); } }
+@keyframes celebrate-enter { from { opacity: 0; transform: translate(-50%,22px) scale(.95); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
+@keyframes celebrate-exit { to { opacity: 0; transform: translate(-50%,12px); } }
+@keyframes reward-pop { from { opacity: 0; transform: translateY(9px) scale(.85); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes medal-pop { 0% { transform: scale(.6) rotate(-12deg); } 65% { transform: scale(1.15) rotate(5deg); } 100% { transform: scale(1); } }
+@keyframes output-bloom { from { box-shadow: 0 0 0 0 #8aac6c55; } to { box-shadow: 0 0 0 12px #8aac6c00; } }
+
+@media(min-width:1600px) { .tavern-window { height: 365px; }.welcome-copy h2 { font-size: 51px; }.welcome-copy>p { font-size: 15px; max-width: 420px; } }
+@media(max-width:1200px) { .sidebar { width: 204px; padding-left: 12px; padding-right: 12px; }.workspace { margin-left: 204px; }main { padding: 28px; }.dashboard-grid { gap: 28px; grid-template-columns: minmax(0,1fr) 240px; }.tavern-welcome { gap: 16px; }.tavern-window { height: 285px; }.welcome-copy h2 { font-size: 36px; }.welcome-copy>p { font-size: 13px; }.welcome-friend>span { font-size: 9px; }.next-quest-card { padding: 20px 15px; gap: 13px; }.next-quest-text>strong { font-size: 18px; }.quest-card-reward { display: none; }.chapter-stop-copy>strong { font-size: 18px; }.chapter-stop { gap: 10px; }.chapter-stop-copy>span:last-child { font-size: 11px; }.daily-panel { padding: 23px 18px; }.achievement-grid { column-gap: 26px; }.achievement-card { padding-left: 77px; } }
+@media(max-width:1000px) { .dashboard-grid { grid-template-columns: 1fr; }.dashboard-aside { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 32px; }.companion-panel .pet-habitat { height: 170px; }.innkeeper-note { display: block; }.next-quest-card { padding: 23px; }.quest-card-reward { display: flex; }.chapter-stop-copy>strong { font-size: 20px; }.chapter-stop-copy>span:last-child { font-size: 12px; }.tavern-window { height: 265px; }.tavern-welcome { gap: 10px; grid-template-columns: 1fr .85fr; }.welcome-copy h2 { font-size: 33px; }.welcome-kicker { font-size: 10px; }.welcome-copy>.button { font-size: 11px; padding: 11px 14px; }.welcome-friend>span { display: none; }.welcome-time { font-size: 10px; }.achievement-card h2 { font-size: 19px; }.achievement-medal { width: 55px; height: 55px; }.achievement-card { padding-left: 72px; }.earned .achievement-medal::after { top: 45px; }.practice-layout>aside { align-items: start; } }
+@media(max-width:760px) { .sidebar { width: 76px; padding: 23px 9px 15px; }.workspace { margin-left: 76px; }.nav-link { border-radius: 16px; }.nav-link.active { box-shadow: none; }.side-note { display: none; }main { padding: 24px 22px; }.topbar { height: 62px; }.tavern-heading h1 { font-size: 23px; }.tavern-welcome { gap: 16px; }.welcome-copy h2 { font-size: 32px; }.welcome-copy>p { font-size: 12px; }.tavern-window { height: 250px; }.welcome-illustration { padding: 20px 6px 24px; }.welcome-friend { right: 12px; }.window-sill { left: 0; right: 0; }.welcome-flower { font-size: 33px; }.flower-left { left: -8px; }.flower-right { right: -7px; }.journey-stats { gap: 12px; }.journey-stats>div { gap: 7px; }.journey-stats>div>.icon { width: 32px; height: 32px; padding: 8px; }.journey-stats>div>span>span { font-size: 9px; }.journey-stats strong { font-size: 15px; }.achievement-grid { column-gap: 20px; }.achievement-card,.achievement-card.earned { padding: 21px 0 20px 67px; }.achievement-status { font-size: 6px; }.achievement-card p { font-size: 11px; }.achievement-card h2 { font-size: 18px; }.lesson-pane { border-right: 0; border-bottom: 1px solid #e0e4d1; }.world-quest-preview { padding: 20px 5px; }.companion-panel .pet-quote { font-size: 12px; } }
+@media(max-width:540px) { .sidebar { inset: auto 0 0; width: 100%; height: calc(67px + env(safe-area-inset-bottom)); background: #f4f2e5f5; border-top: 1px solid #d1dcc2; padding: 5px 8px calc(5px + env(safe-area-inset-bottom)); }.workspace { margin-left: 0; padding-bottom: calc(67px + env(safe-area-inset-bottom)); }.nav-link { border-radius: 12px; }.nav-link.active { background: #dcebcf; box-shadow: none; }.topbar { padding: 0 17px; height: 57px; }.stat-pill { font-size: 10px; }.topbar .breadcrumb strong { color: #4d6949; }main { padding: 23px 19px; }.page-heading h1 { font-size: 27px; }.tavern-heading h1 { font-size: 22px; }.page-heading .eyebrow { font-size: 8px; }.tavern-welcome { grid-template-columns: 1fr; gap: 0; padding-top: 0; }.welcome-copy { padding-top: 4px; padding-bottom: 4px; }.welcome-kicker { font-size: 11px; }.welcome-copy h2 { font-size: 37px; line-height: 1.18; margin-top: 13px; }.welcome-copy>p { max-width: 360px; font-size: 13px; margin-bottom: 19px; }.welcome-copy>.button { font-size: 13px; }.welcome-time { font-size: 11px; margin-top: 12px; }.welcome-illustration { margin: 13px 12px 0; padding-top: 20px; }.tavern-window { height: 200px; border-radius: 45% 45% 5px 5px; border-width: 6px; }.welcome-friend>span { display: block; font-size: 10px; }.welcome-bunting { top: 0; width: 100%; left: 0; }.welcome-friend .pet-sprite { width: 62px; height: 62px; }.flower-right { top: 80px; }.journey-stats { margin: 0 0 26px; padding: 17px 0 23px; gap: 8px; }.journey-stats>div { gap: 6px; }.journey-stats>div>.icon { width: 27px; height: 27px; padding: 6px; }.journey-stats strong { font-size: 14px; }.journey-stats>div>span>span { font-size: 8px; }.journey-stats strong small { font-size: 10px; }.section-heading h2 { font-size: 23px; }.section-heading .text-button { font-size: 10px; }.next-quest-card { padding: 20px 15px; gap: 13px; }.next-quest-text>strong { font-size: 20px; }.next-quest-text>span:last-child { font-size: 11px; }.next-quest-text>.eyebrow { font-size: 7px; }.quest-card-reward { display: none; }.quest-book { width: 38px; height: 48px; }.chapter-stop { gap: 9px; padding: 16px 0; }.chapter-emblem { width: 49px; height: 49px; }.chapter-preview-grid::before { left: 24px; }.chapter-stop-copy>strong { font-size: 19px; }.chapter-stop-copy>span:last-child { font-size: 11px; }.chapter-stop-progress { gap: 7px; font-size: 10px; padding-right: 0; }.chapter-stop-progress .icon { width: 13px; height: 13px; }.dashboard-aside { grid-template-columns: 1fr; gap: 29px; }.companion-panel { max-width: 320px; width: 100%; margin: 0 auto; }.companion-panel .panel-label { font-size: 9px; }.companion-panel .pet-habitat { height: 185px; }.companion-panel .pet-sprite { width: 112px; height: 112px; }.companion-panel h2 { font-size: 25px; }.pet-type { font-size: 10px; }.companion-panel .pet-quote { font-size: 13px; }.companion-panel>.text-button { font-size: 12px; }.daily-panel { padding: 25px; }.daily-panel .panel-label { font-size: 8px; }.daily-panel h2 { font-size: 26px; }.daily-panel p { font-size: 13px; }.daily-panel .button { font-size: 12px; padding: 10px 18px; }.daily-panel .button .icon { display: inline; }.daily-panel .rewards { gap: 18px; }.daily-panel .reward-xp,.daily-panel .reward-coins { font-size: 12px; }.daily-note { font-size: 10px; }.innkeeper-note p { font-size: 14px; }.reassurance { font-size: 10px; line-height: 1.8; margin: 31px 10px 0; }.footer { gap: 12px; }.footer>span { font-size: 9px; }.footer-settings { font-size: 10px; }.pet-shop-grid { gap: 20px; }.pet-shop-card { padding: 10px 0 20px; }.pet-shop-card>p { font-size: 11px; }.pet-shop-card>.button { font-size: 10px; }.pet-requirement { font-size: 9px; }.achievement-grid { grid-template-columns: 1fr; }.achievement-card,.achievement-card.earned { padding: 23px 0 23px 87px; min-height: 0; }.achievement-medal { height: 65px; width: 65px; }.earned .achievement-medal::after { top: 53px; }.achievement-status { font-size: 8px; }.achievement-card h2 { font-size: 23px; }.achievement-card p { font-size: 12px; }.achievement-progress { font-size: 10px; }.practice-layout>aside { display: block; }.code-input,.line-numbers { font-size: 12px; line-height: 1.8; }.editor-footer { font-size: 8px; flex-wrap: wrap; }.run-row>.muted { font-size: 10px; }.runtime-note { font-size: 11px; }.quest-columns .code-input,.quest-columns .line-numbers { font-size: 12px; line-height: 1.9; }.quest-columns .line-numbers { padding-top: 18px; }.challenge-pane .editor-footer { font-size: 8px; }.lesson-pane>p { font-size: 14px; }.lesson-label { font-size: 10px; }.challenge-pane h3 { font-size: 14px; }.answer-option { font-size: 13px; }.dialog-top .eyebrow { font-size: 8px; }.quest-modal-heading h2 { font-size: 27px; }.settings-body p { font-size: 12px; }.completion-celebration { bottom: calc(82px + env(safe-area-inset-bottom)); padding: 13px 28px 13px 11px; gap: 9px; }.celebration-graphic { width: 75px; height: 82px; }.reward-chest { width: 76px; height: 82px; }.celebration-friend { width: 37px; height: 37px; right: -5px; }.celebration-friend .pet-sprite { width: 37px; height: 37px; }.celebration-copy>strong { font-size: 21px; }.celebration-copy>span { font-size: 10px; }.celebration-rewards { gap: 10px; }.celebration-rewards>span { font-size: 12px; }dialog .completion-celebration { bottom: 20px; }.world-shell { border-width: 3px; border-radius: 14px; }.destination-description p { font-size: 12px; }.destination-meta>span { font-size: 10px; }.journey-receipt { padding: 22px 17px; }.journey-receipt p:not(.eyebrow) { font-size: 12px; }.receipt-rewards>span { font-size: 12px; }.receipt-achievements>span { font-size: 10px; } }
+@media(prefers-reduced-motion:reduce) { .celebration-sprinkles { display: none; } }
+.reduce-motion .celebration-sprinkles { display: none; }
+.success-illustration { display: flex; justify-content: center; margin: -10px auto 9px; }.success-illustration .reward-chest { width: 150px; height: 130px; animation: medal-pop .65s ease-out; }
+.receipt-illustration { display: block; width: 90px; flex: none; margin: -7px 0 0; }.receipt-illustration .reward-chest { width: 90px; height: 90px; }
+.achievement-card { isolation: isolate; }
+@media(max-width:540px) { .receipt-illustration { width: 52px; }.receipt-illustration .reward-chest { width: 52px; height: 60px; }.journey-receipt { gap: 12px; } }

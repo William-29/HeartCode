@@ -1,0 +1,72 @@
+import { quests, pets, achievements } from './content.js';
+export const SAVE_KEY = 'hearthcode-save-v1';
+export function freshState() {
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, sound: false, reducedMotion: false };
+}
+export function dateKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+function dayNumber(key) { return Date.parse(`${key}T12:00:00Z`) / 86400000; }
+export function normalizeState(value) {
+  if (!value || value.version !== 1) throw new Error('This is not a compatible Hearthcode save.');
+  const s = freshState();
+  s.name = typeof value.name === 'string' ? value.name.trim().slice(0, 24) || 'Adventurer' : s.name;
+  for (const field of ['xp', 'coins', 'streak']) s[field] = Number.isSafeInteger(value[field]) && value[field] >= 0 ? Math.min(value[field], 10000000) : 0;
+  // A restored campaign can never skip prerequisites.
+  for (const q of quests) { if (Array.isArray(value.completed) && value.completed.includes(q.id)) s.completed.push(q.id); else break; }
+  s.owned = [...new Set(['pip', ...(Array.isArray(value.owned) ? value.owned.filter(id => pets.some(p => p.id === id)) : [])])];
+  s.equipped = s.owned.includes(value.equipped) ? value.equipped : 'pip';
+  s.achievements = Array.isArray(value.achievements) ? [...new Set(value.achievements.filter(id => achievements.some(a => a.id === id)))] : [];
+  s.daily = Array.isArray(value.daily) ? [...new Set(value.daily.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && Number.isFinite(dayNumber(d))))].slice(-400) : [];
+  s.lastActivity = typeof value.lastActivity === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.lastActivity) && Number.isFinite(dayNumber(value.lastActivity)) ? value.lastActivity : null;
+  s.sound = value.sound === true;
+  s.reducedMotion = value.reducedMotion === true;
+  if (value.drafts && typeof value.drafts === 'object') for (const key of [...quests.map(q => q.id), 'practice']) if (typeof value.drafts[key] === 'string') s.drafts[key] = value.drafts[key].slice(0, 30000);
+  return s;
+}
+export function isUnlocked(state, id) {
+  const index = quests.findIndex(q => q.id === id);
+  return index >= 0 && (index === 0 || state.completed.includes(quests[index - 1].id));
+}
+export function nextQuest(state) { return quests.find(q => !state.completed.includes(q.id)) || null; }
+export function levelInfo(xp) {
+  let level = 1, base = 0, needed = 200;
+  while (xp >= base + needed) { base += needed; level++; needed = 200 + (level - 1) * 60; }
+  return { level, current: xp - base, needed, percent: Math.min(100, Math.round((xp - base) / needed * 100)) };
+}
+export function visibleStreak(state, today = dateKey()) {
+  if (!state.lastActivity || dayNumber(today) - dayNumber(state.lastActivity) > 1) return 0;
+  return state.streak;
+}
+function activity(state, today) {
+  if (state.lastActivity === today) return;
+  state.streak = state.lastActivity && dayNumber(today) - dayNumber(state.lastActivity) === 1 ? state.streak + 1 : 1;
+  state.lastActivity = today;
+}
+export function unlockAchievements(state) {
+  const earned = achievements.filter(a => !state.achievements.includes(a.id) && a.test(state));
+  for (const achievement of earned) { state.achievements.push(achievement.id); state.coins += achievement.coins; }
+  return earned;
+}
+export function completeQuest(state, id, today = dateKey()) {
+  const quest = quests.find(q => q.id === id);
+  if (!quest || !isUnlocked(state, id)) return { ok: false, reason: 'Complete the previous quest first.' };
+  activity(state, today);
+  if (state.completed.includes(id)) return { ok: true, replay: true, xp: 0, coins: 0, achievements: unlockAchievements(state) };
+  state.completed.push(id); state.xp += quest.xp; state.coins += quest.coins;
+  return { ok: true, replay: false, xp: quest.xp, coins: quest.coins, achievements: unlockAchievements(state) };
+}
+export function completeDaily(state, today = dateKey()) {
+  if (state.daily.includes(today)) return { ok: false, reason: 'Today’s reward has already been collected.' };
+  state.daily.push(today); state.daily = state.daily.slice(-400); state.xp += 50; state.coins += 25; activity(state, today);
+  return { ok: true, xp: 50, coins: 25, achievements: unlockAchievements(state) };
+}
+export function adoptPet(state, id) {
+  const pet = pets.find(p => p.id === id);
+  if (!pet) return { ok: false, reason: 'Companion not found.' };
+  if (state.owned.includes(id)) { state.equipped = id; return { ok: true, equipped: true, achievements: [] }; }
+  if (state.completed.length < pet.required) return { ok: false, reason: `Complete ${pet.required} quests to meet ${pet.name}.` };
+  if (state.coins < pet.cost) return { ok: false, reason: `You need ${pet.cost - state.coins} more coins.` };
+  state.coins -= pet.cost; state.owned.push(id); state.equipped = id;
+  return { ok: true, equipped: false, achievements: unlockAchievements(state) };
+}

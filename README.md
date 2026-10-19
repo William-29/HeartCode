@@ -1,0 +1,118 @@
+# Hearthcode — The Learning Tavern
+
+A cozy browser learning game with **60 progressive quests in 15 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **14 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
+
+## Daylight at the tavern
+
+The interface now uses warm cream, leafy green, coral, sky blue, and lavender. The home page replaces the old dark card grid with an arched tavern scene, an open chapter trail, a companion garden, a small paper daily challenge, and a note from Rowan. Lessons, the editor, settings, companions, achievements, and the map frame use the same light palette. The original map artwork and all saved progress are preserved.
+
+`dist/cozy-art.js` draws the bunting, steaming tea, garden, and reward chest as SVGs. No new generated bitmap artwork is used for this refresh. `dist/comfort.css` contains the daylight theme and responsive layouts.
+
+`dist/celebration.js` adds a brief, dismissible reward celebration after a first quest clear, a daily completion, or a new companion adoption. It includes confetti, bouncing coins, a cheering companion, and the actual earned rewards. Level-ups receive their own message. Practice runs get a gentle success pulse. These effects never change XP, coins, or saved progression. They respect both the game’s Reduce motion setting and the system preference, including changes during an animation. Dismissal, timeout, and navigation clean up their timer and listener.
+
+All 30 automated tests pass, including celebration cleanup, reduced motion, safe text rendering, the Python curriculum, save compatibility, and map travel. All five page templates were also rendered with fresh, 24-quest, and finished saves using a lightweight DOM adapter. This verifies code paths, not visual layout; no connected browser was available for visual QA.
+
+## Run locally
+
+Requires Node.js. No package installation or build step is needed.
+
+On Windows, double-click **Play-Hearthcode.cmd** to start the server and open the game in your default browser. Keep the launcher window open while playing. Alternatively:
+
+```powershell
+cd C:\Users\willi\Documents\PythonGame\hearthcode
+npm start
+```
+
+Open http://127.0.0.1:4173. Serve the site over HTTP; opening index.html directly as a file does not support module imports or Python workers.
+
+## Tests
+
+```powershell
+npm test
+```
+
+Tests require Python 3 on PATH. They validate campaign progression, reward idempotency, pet purchases, daily streaks, save normalization, XP thresholds, every coding solution, and several incorrect solutions against the same Python checker used in the browser.
+
+## Learning path
+
+1. The first spark: output, variables, types, arithmetic.
+2. A little bit of logic: conditionals, loops, functions, debugging.
+3. The data pantry: lists, dictionaries, cleaning, means.
+4. A mind of its own: AI vs ML, rules vs learning, prompts, responsible AI.
+5. The pattern seekers: features/labels, learning tasks, held-out evaluation, overfitting.
+6. The prediction forge: linear prediction, gradient descent, MAE, model selection.
+7. The artisan’s workshop: word frequencies, exceptions, mutable defaults, function contracts.
+8. The merchant’s ledgers: JSON, CSV, grouped aggregation, duplicate detection.
+9. The statistician’s garden: median, population variance, conditional probability, correlation versus causation.
+10. The alchemist’s greenhouse: fitted scaling, transformations, chronological splitting, preprocessing leakage.
+11. The sentinel gates: confusion counts, precision and recall, thresholds, imbalanced classification.
+12. The modelmaker’s valley: nearest neighbors, pooled cross-validation errors, L2 penalties, grouped splits.
+13. The neural observatory: stable sigmoid, a weighted neuron, cross-entropy, logistic-regression training.
+14. The whispering archives: bag-of-words vectors, cosine similarity, ranked retrieval, untrusted source content.
+15. The master’s summit: least-squares fitting, validation selection, group evaluation, a complete prediction pipeline.
+
+Early quests introduce one idea at a time; later chapters combine functions and data structures, then algorithms and evaluation. Advanced lessons show prerequisites, worked examples, starter code, hints, and reference solutions. The final four quests connect training, selection, reporting, and a train/predict/evaluate pipeline. Difficulty labels are relative to this course, not professional certifications. All exercises use standard-library Python; the text retriever is a small teaching example, not a full language model.
+
+Completion rewards are awarded once per quest, with larger XP rewards for later chapters and 600 XP for the final pipeline. Replays and the practice room are free, without additional quest rewards. All hints are free, and companions are cosmetic. The original guild achievement still unlocks after 24 quests; five later milestones continue through quest 60. Existing saves keep their coins, XP, companions, drafts, and earned badges, and resume at the first unfinished quest. A completed original save resumes at the guild workshop.
+
+Curriculum references: [Python exceptions](https://docs.python.org/3/tutorial/errors.html), [scikit-learn common pitfalls and leakage](https://scikit-learn.org/stable/common_pitfalls.html), and [scikit-learn model evaluation](https://scikit-learn.org/stable/modules/model_evaluation.html).
+
+## Explore the Hearthlands
+
+Open **Quest map** to wander across the world. Drag with a mouse or finger to pan. The +/− buttons zoom; the map button shows the whole world, and the paw button finds your adventurer. Scroll the region tabs to jump between fifteen destinations; the current region is automatically brought into view. Select any numbered stop to preview its quest, difficulty, and topic; available quests can be started from the panel beneath the map. Keyboard users can Tab through stops and controls, or focus the map and use arrow keys to pan, +/− to zoom, and Home to find their character.
+
+Completing a campaign quest for the first time returns you to the map. Your cloaked adventurer walks along the curved trail with the equipped companion following, while the camera tracks them. Arrival reveals the next stop, celebrates new regions, and displays rewards, achievement bonuses, and the lesson takeaway. The trail now continues beyond the original guild into a panorama three times the original world width, ending at the academy. Replays and daily challenges do not move campaign progress forward.
+
+Progress is saved **before** travel begins. Skip walk, navigating away, or reloading cannot undo a reward or award it twice. The game's Reduce motion setting and the operating system's reduced-motion preference both skip the walk and disable ambient motion. Existing saves remain compatible. Fireflies, chimney smoke, drifting clouds, water glints, and walking sprites are decorative effects.
+
+The test suite has 30 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
+
+## Runtime and privacy
+
+- Progress and code drafts are saved under `hearthcode-save-v1` in this browser's localStorage. No backend user database is used. Different origins, devices, and browsers have separate saves. Settings can export/import a save; an import replaces current progress and preserves the prior save in localStorage under `hearthcode-before-import` when available.
+- Real CPython is provided by pinned [Pyodide](https://pyodide.org/en/stable/usage/index.html) 0.27.7, loaded from jsDelivr in a Web Worker. The initial engine download needs internet access. Python code and quest checking execute locally in that worker. The Stop button terminates it; an 8-second execution timeout prevents endless loops from blocking the UI. Initial runtime loading has a separate 90-second timeout and a retryable error.
+- The practice room supports standard-library exercises. Interactive input and a package installation UI are not included. Like other browser code, user-written Python can access browser capabilities exposed by Pyodide; this is a personal learning playground, not a hostile-code security sandbox.
+- Daily questions and streaks use the player's device calendar day. Daily questions rotate through seven entries and can be claimed once per day. The game is local and does not attempt to prevent save editing or device-clock changes.
+- Google Fonts provides Lora, DM Sans, and DM Mono; local fallbacks are specified if fonts cannot load.
+
+## Source
+
+`dist/content.js`: original curriculum, pets, achievements, daily questions. `dist/advanced-content.js`: quests 25–60 and their Python checks. `dist/state.js`: pure progression logic. `dist/app.js`: UI. `dist/runtime.py`: shared checker. `dist/runner.js` and `dist/python-worker.js`: browser Python lifecycle. `dist/styles.css`: responsive tavern design. `dist/art.js`: original code-native pixel companions and interface icons. `dist/world-model.js`: map locations and shared Bézier route geometry. `dist/world.js`: map rendering, camera, input, and travel lifecycle. `dist/world.css`: world design and environmental animations.
+
+## Tavern artwork
+
+Generated with the built-in ImageGen tool and saved in `dist/assets/tavern.png`. The original generation is kept in the generator's output directory. Prompt used:
+
+> Use case: illustration-story. Asset type: wide website game scene. Create a beautiful cozy fantasy tavern interior in detailed, crisp 16-bit pixel art, horizontal 3:2 composition. A welcoming stone fireplace glows amber on the right, a little orange cat curled on a green armchair, wood beams and warm lanterns, shelves full of books and jewel colored potion bottles, small wooden tables, hanging ivy, and an arched leaded window with midnight blue outside. A tiny friendly owl on a bookshelf. Magical programming academy atmosphere, old medieval inn, rich dark chocolate brown shadows, copper and gold light, muted forest green accents. Strong pixel clusters, artful game environment with clean readable silhouettes, no blur, no photorealism. Right half contains the fireplace, armchair, cat and most interest; left half darker with subtle background shelves, room for overlaid HTML title. No text, letters, numbers, logos, borders or UI.
+
+## World artwork
+
+The overworld was generated with the built-in ImageGen tool and saved as `dist/assets/hearthlands.png`. Its original generated file is preserved. The route, quest controls, adventurer, equipped companion, bridges, and animated environmental accents are drawn by application code above this illustration. Prompt used:
+
+> Use case: stylized-concept. Asset type: playable pixel-art overworld map background for a cozy fantasy learning RPG. Create a polished wide 3:2 top-down / lightly isometric 16-bit pixel art world map, entire landscape fills the frame with NO margins. Charming old taverns, pubs, fields, magical forest, lakes, mountains. Carefully follow this layout: bottom LEFT (15% across, 80% down) a cozy half-timbered tavern village with amber windows and a red roof; bottom CENTER (50% across, 78% down) open sunlit wildflower meadows and wheat fields with fences and a windmill; bottom RIGHT (83% across, 76% down) a welcoming roadside pub with copper orange roof, a small market and beer garden; middle RIGHT (80% across, 47% down) shimmering turquoise lake with a wooden bridge, small sailboat and lily pads; middle LEFT (33% across, 43% down) a magical forest with teal, jade and purple trees, luminous mushrooms and tiny ancient stone ruins; TOP CENTER and TOP RIGHT (65% across, 15% down) misty lavender mountains, crystalline rocks and a little guild castle with pennants. Broad connected sandy walking trails wind between these six places in this order: bottom-left tavern, across lower meadows to bottom-right pub, up the right side of the lake, west across the lake bridge toward the magical forest, then northeast through the forest up to the mountain guild. Leave ample open grassy walking space around landmarks and paths, roughly 50 percent map is traversable open land. The lake water is mainly middle right; forest middle left; mountain ridge top. Beautiful lush green countryside with varied foliage, warm honey sunlight, blue-violet shadows, fairy-tale atmosphere. Detailed yet readable chunky pixel clusters and crisp edges, classic adventure game overworld, consistent scale and camera. No characters, no UI, no circles, no quest markers, no labels, no text, no letters or numbers, no logos, no frame.
+
+## Guildlands artwork
+
+The extension panorama is generated artwork in `dist/assets/guildlands.png`; the original output is preserved. It continues beside the original illustration without changing the existing quest coordinates. Generation prompt:
+
+> Use case: stylized-concept. Asset type: a wide continuation map for a cozy pixel-art fantasy learning RPG. Generate an EXTRA WIDE 3:1 panoramic overworld, ideally 3072 by 1024 pixels. Top-down slightly isometric 16-bit pixel art, chunky readable pixels, bright lush detailed game landscape, matching a warm storybook countryside game. Fill entire image, no borders, no text, no UI or quest markers, no characters. An expansive connected valley beyond a medieval guild: LEFT third contains a timber riverside trading town, markets and ledgers workshop at the bottom, hillside statistical orchard and gardens above, a glass-roof alchemist greenhouse toward the top. MIDDLE third has a charming fortified stone gate at the top, a grassy valley of watermills and modelmaker workshops across the center, a magical observatory with small blue crystal towers toward the bottom. RIGHT third has moonlit library groves and a great wooden archive by a small lake in the middle, winding mountain trails leading to a golden-roof academy on a sunny peak at the upper right. A network of broad sandy winding paths connects every landmark; allow lots of open grass between landmarks for UI quest stops. Colorful forest, farms, lakes, wooden bridges, purple mountains in distance. Friendly, exploratory, warm emerald and gold palette gradually becomes blue and lavender to the right. Consistent camera, scale, and lighting. No words, letters, numbers, labels, circular icons, logos, frame, or legend.
+
+
+## Connected guild pass
+
+`dist/assets/guild-pass.png` is a connecting terrain panel made with the built-in ImageGen tool using the two existing maps as references. It spans world x=1320–1960, fully covering the original image join between quests 26 and 27. Its outer edges blend into the neighboring scenery with a CSS mask. A continuous road and bridge share the existing walking-path curves; quest positions and saved progress are unchanged. The source image remains in the generator output directory. Prompt:
+
+> Use case: compositing.
+> Asset type: a seamless transition panel for an existing pixel-art RPG overworld.
+> Input 1 is the original Hearthlands map; input 2 is the wider Guildlands extension. In the game, input 1 occupies world x=0..1600, y=0..1067, and input 2 occupies x=1600..4800, y=0..1067. They currently have an ugly hard vertical join at x=1600.
+> Create ONLY a portrait connector panel covering world x=1320..1960, y=0..1067 (aspect ratio 640:1067). This panel will be laid over the join with its far-left and far-right edges gently feathered. Match the original terrain at the left edge and the extension terrain at the right edge. It is a crop of the same world at the SAME scale, not a new complete world squeezed into a portrait.
+> Top: continue the lavender mountain horizon and rocky green guild foothills of input 1 naturally into the fir-covered cliff ridges of the far left of input 2. Keep the same sunlit isometric/top-down perspective. Upper quarter: a walkable sandy mountain pass and small rustic stone bridge should connect diagonally from panel x=180,y=220 to x=300,y=310, descending toward x=380,y=390 and x=460,y=520. These coordinates are in a 640 by 1067 panel. The path must visibly connect across the middle; do not place a giant waterfall, wall, or building across that route.
+> Middle: connected evergreen woods, grassy ledges, rocks, a stream with small bridges, continuous terrain without a dividing line. Transition the original lake shore on the left toward the extension's terraced trading village on the right. Lower quarter: connect the original tavern's grassy outskirts into the extension's riverside town outskirts. Tiny timber roof edges, flowered grass, sandy paths, and coherent blue water where appropriate. Preserve the existing asset scale; trees should be approximately 30-65 pixels tall when this panel is displayed at 640x1067, not huge close-up trees.
+> Style: match both inputs' warm, colorful, detailed 16-bit pixel art; chunky crisp pixel clusters; emerald and jade foliage, honey sandy trails, lavender gray rocks, turquoise water. The two sides must read as one connected physical landscape. No border, text, labels, quest numbers, circles, UI, characters, or fog hiding the connection. Fill the full panel. Opaque background.
+
+
+## Hosting
+
+The private Sites project identity and static output path are in `.openai/hosting.json`. Publish the contents of `dist` as a static site. Source repository credentials are not stored in this project.
+
+The local game is complete and can be run with the launcher above. Hosted publication requires access to the configured private Sites source repository. A registered Site identity alone does not mean a deployment is live.
