@@ -28,6 +28,10 @@ The surrounding UI uses walnut navigation, ivory paper, terracotta enamel button
 
 `dist/alley-theme.css` provides the shared theme; `dist/village.css` loads `dist/alley-scene.css` for the village and lighting, while `dist/alley-scene.js` places the glow overlays and project improvements. The backdrop is `dist/assets/hearthwick-evening.png` (1536 x 1024), generated with the built-in ImageGen tool. Its original is preserved; the prompt and alignment notes are recorded in [docs/alley-art.md](docs/alley-art.md).
 
+The traveler and all three villagers now share illustrated character art that matches the street: soft expressions, textured wool and leather, cinnamon coats, sage waistcoats, and warm lamplight highlights. The same people appear in the village, campaign map, conversation portraits, player profile, and Rowan's tavern note. Individual atlas crops keep their boots on the ground, with soft shadows, gentle idle breathing, and a restrained walking sway. Both reduced-motion settings disable these decorative character animations.
+
+`dist/characters.js` and `dist/characters.css` render the shared atlas, `dist/assets/hearthwick-neighbors.png` (1774 x 887, transparent PNG). The original is preserved; the built-in ImageGen prompt, transparency checks, and source crop coordinates are recorded in [docs/character-art.md](docs/character-art.md).
+
 The 55 automated tests cover campaign and project progression, real Python solutions, save compatibility, village paths, dialog handoffs, and motion cleanup. Artwork was inspected directly. No connected browser was available for visual layout or animation QA.
 
 ## Run locally
@@ -79,7 +83,7 @@ Curriculum references: [Python exceptions](https://docs.python.org/3/tutorial/er
 
 Open **Quest map** to wander across the world. Drag with a mouse or finger to pan. The +/− buttons zoom; the map button shows the whole world, and the paw button finds your adventurer. Scroll the region tabs to jump between fifteen destinations; the current region is automatically brought into view. Select any numbered stop to preview its quest, difficulty, and topic; available quests can be started from the panel beneath the map. Keyboard users can Tab through stops and controls, or focus the map and use arrow keys to pan, +/− to zoom, and Home to find their character.
 
-Completing a campaign quest for the first time returns you to the map. Your cloaked adventurer walks along the curved trail with the equipped companion following, while the camera tracks them. Arrival reveals the next stop, celebrates new regions, and displays rewards, achievement bonuses, and the lesson takeaway. The trail now continues beyond the original guild into a panorama three times the original world width, ending at the academy. Replays and daily challenges do not move campaign progress forward.
+Completing a campaign quest for the first time returns you to the map. Your coat-and-scarf traveler walks along the curved trail with the equipped companion following, while the camera tracks them. Arrival reveals the next stop, celebrates new regions, and displays rewards, achievement bonuses, and the lesson takeaway. The trail now continues beyond the original guild into a panorama three times the original world width, ending at the academy. Replays and daily challenges do not move campaign progress forward.
 
 Progress is saved **before** travel begins. Skip walk, navigating away, or reloading cannot undo a reward or award it twice. The game's Reduce motion setting and the operating system's reduced-motion preference both skip the walk and disable ambient motion. Existing saves remain compatible. Fireflies, chimney smoke, drifting clouds, water glints, and walking sprites are decorative effects.
 

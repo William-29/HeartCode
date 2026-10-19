@@ -9,6 +9,7 @@ import { showCelebration } from './celebration.js';
 import { renderVillage, mountVillage } from './village.js';
 import { projects, villagers, projectUnlocked } from './projects.js';
 import { renderVillager, renderProjectDemo, demoSource } from './village-stories.js';
+import { characterPortrait } from './characters.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -89,7 +90,7 @@ function render() {
       <div class="side-note">${teaCup()}<p>There’s always time<br>for one more try.</p><span>THE KETTLE’S ON</span></div>
       <div class="sidebar-bottom">
         <button class="quiet-button settings-link" data-action="settings">${icon('settings')} Settings & saved progress</button>
-        <div class="player-card"><div class="avatar">${sprite(current.id)}</div><div><strong>${esc(state.name)}</strong><span>Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}</span></div></div>
+        <div class="player-card"><div class="avatar">${characterPortrait("traveler", "player-portrait")}</div><div><strong>${esc(state.name)}</strong><span>Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}</span></div></div>
         <div class="small-row"><span>To the next level</span><span>${level.current} / ${level.needed} XP</span></div>${progressBar(level.percent)}
       </div>
     </aside>
@@ -122,7 +123,7 @@ function renderTavern() {
     <div class="dashboard-grid"><div class="dashboard-main">
       <section class="next-section"><div class="section-heading"><h2>On your reading table</h2><span class="eyebrow">ONE THING AT A TIME</span></div>${next ? `<button class="next-quest-card" data-action="quest" data-id="${next.id}"><span class="quest-book">${icon(next.type === 'code' ? 'code' : 'book')}</span><span class="next-quest-text"><span class="eyebrow">QUEST ${String(quests.indexOf(next) + 1).padStart(2, '0')} · ${next.type === 'code' ? 'TRY SOME PYTHON' : 'THINK IT THROUGH'}</span><strong>${next.title}</strong><span>${next.subtitle}</span></span><span class="quest-card-reward">${rewardLine(next.xp, next.coins)}</span><span class="circle-arrow">${icon('arrow')}</span></button>` : `<div class="notice success">${icon('trophy')} All ${quests.length} quests complete. That’s something to be proud of.</div>`}</section>
       <section class="chapter-trail"><div class="section-heading"><h2>Around the next bend</h2><button class="text-button" data-action="navigate" data-route="quests">Unfold the map ${icon('arrow')}</button></div><div class="chapter-preview-grid">${chapters.slice(chapterStart, chapterStart + 3).map(ch => chapterCard(ch)).join('')}</div></section>
-      <section class="innkeeper-note"><div>${sprite('rowan')}<span><strong>A note from Rowan</strong><small>YOUR FRIEND AT THE TAVERN</small></span></div><p>“Getting stuck is part of it. Take a breath, try one small change, and see what happens. The kettle will still be warm.”</p></section>
+      <section class="innkeeper-note"><div>${characterPortrait('rowan', 'note-portrait')}<span><strong>A note from Rowan</strong><small>YOUR FRIEND AT THE TAVERN</small></span></div><p>“Getting stuck is part of it. Take a breath, try one small change, and see what happens. The kettle will still be warm.”</p></section>
     </div><aside class="dashboard-aside">
       <section class="companion-panel"><div class="panel-label">${icon('paw')} GOOD COMPANY</div><div class="pet-habitat companion-meadow">${garden()}${sprite(current.id, 'floating-pet')}<div class="pet-ground"></div></div><h2>${current.name} <span class="pet-type">${current.species}</span></h2><p class="pet-quote">“${current.quote}”</p><button class="text-button" data-action="navigate" data-route="companions">Say hello to the others ${icon('arrow')}</button></section>
       <section class="daily-panel"><span class="paper-tape" aria-hidden="true"></span><div class="panel-label">${icon('flame')} SOMETHING SMALL FOR TODAY</div><h2>${dailyDone ? 'Nicely done, you.' : 'Fancy a quick question?'}</h2><p>${dailyDone ? 'Today’s question is done. Come back whenever you’re ready for another.' : 'A tiny challenge to keep you curious. And a few coins for your pocket.'}</p><div class="rewards">${rewardLine(50, 25)}</div><button class="button ${dailyDone ? 'subtle' : 'outline'}" data-action="daily" ${dailyDone ? 'disabled' : ''}>${dailyDone ? icon('check') + ' All done for today' : 'Give it a try ' + icon('arrow')}</button><span class="daily-note">A fresh question each day</span></section>

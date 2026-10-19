@@ -1,11 +1,12 @@
 import { quests, chapters } from './content.js';
 import { isUnlocked } from './state.js';
 import { icon, sprite } from './art.js';
+import { characterSprite } from './characters.js';
 import { rewardChest } from './cozy-art.js';
 import { WORLD_WIDTH, WORLD_HEIGHT, regions, stops, regionForStop, positionForProgress, legPath, pointOnLeg } from './world-model.js';
 
 const esc = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-const traveler = `<svg class="traveler-sprite" viewBox="0 0 32 40" aria-hidden="true" shape-rendering="crispEdges"><ellipse cx="16" cy="37" rx="12" ry="3" fill="#19201866"/><g class="traveler-leg left-leg"><path d="M10 29h5v8H8v-3h2" fill="#483327"/><path d="M8 36h7v3H7v-2h1" fill="#28241e"/></g><g class="traveler-leg right-leg"><path d="M18 29h5v8h-7v-4h2" fill="#634331"/><path d="M17 36h7v3h-8v-2h1" fill="#28241e"/></g><g class="traveler-body"><path d="M10 4h12v3h4v10h-3v5h-3v9H8v-4H5V16h2V7h3" fill="#315b50"/><path d="M11 6h10v3h3v7h-4v4H10v-4H8V9h3" fill="#568272"/><path d="M13 10h9v8h-2v3h-6v-3h-2" fill="#ecc394"/><path d="M20 12h2v3h-2" fill="#39312a"/><path d="M8 19h5v3h9v8H8" fill="#4e7a60"/><path d="M5 18h7v13H5v-3H3v-7h2" fill="#966f3d"/><path d="M6 19h4v8H6" fill="#c09b5a"/><path d="M9 28h13v3H9" fill="#80613e"/><path d="M25 16h2v21h-2" fill="#ab8854"/><path d="M23 14h5v4h-5" fill="#e5c779"/></g></svg>`;
+const traveler = characterSprite('traveler', 'traveler-sprite');
 
 export function renderWorld(state, companion, selectedIndex, receipt) {
   const current = Math.min(state.completed.length, quests.length - 1);
@@ -31,7 +32,7 @@ export function renderWorld(state, companion, selectedIndex, receipt) {
             return `<button class="world-node ${done ? 'cleared' : unlocked ? 'current' : 'undiscovered'} ${i === selected ? 'selected' : ''}" data-world="select" data-index="${i}" style="left:${stops[i].x}px;top:${stops[i].y}px" aria-label="Quest ${i + 1}: ${esc(quest.title)}. ${done ? 'Complete, replay available' : unlocked ? 'Ready to begin' : 'Locked, preview available'}" aria-pressed="${i === selected}"><span class="node-ring"><span>${done ? icon('check') : String(i + 1).padStart(2, '0')}</span></span><span class="node-tooltip">${quest.title}</span></button>`;
           }).join('')}
           <div class="guild-finish ${state.completed.length === quests.length ? 'reached' : ''}" style="left:${stops[quests.length].x}px;top:${stops[quests.length].y}px" aria-label="Hearthlands academy, journey’s end">${icon('trophy')}<span>THE ACADEMY</span></div>
-          <div class="world-traveler" style="left:${position.x}px;top:${position.y}px" aria-label="You and ${companion.name}"><span class="traveler-name">YOU</span><div class="traveler-party">${traveler}<span class="travel-companion">${sprite(companion.id)}</span></div><div class="arrival-sparks" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<i style="--spark:${i}"></i>`).join('')}</div>
+          <div role="img" class="world-traveler" style="left:${position.x}px;top:${position.y}px" aria-label="You and ${companion.name}"><span class="traveler-name">YOU</span><div class="traveler-party">${traveler}<span class="travel-companion">${sprite(companion.id)}</span></div><div class="arrival-sparks" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<i style="--spark:${i}"></i>`).join('')}</div>
         </div>
         <div class="world-vignette" aria-hidden="true"></div><div class="world-compass" aria-hidden="true"><span>N</span>✦</div>
         <div class="world-controls" role="group" aria-label="Map controls"><button data-world="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><span id="world-zoom" aria-live="off">100%</span><button data-world="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><span class="control-divider"></span><button data-world="fit" aria-label="Show the whole world" title="Show the whole world">${icon('map')}</button><button data-world="follow" aria-label="Find my adventurer" title="Find my adventurer">${icon('paw')}</button></div>

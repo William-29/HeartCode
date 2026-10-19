@@ -1,11 +1,11 @@
 import { projects, villagers, friendship, projectUnlocked } from './projects.js';
 import { icon } from './art.js';
+import { characterPortrait } from './characters.js';
 
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export function portrait(id) {
-  const colors = id === 'mira' ? ['#704332', '#bc623e', '#f2c89e', '#638ca3'] : id === 'elio' ? ['#4d392b', '#385c46', '#ad7556', '#e9be61'] : ['#a0794f', '#53745a', '#edc89a', '#eee4c8'];
-  return `<svg class="villager-portrait" viewBox="0 0 64 64" role="img" aria-label="${esc(villagers.find(v => v.id === id)?.name || id)}" shape-rendering="crispEdges"><circle cx="32" cy="32" r="31" fill="${colors[3]}"/><path fill="${colors[1]}" d="M12 48h8v-8h24v8h8v16H12z"/><path fill="${colors[0]}" d="M18 18h5v-5h21v5h5v25H18z"/><path fill="${colors[2]}" d="M23 23h21v19h-6v6H28v-6h-5z"/><path fill="#38392e" d="M26 28h3v4h-3zm12 0h3v4h-3z"/><path fill="#9c5a47" d="M31 37h7v2h-7z"/>${id === 'rowan' ? '<path fill="#f1e6ce" d="M23 34h5v7h11v-7h5v9h-5v5H28v-5h-5z"/>' : id === 'mira' ? '<path fill="#f6da83" d="M18 18h31v5H18z"/><path fill="#547a8b" d="M23 17h8v7h-8zm13 0h8v7h-8z"/>' : '<path fill="#62885c" d="M12 19h43v5H12zm9-8h24v9H21z"/><path fill="#e9bd5c" d="M39 12h5v5h-5z"/>'}<path fill="${colors[3]}" d="M27 49h12v15H27z"/></svg>`;
+  return characterPortrait(id, 'villager-portrait');
 }
 
 export function projectRequirement(state, project) {

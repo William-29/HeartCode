@@ -7,6 +7,7 @@ import * as content from '../dist/content.js';
 import * as stateApi from '../dist/state.js';
 import { projects, villagers, projectUnlocked } from '../dist/projects.js';
 import { renderVillager, renderProjectDemo, demoSource, projectRequirement } from '../dist/village-stories.js';
+import { characterPortrait } from '../dist/characters.js';
 
 const byId = id => projects.find(project => project.id === `project-${id}`);
 const defaults = project => Object.fromEntries(project.demo.fields.map(field => [field.name, String(field.value)]));
@@ -167,7 +168,7 @@ function appHarness() {
     return new Promise(resolve => { currentRun = { code, checks, resolve }; pendingRuns.push(currentRun); });
   };
   const scope = {
-    ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource,
+    ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
     localStorage: { getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value) },
     setTimeout: () => 1, clearTimeout() {}, matchMedia: () => ({ matches: false }),

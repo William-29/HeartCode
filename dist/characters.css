@@ -1,0 +1,30 @@
+/* Warm, consistently scaled neighbors. The source crop always ends at their feet. */
+.hearth-character{--character-height:74px;position:relative;display:inline-block;flex:none;width:calc(var(--character-height)*var(--character-ratio));height:var(--character-height);vertical-align:bottom;line-height:0;pointer-events:none;isolation:isolate}
+.hearth-character-art{position:absolute;display:block;inset:0;width:100%;height:100%;background-image:url('./assets/hearthwick-neighbors.png');background-repeat:no-repeat;background-size:var(--character-size);background-position:var(--character-position);image-rendering:auto;transform-origin:50% 100%;filter:drop-shadow(-.6px 0 0 #f9dfb05c) drop-shadow(1px 1px .7px #332c2642);animation:hearth-character-breathe 5.7s ease-in-out infinite}
+.character-rowan>.hearth-character-art{animation-delay:-1.4s}.character-mira>.hearth-character-art{animation-duration:6.3s;animation-delay:-3.1s}.character-elio>.hearth-character-art{animation-duration:5.2s;animation-delay:-2.2s}
+.hearth-character-portrait{--character-height:68px;width:var(--character-height);height:var(--character-height);overflow:hidden;background:radial-gradient(ellipse at 45% 25%,#e6d6ad,#c9b38c);border:1px solid #a68c61;border-radius:50%;box-shadow:inset 0 1px #f8e9c9,0 3px 8px #5d472518}
+.hearth-character-portrait>.hearth-character-art{animation:none;filter:none;transform:none}
+.avatar>.hearth-character-portrait.player-portrait{--character-height:100%;width:100%;height:100%;display:block;border:0;box-shadow:none;border-radius:inherit}.avatar:has(>.player-portrait){overflow:hidden}
+.innkeeper-note .hearth-character-portrait.note-portrait{--character-height:50px;width:50px;height:50px;flex:0 0 50px}
+.villager-introduction>.hearth-character-portrait.villager-portrait{--character-height:90px;width:90px;height:90px;flex:0 0 90px;border:3px solid #fff7e8;box-shadow:0 0 0 1px #bd8b4780,0 4px 8px #67482a1f}
+.village-actor{width:76px;height:84px}.village-actor::before{width:68px;left:4px;bottom:-3px}.village-actor::after{left:30px;height:42px;opacity:.6}.village-you{top:-9px;left:26px;z-index:2}
+.village-party{position:absolute;left:50%;bottom:0;width:0;height:74px;display:block;filter:none}
+.village-party>.hearth-character{--character-height:74px;position:absolute;bottom:0;left:0;margin-left:calc(var(--character-height)*var(--character-ratio)*-.5);width:calc(var(--character-height)*var(--character-ratio));height:var(--character-height)}
+.village-following-pet{position:absolute;left:22px;bottom:0;margin:0;filter:drop-shadow(1px 2px 0 #342f2338)}
+.village-rowan,.village-mira,.village-elio{height:68px;min-height:68px;transform:translate(-50%,-100%);padding:0;justify-content:flex-start;overflow:visible}
+.village-rowan>.village-npc,.village-mira>.village-npc,.village-elio>.village-npc{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:68px;width:60px;display:flex;align-items:flex-end;justify-content:center;filter:none}
+.village-npc .hearth-character{--character-height:68px;width:calc(var(--character-height)*var(--character-ratio));height:var(--character-height);filter:none}
+.village-npc::before{width:46px;height:11px;left:50%;bottom:-3px;transform:translateX(-50%);background:radial-gradient(ellipse,#26271e66,transparent 73%)}
+.village-rowan>.village-place-name,.village-mira>.village-place-name,.village-elio>.village-place-name{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);padding:3px 9px 4px;font-size:10px}
+.village-rowan:hover>.village-place-name,.village-mira:hover>.village-place-name,.village-elio:hover>.village-place-name,.village-rowan:focus-visible>.village-place-name,.village-mira:focus-visible>.village-place-name,.village-elio:focus-visible>.village-place-name{transform:translate(-50%,-1px)}
+.village-rowan>.village-place-hint,.village-mira>.village-place-hint,.village-elio>.village-place-hint{top:calc(100% + 28px)}
+.village-npc>.village-hello{top:0;right:-3px;width:20px;height:21px;font-size:12px}
+.village-actor.is-walking .hearth-character-art{animation:hearth-character-walk .42s ease-in-out infinite}
+.traveler-party>.traveler-sprite.hearth-character{--character-height:85px;position:absolute;left:50%;bottom:0;width:calc(var(--character-height)*var(--character-ratio));height:var(--character-height);margin-left:calc(var(--character-height)*var(--character-ratio)*-.5)}
+.traveler-party::before{content:'';position:absolute;left:4px;bottom:-3px;width:60px;height:13px;border-radius:50%;background:radial-gradient(ellipse,#2430205c,transparent 72%)}
+.world-traveler.walking .traveler-party{animation:none}.world-traveler.walking .hearth-character-art{animation:hearth-character-walk .42s ease-in-out infinite}
+@keyframes hearth-character-breathe{0%,100%{transform:scaleY(1);opacity:.99}48%{transform:scaleY(1.006);opacity:1}}
+@keyframes hearth-character-walk{0%,100%{transform:translateY(0) rotate(-.65deg)}50%{transform:translateY(-.8px) rotate(.65deg)}}
+.village-still .hearth-character-art,.reduce-motion .hearth-character-art{animation:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){.hearth-character-art{animation:none!important;transform:none!important}}
+@media(max-width:650px){.villager-introduction>.hearth-character-portrait.villager-portrait{--character-height:68px;width:68px;height:68px;flex-basis:68px}}

@@ -1,17 +1,13 @@
 import { icon, sprite } from './art.js';
 import { sceneArt } from './alley-scene.js';
+import { characterSprite } from './characters.js';
 import { VILLAGE_WIDTH, VILLAGE_HEIGHT, destinations, normalizePosition, findRoute, moveBy, advanceRoute, nearbyDestination, WALK_SPEED } from './village-model.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
-export function villagerSprite(id) {
-  if (id === 'rowan') return sprite('rowan', 'village-npc-sprite');
-  const mira = '<path fill="#61445d" d="M7 4h11v3h3v10h-5V8H9v9H5V7h2Z"/><path fill="#bd8056" d="M9 8h8v10H9Z"/><path fill="#e4b17f" d="M9 8h7v8H9Z"/><path fill="#443848" d="M10 10h2v2h-2Zm5 0h2v2h-2Z"/><path fill="#e5c469" d="M7 5h12v3H7Z"/><path fill="#6d98a2" d="M6 18h14v6H6Z"/><path fill="#346d78" d="M9 17h7v7H9Z"/><path fill="#e9cba1" d="M11 20h3v2h-3Z"/><path fill="#6c4b37" d="M7 24h4v2H7Zm9 0h4v2h-4Z"/>';
-  const elio = '<path fill="#725b90" d="M7 4h12v3h3v7H5V7h2Z"/><path fill="#a495be" d="M7 5h12v3H7Zm-2 5h17v3H5Z"/><path fill="#8f573c" d="M8 13h10v6H8Z"/><path fill="#bd8054" d="M8 13h9v4H8Z"/><path fill="#322d30" d="M9 13h2v2H9Zm5 0h2v2h-2Z"/><path fill="#508b69" d="M5 19h16v5H5Z"/><path fill="#c6b66b" d="M9 18h3v6H9Z"/><path fill="#f1dbab" d="M16 20h7v5h-7Z"/><path fill="#624533" d="M7 24h4v2H7Zm8 0h4v2h-4Z"/>';
-  return `<svg class="pet-sprite village-npc-sprite" viewBox="0 0 26 28" role="img" aria-label="${id === 'mira' ? 'Mira the tinkerer' : 'Elio the naturalist'}" shape-rendering="crispEdges">${id === 'mira' ? mira : elio}</svg>`;
-}
+export function villagerSprite(id) { return characterSprite(id, 'village-npc-sprite'); }
 
-const adventurer = `<svg class="village-adventurer" viewBox="0 0 30 42" aria-hidden="true" shape-rendering="crispEdges"><ellipse fill="#3d633b45" cx="15" cy="39" rx="13" ry="3"/><g class="village-feet"><path fill="#6d493d" d="M8 29h6v10H6v-3h2Zm9 0h6v10h-8v-3h2Z"/></g><g class="village-adventurer-body"><path fill="#3f6b65" d="M8 5h13v3h4v11h-4v4H8v-4H5V8h3Z"/><path fill="#6ba38a" d="M10 3h10v4h3v4H7V7h3Z"/><path fill="#f1c89a" d="M11 11h11v9h-3v3h-8Z"/><path fill="#413f3a" d="M19 13h2v3h-2Z"/><path fill="#d37e59" d="M9 22h13v10H7V22Z"/><path fill="#f2d7a0" d="M9 22h13v3H9Z"/><path fill="#ac804e" d="M4 19h7v12H4v-3H2v-6h2Z"/><path fill="#d7ab65" d="M4 20h5v7H4Z"/><path fill="#74523d" d="M25 20h2v18h-2Z"/></g></svg>`;
+const adventurer = characterSprite('traveler', 'village-adventurer');
 
 export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
   const position = normalizePosition(state.villagePosition);
@@ -23,7 +19,7 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
     <div class="village-viewport" tabindex="0" role="region" aria-label="Walkable village" aria-describedby="village-instructions">
       <div class="village-scene" style="aspect-ratio:${VILLAGE_WIDTH}/${VILLAGE_HEIGHT}">${sceneArt(projects)}
         ${destinations.map(place => `<button type="button" class="village-destination village-${place.id} ${place.color} ${met.has(place.id) ? 'has-met' : ''}" data-village-walk="${place.id}" style="left:${place.x / 10}%;top:${place.y / 6.5}%" aria-label="Walk to ${esc(place.name)}. ${esc(place.hint)}">${['rowan', 'mira', 'elio'].includes(place.id) ? `<span class="village-npc">${villagerSprite(place.id)}<span class="village-hello" aria-hidden="true">${met.has(place.id) ? '♡' : '!'}</span></span>` : `<span class="village-place-icon">${icon(place.icon)}</span>`}<span class="village-place-name">${esc(place.name)}</span><span class="village-place-hint">${esc(place.place)}</span></button>`).join('')}
-        <div class="village-actor" style="left:${position.x / 10}%;top:${position.y / 6.5}%" aria-label="You and ${esc(companion.name)}"><span class="village-you">YOU</span><div class="village-party">${adventurer}<span class="village-following-pet">${sprite(companion.id)}</span></div></div>
+        <div role="img" class="village-actor" style="left:${position.x / 10}%;top:${position.y / 6.5}%" aria-label="You and ${esc(companion.name)}"><span class="village-you">YOU</span><div class="village-party">${adventurer}<span class="village-following-pet">${sprite(companion.id)}</span></div></div>
         <div class="village-walk-marker" hidden aria-hidden="true"></div>
         <span class="village-map-note" aria-hidden="true">Good company. A little curiosity. Home.</span>
       </div>
