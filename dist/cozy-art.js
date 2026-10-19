@@ -1,6 +1,6 @@
 // Small, code-drawn illustrations. They inherit the UI palette and stay crisp.
 export function bunting() {
-  return `<svg class="welcome-bunting" viewBox="0 0 500 100" fill="none" aria-hidden="true"><path d="M-10 8Q250 117 510 8" stroke="#6c785c" stroke-width="2"/><path d="m35 24 37 12-27 35Z" fill="#df7d60"/><path d="m110 46 39 8-25 34Z" fill="#e8b94e"/><path d="m189 60 39 3-21 35Z" fill="#83ad9a"/><path d="m270 63 39-3-17 37Z" fill="#8caec1"/><path d="m350 53 38-8-11 39Z" fill="#b5a0ca"/><path d="m427 34 36-12-5 40Z" fill="#e8b94e"/></svg>`;
+  return `<svg class="welcome-bunting" viewBox="0 0 500 100" fill="none" aria-hidden="true"><path d="M-10 8Q250 100 510 8" stroke="#775a3b" stroke-width="2"/>${[40, 110, 180, 250, 320, 390, 460].map((x, i) => { const y = 11 + 40 * Math.sin((x + 10) / 520 * Math.PI); return `<g class="cafe-bulb" style="animation-delay:-${i * .7}s"><circle cx="${x}" cy="${y + 13}" r="19" fill="#efb759" opacity=".1"/><circle cx="${x}" cy="${y + 13}" r="12" fill="#f8c465" opacity=".16"/><path d="M${x - 3} ${y}h6v7h-6Z" fill="#805e3c"/><path d="M${x - 4} ${y + 7}h8v5h2v7h-2v3h-8v-3h-2v-7h2Z" fill="#e9b45c"/><path d="M${x - 2} ${y + 9}h4v10h-4Z" fill="#fff2b9"/></g>`; }).join('')}</svg>`;
 }
 
 export function teaCup() {

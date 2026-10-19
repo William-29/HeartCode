@@ -36,7 +36,7 @@ test('keyboard movement respects bounds and solids even during a long time step'
     assert.ok(end.x >= 30 && end.x <= 970 && end.y >= 70 && end.y <= 620);
   }
   assert.ok(moveBy({ x: 350, y: 500 }, -280, 0).x > 330);
-  assert.ok(moveBy({ x: 200, y: 350 }, 0, -200).y > 306);
+  assert.ok(moveBy({ x: 200, y: 350 }, 0, -200).y > 265);
   const straight = moveBy(VILLAGE_START, 10, 0);
   assert.ok(Math.abs(straight.x - 510) < 1e-9); assert.equal(straight.y, 460);
 });

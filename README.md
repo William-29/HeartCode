@@ -4,7 +4,7 @@ A cozy browser learning game with **60 progressive quests in 15 chapters** acros
 
 ## A village to call home
 
-The new **Village** is the default starting place. Click the ground to walk, click a destination to walk there and visit, or focus the scene and use **WASD / arrow keys**. Press **E / Enter** near a destination to interact. The destination list also opens activities directly for touch and keyboard access. The character and equipped pet explore a colourful village with a tavern, workshop, fields, garden, lake, and trail to the existing campaign. Movement routes around buildings and water; dialog opening, losing focus, and navigation stop movement.
+The new **Village** is the default starting place. Click the ground to walk, click a destination to walk there and visit, or focus the scene and use **WASD / arrow keys**. Press **E / Enter** near a destination to interact. The destination list also opens activities directly for touch and keyboard access. The character and equipped pet explore a colourful village with a tavern, workshop, sheltered courtyard, garden, pond, and trail to the existing campaign. Movement routes around buildings and water; dialog opening, losing focus, and navigation stop movement.
 
 Meet three villagers with personal stories. Helping them earns friendship, changes their conversations, and adds details to the village:
 
@@ -16,17 +16,19 @@ The second project for each villager also requires their first. Each project inc
 
 First completion earns XP and coins once; visits, demo runs, and replays cannot farm project rewards. Replays can update the saved creation. Projects do not advance or skip campaign quests. Village position, known villagers, completed projects, project drafts, and successful source code share the existing browser save and JSON backup. Older saves gain empty village fields without losing campaign progress. Local and published origins still need an exported/imported save to transfer progress.
 
-`dist/village-model.js` handles walkability and paths; `dist/village.js` renders and animates the code-drawn village. `dist/projects.js` contains the six projects and characters. `dist/village-stories.js` renders conversations and runnable creations. The village adds no image generation, external service, or package dependency. Reduced motion disables decorative walking/ambient effects while leaving movement usable.
+`dist/village-model.js` handles walkability and paths; `dist/village.js` renders the illustrated village and animated characters. `dist/projects.js` contains the six projects and characters. `dist/village-stories.js` renders conversations and runnable creations. The village uses a local illustrated backdrop and adds no external service or package dependency. Reduced motion disables decorative walking/ambient effects while leaving movement usable.
 
-## Daylight at the tavern
+## Lamplight in Hearthwick
 
-The interface now uses warm cream, leafy green, coral, sky blue, and lavender. The home page replaces the old dark card grid with an arched tavern scene, an open chapter trail, a companion garden, a small paper daily challenge, and a note from Rowan. Lessons, the editor, settings, companions, achievements, and the map frame use the same light palette. The original map artwork and all saved progress are preserved.
+The village now has the feeling of a cozy 1950s back alley at early evening: textured brick storefronts, striped cafe awnings, cobblestones, warm windows, streetlamps, a reflecting pond, and layered plants. A detailed illustrated background replaces the original flat SVG scenery. The movement layer, people, pets, project improvements, and lighting remain separate from the image. Building collision bounds follow the new artwork while all six destination locations stay compatible with saves.
 
-`dist/cozy-art.js` draws the bunting, steaming tea, garden, and reward chest as SVGs. No new generated bitmap artwork is used for this refresh. `dist/comfort.css` contains the daylight theme and responsive layouts.
+Streetlamp glows, window light, reflections, and overhead bulbs vary gently with independent timing. The illustration already contains the lamp fixtures, so the overlays add light rather than duplicate posts. A grounded character shadow and warmer sprite lighting tie the walking party to the street. Both the game and operating-system Reduce motion settings keep ambient lighting still. The existing controls and direct-access destination links remain available.
 
-`dist/celebration.js` adds a brief, dismissible reward celebration after a first quest clear, a daily completion, or a new companion adoption. It includes confetti, bouncing coins, a cheering companion, and the actual earned rewards. Level-ups receive their own message. Practice runs get a gentle success pulse. These effects never change XP, coins, or saved progression. They respect both the game’s Reduce motion setting and the system preference, including changes during an animation. Dismissal, timeout, and navigation clean up their timer and listener.
+The surrounding UI uses walnut navigation, ivory paper, terracotta enamel buttons, brass details, and muted petrol accents. Conversation sheets, lessons, the code editor, companions, achievements, campaign map frame, and celebrations share the palette. The tavern window has a wooden frame and a gently glowing string of bulbs. Learning pages remain light and readable.
 
-All 55 automated tests pass, including celebration cleanup, reduced motion, safe text rendering, the Python curriculum, save compatibility, and map travel. The village interaction flows are covered with a lightweight DOM adapter. The original five page templates were also rendered with fresh, 24-quest, and finished saves using a lightweight DOM adapter. This verifies code paths, not visual layout; no connected browser was available for visual QA.
+`dist/alley-theme.css` provides the shared theme; `dist/village.css` loads `dist/alley-scene.css` for the village and lighting, while `dist/alley-scene.js` places the glow overlays and project improvements. The backdrop is `dist/assets/hearthwick-evening.png` (1536 x 1024), generated with the built-in ImageGen tool. Its original is preserved; the prompt and alignment notes are recorded in [docs/alley-art.md](docs/alley-art.md).
+
+The 55 automated tests cover campaign and project progression, real Python solutions, save compatibility, village paths, dialog handoffs, and motion cleanup. Artwork was inspected directly. No connected browser was available for visual layout or animation QA.
 
 ## Run locally
 

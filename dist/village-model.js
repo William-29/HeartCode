@@ -13,13 +13,12 @@ export const destinations = Object.freeze([
 ]);
 
 const solidRects = [
-  { left: 76, right: 313, top: 116, bottom: 306 },
-  { left: 662, right: 890, top: 111, bottom: 292 }
+  { left: 30, right: 390, top: 0, bottom: 265 },
+  { left: 660, right: 970, top: 0, bottom: 275 }
 ];
 const solidEllipses = [
   { x: 184, y: 493, rx: 150, ry: 102 },
-  { x: 500, y: 320, rx: 47, ry: 35 },
-  { x: 574, y: 183, rx: 25, ry: 26 },
+  { x: 500, y: 318, rx: 60, ry: 38 },
   { x: 930, y: 382, rx: 29, ry: 31 }
 ];
 
