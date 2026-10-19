@@ -1,7 +1,8 @@
 import { quests, pets, achievements } from './content.js';
+import { projects, villagers, projectUnlocked, friendship } from './projects.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
-  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, sound: false, reducedMotion: false };
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, sound: false, reducedMotion: false };
 }
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -14,6 +15,16 @@ export function normalizeState(value) {
   for (const field of ['xp', 'coins', 'streak']) s[field] = Number.isSafeInteger(value[field]) && value[field] >= 0 ? Math.min(value[field], 10000000) : 0;
   // A restored campaign can never skip prerequisites.
   for (const q of quests) { if (Array.isArray(value.completed) && value.completed.includes(q.id)) s.completed.push(q.id); else break; }
+  // Side stories preserve their own prerequisites without advancing the campaign.
+  for (const project of projects) if (Array.isArray(value.projects) && value.projects.includes(project.id) && projectUnlocked(s, project.id)) s.projects.push(project.id);
+  s.metVillagers = [...new Set([
+    ...(Array.isArray(value.metVillagers) ? value.metVillagers.filter(id => villagers.some(villager => villager.id === id)) : []),
+    ...projects.filter(project => s.projects.includes(project.id)).map(project => project.npc)
+  ])];
+  if (value.projectCode && typeof value.projectCode === 'object') for (const id of s.projects) if (typeof value.projectCode[id] === 'string') s.projectCode[id] = value.projectCode[id].slice(0, 30000);
+  if (value.villagePosition && typeof value.villagePosition === 'object') {
+    for (const [axis, maximum] of [['x', 1000], ['y', 650]]) if (Number.isFinite(value.villagePosition[axis])) s.villagePosition[axis] = Math.max(0, Math.min(maximum, value.villagePosition[axis]));
+  }
   s.owned = [...new Set(['pip', ...(Array.isArray(value.owned) ? value.owned.filter(id => pets.some(p => p.id === id)) : [])])];
   s.equipped = s.owned.includes(value.equipped) ? value.equipped : 'pip';
   s.achievements = Array.isArray(value.achievements) ? [...new Set(value.achievements.filter(id => achievements.some(a => a.id === id)))] : [];
@@ -21,7 +32,7 @@ export function normalizeState(value) {
   s.lastActivity = typeof value.lastActivity === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.lastActivity) && Number.isFinite(dayNumber(value.lastActivity)) ? value.lastActivity : null;
   s.sound = value.sound === true;
   s.reducedMotion = value.reducedMotion === true;
-  if (value.drafts && typeof value.drafts === 'object') for (const key of [...quests.map(q => q.id), 'practice']) if (typeof value.drafts[key] === 'string') s.drafts[key] = value.drafts[key].slice(0, 30000);
+  if (value.drafts && typeof value.drafts === 'object') for (const key of [...quests.map(q => q.id), ...projects.map(project => project.id), 'practice']) if (typeof value.drafts[key] === 'string') s.drafts[key] = value.drafts[key].slice(0, 30000);
   return s;
 }
 export function isUnlocked(state, id) {
@@ -55,6 +66,25 @@ export function completeQuest(state, id, today = dateKey()) {
   if (state.completed.includes(id)) return { ok: true, replay: true, xp: 0, coins: 0, achievements: unlockAchievements(state) };
   state.completed.push(id); state.xp += quest.xp; state.coins += quest.coins;
   return { ok: true, replay: false, xp: quest.xp, coins: quest.coins, achievements: unlockAchievements(state) };
+}
+export function meetVillager(state, id) {
+  if (!villagers.some(villager => villager.id === id)) return { ok: false, reason: 'Villager not found.' };
+  const first = !state.metVillagers.includes(id);
+  if (first) state.metVillagers.push(id);
+  return { ok: true, first, friendship: friendship(state, id) };
+}
+// The caller runs the Python checks before committing the submitted source here,
+// just as campaign completion follows a successful quiz or Python result.
+export function completeProject(state, id, code, today = dateKey()) {
+  const project = projects.find(item => item.id === id);
+  if (!project || !projectUnlocked(state, id)) return { ok: false, reason: 'Finish the required lessons and the previous village project first.' };
+  if (typeof code !== 'string' || !code.trim() || code.length > 30000) return { ok: false, reason: 'Run a project solution of up to 30,000 characters first.' };
+  activity(state, today);
+  meetVillager(state, project.npc);
+  state.projectCode[id] = code;
+  const replay = state.projects.includes(id);
+  if (!replay) { state.projects.push(id); state.xp += project.xp; state.coins += project.coins; }
+  return { ok: true, replay, xp: replay ? 0 : project.xp, coins: replay ? 0 : project.coins, achievements: unlockAchievements(state), project, friendship: friendship(state, project.npc) };
 }
 export function completeDaily(state, today = dateKey()) {
   if (state.daily.includes(today)) return { ok: false, reason: 'Today’s reward has already been collected.' };

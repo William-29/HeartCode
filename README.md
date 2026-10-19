@@ -2,6 +2,22 @@
 
 A cozy browser learning game with **60 progressive quests in 15 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **14 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
 
+## A village to call home
+
+The new **Village** is the default starting place. Click the ground to walk, click a destination to walk there and visit, or focus the scene and use **WASD / arrow keys**. Press **E / Enter** near a destination to interact. The destination list also opens activities directly for touch and keyboard access. The character and equipped pet explore a colourful village with a tavern, workshop, fields, garden, lake, and trail to the existing campaign. Movement routes around buildings and water; dialog opening, losing focus, and navigation stop movement.
+
+Meet three villagers with personal stories. Helping them earns friendship, changes their conversations, and adds details to the village:
+
+- **Rowan:** a bill calculator available immediately, followed by a pantry shopping planner after 8 campaign quests.
+- **Mira:** a guessing game after 4 quests, followed by a festival scoreboard after 8.
+- **Elio:** a plant-care rule system after 12 quests, followed by a learned brightness predictor with a held-out error experiment after 20.
+
+The second project for each villager also requires their first. Each project includes a lesson, worked example, starter code, free hints, reference solution, and Python checks across multiple inputs. Completed creations can be tried with new inputs and downloaded as `.py` files. Mira's guessing game hides a fresh number from 1 to 100 and uses the player's saved Python function to give clues; a round tracks guesses until the number is found. The other creations have small input forms that run the submitted Python in the existing worker. The predictor explicitly separates rule-based behavior, learning from data, and testing on unseen measurements.
+
+First completion earns XP and coins once; visits, demo runs, and replays cannot farm project rewards. Replays can update the saved creation. Projects do not advance or skip campaign quests. Village position, known villagers, completed projects, project drafts, and successful source code share the existing browser save and JSON backup. Older saves gain empty village fields without losing campaign progress. Local and published origins still need an exported/imported save to transfer progress.
+
+`dist/village-model.js` handles walkability and paths; `dist/village.js` renders and animates the code-drawn village. `dist/projects.js` contains the six projects and characters. `dist/village-stories.js` renders conversations and runnable creations. The village adds no image generation, external service, or package dependency. Reduced motion disables decorative walking/ambient effects while leaving movement usable.
+
 ## Daylight at the tavern
 
 The interface now uses warm cream, leafy green, coral, sky blue, and lavender. The home page replaces the old dark card grid with an arched tavern scene, an open chapter trail, a companion garden, a small paper daily challenge, and a note from Rowan. Lessons, the editor, settings, companions, achievements, and the map frame use the same light palette. The original map artwork and all saved progress are preserved.
@@ -10,7 +26,7 @@ The interface now uses warm cream, leafy green, coral, sky blue, and lavender. T
 
 `dist/celebration.js` adds a brief, dismissible reward celebration after a first quest clear, a daily completion, or a new companion adoption. It includes confetti, bouncing coins, a cheering companion, and the actual earned rewards. Level-ups receive their own message. Practice runs get a gentle success pulse. These effects never change XP, coins, or saved progression. They respect both the game’s Reduce motion setting and the system preference, including changes during an animation. Dismissal, timeout, and navigation clean up their timer and listener.
 
-All 30 automated tests pass, including celebration cleanup, reduced motion, safe text rendering, the Python curriculum, save compatibility, and map travel. All five page templates were also rendered with fresh, 24-quest, and finished saves using a lightweight DOM adapter. This verifies code paths, not visual layout; no connected browser was available for visual QA.
+All 55 automated tests pass, including celebration cleanup, reduced motion, safe text rendering, the Python curriculum, save compatibility, and map travel. The village interaction flows are covered with a lightweight DOM adapter. The original five page templates were also rendered with fresh, 24-quest, and finished saves using a lightweight DOM adapter. This verifies code paths, not visual layout; no connected browser was available for visual QA.
 
 ## Run locally
 
@@ -65,7 +81,7 @@ Completing a campaign quest for the first time returns you to the map. Your cloa
 
 Progress is saved **before** travel begins. Skip walk, navigating away, or reloading cannot undo a reward or award it twice. The game's Reduce motion setting and the operating system's reduced-motion preference both skip the walk and disable ambient motion. Existing saves remain compatible. Fireflies, chimney smoke, drifting clouds, water glints, and walking sprites are decorative effects.
 
-The test suite has 30 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
+The test suite has 55 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
 
 ## Runtime and privacy
 

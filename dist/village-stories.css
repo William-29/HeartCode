@@ -1,0 +1,45 @@
+#village-dialog { width: min(760px, calc(100vw - 28px)); max-height: 90dvh; padding: 0; border: 1px solid #d9d4bd; border-radius: 20px; background: #fffaf0; color: var(--text); box-shadow: 0 22px 80px #29382a44; }
+#village-dialog::backdrop { background: #304a3c70; backdrop-filter: blur(3px); }
+.village-conversation { padding: 14px 32px 28px; }
+.villager-introduction { display: flex; gap: 20px; align-items: center; }
+.villager-portrait { width: 90px; height: 90px; flex: 0 0 90px; filter: drop-shadow(0 4px 0 #b5b18a45); }
+.villager-introduction h2 { margin: 3px 0 8px; font-size: 30px; }
+.friendship-line { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 12px; color: #626a5d; }
+.friendship-line > span:first-child { color: #b64f51; font-size: 22px; letter-spacing: 3px; }
+.village-conversation blockquote { margin: 24px 0 14px; padding: 0 0 0 20px; border-left: 3px solid #e3bc73; font-family: Georgia, serif; font-size: 20px; line-height: 1.6; color: #47563d; }
+.village-story-intro { line-height: 1.7; color: var(--muted); margin-bottom: 26px; }
+.villager-project { display: grid; grid-template-columns: 34px 1fr; gap: 13px; padding: 23px 0; border-top: 1px dashed #d5d2bd; }
+.project-thread-mark { width: 34px; height: 34px; border-radius: 50%; background: #f2dfb8; color: #885b2b; display: grid; place-items: center; }
+.project-finished .project-thread-mark { background: #dbe8c9; color: #397457; }
+.villager-project h3 { font-size: 19px; margin: 6px 0 9px; }
+.villager-project p:not(.eyebrow) { font-size: 14px; line-height: 1.7; margin: 0 0 12px; color: var(--muted); }
+.project-reward { display: flex; align-items: center; flex-wrap: wrap; font-size: 12px; gap: 4px; color: #795622; }
+.project-reward svg { width: 15px; height: 15px; }
+.project-actions { display: flex; flex-wrap: wrap; gap: 13px; align-items: center; margin-top: 16px; }
+.project-actions .button { min-height: 42px; }
+.project-locked .icon { width: 14px; vertical-align: middle; }
+.project-locked .text-button { display: flex; margin-top: 7px; }
+.conversation-footer { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; padding-top: 18px; border-top: 1px solid #e1ddca; }
+.project-playground > p { line-height: 1.7; color: var(--muted); margin: 23px 0; }
+.project-demo-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.project-demo-fields label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; }
+.project-demo-fields input { width: 100%; min-width: 0; border: 1px solid #bfc6ae; border-radius: 9px; padding: 11px 12px; background: #fffefa; color: #344236; font: inherit; }
+.project-demo-output { background: #edf1e3; color: #35533d; border-radius: 12px; min-height: 90px; white-space: pre-wrap; overflow-wrap: anywhere; padding: 18px; margin: 16px 0 24px; line-height: 1.65; max-height: 280px; overflow: auto; }
+.project-demo-output.output-error { color: #a84335; }
+.village-invitation { display: flex; gap: 16px; align-items: center; margin: 0 0 28px; padding: 17px 0; border-block: 1px dashed #c8cdb5; }
+.village-invitation > .icon { flex-shrink: 0; width: 30px; height: 30px; color: #39765e; }
+.village-invitation p { margin: 0; flex: 1; color: var(--muted); font-size: 13px; }
+.village-invitation strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 16px; }
+@media(min-width:541px) { .sidebar { overflow-y: auto; } }
+@media(max-width:540px) { .nav-link > span:not(.nav-count) { font-size: 9px; } }
+@media(max-width:760px) {
+  .sidebar .nav-link { padding-inline: 2px; font-size: 9px; }
+  .sidebar .nav-link .nav-count { display: none; }
+  .village-conversation { padding: 10px 20px 24px; }
+  .villager-introduction { gap: 13px; }
+  .villager-portrait { width: 68px; height: 68px; flex-basis: 68px; }
+  .villager-introduction h2 { font-size: 26px; }
+  .village-conversation blockquote { font-size: 18px; }
+  .project-demo-fields { grid-template-columns: 1fr; }
+  .village-invitation { flex-wrap: wrap; }
+}
