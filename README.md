@@ -111,6 +111,12 @@ The test suite has 86 tests, including curved route continuity, reward/travel co
 
 ## Source
 
+### High Street adventures
+
+Visit **High Street** from the village to investigate three Python mysteries, run your own tool shop with returning customers, take progressively unlocked train trips to three towns, and train a small garden model. Beginner activities start immediately; advanced activities follow existing lesson progress. Ten new coding challenges award XP and coins once. Saved shop tools execute for customers, and the garden uses fitted parameters to predict growth.
+
+See [the High Street guide](docs/high-street.md) for unlock requirements, save behavior, and verification details.
+
 `dist/content.js`: original curriculum, pets, achievements, daily questions. `dist/advanced-content.js`: quests 25–60 and their Python checks. `dist/state.js`: pure progression logic. `dist/app.js`: UI. `dist/runtime.py`: shared checker. `dist/runner.js` and `dist/python-worker.js`: browser Python lifecycle. `dist/styles.css`: responsive tavern design. `dist/art.js`: original code-native pixel companions and interface icons. `dist/world-model.js`: map locations and shared Bézier route geometry. `dist/world.js`: map rendering, camera, input, and travel lifecycle. `dist/world.css`: world design and environmental animations.
 
 ## Tavern artwork

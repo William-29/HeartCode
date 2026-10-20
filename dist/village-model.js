@@ -12,7 +12,8 @@ export const destinations = Object.freeze([
   { id: 'trail', name: 'The learning trail', place: 'Beyond the village', hint: 'Continue your 60-quest journey', x: 500, y: 100, icon: 'map', color: 'green' },
   { id: 'room', name: 'Your room', place: 'Above the tavern', hint: 'Decorate & display your keepsakes', x: 170, y: 310, icon: 'home', color: 'coral' },
   { id: 'cafe', name: 'A quiet table', place: 'The café terrace', hint: 'Take a little break with your pet', x: 385, y: 390, icon: 'clock', color: 'gold' },
-  { id: 'festival', name: 'The lantern festival', place: 'The village green', hint: 'Help prepare & try your creations', x: 590, y: 555, icon: 'spark', color: 'gold' }
+  { id: 'festival', name: 'The lantern festival', place: 'The village green', hint: 'Help prepare & try your creations', x: 590, y: 555, icon: 'spark', color: 'gold' },
+  { id: 'highstreet', name: 'High Street', place: 'The station & market lane', hint: 'Mysteries, your shop, train trips & the learning garden', x: 600, y: 185, icon: 'book', color: 'gold' }
 ]);
 
 const solidRects = [

@@ -2,9 +2,10 @@ import { quests, pets, achievements } from './content.js';
 import { projects, villagers, projectUnlocked, friendship } from './projects.js';
 import { freshHome, normalizeHome, periods, festivalProgress } from './village-life-model.js';
 import { normalizeAmbience, normalizePetCare } from './cozy-model.js';
+import { freshAdventure, normalizeAdventure } from './adventure-model.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
-  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
 }
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -36,6 +37,7 @@ export function normalizeState(value) {
   s.home = normalizeHome(value.home);
   s.ambience = normalizeAmbience(value.ambience);
   s.petCare = normalizePetCare(value.petCare, s.owned);
+  s.adventure = normalizeAdventure(value.adventure, s);
   s.villageTime = periods.includes(value.villageTime) ? value.villageTime : 'auto';
   s.festivalCelebrated = value.festivalCelebrated === true && festivalProgress(s).ready;
   s.reducedMotion = value.reducedMotion === true;
@@ -56,7 +58,7 @@ export function visibleStreak(state, today = dateKey()) {
   if (!state.lastActivity || dayNumber(today) - dayNumber(state.lastActivity) > 1) return 0;
   return state.streak;
 }
-function activity(state, today) {
+export function activity(state, today = dateKey()) {
   if (state.lastActivity === today) return;
   state.streak = state.lastActivity && dayNumber(today) - dayNumber(state.lastActivity) === 1 ? state.streak + 1 : 1;
   state.lastActivity = today;
