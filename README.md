@@ -2,6 +2,16 @@
 
 A cozy browser learning game with **60 progressive quests in 15 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **14 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
 
+## Learning together, shared projects, and Willowmere
+
+Visit **The learning table** in the village or tavern to meet Nell and Kit. Six progressive conversations ask you to explain a Python mistake, choose a useful test, and repair real code. Their confidence and dialogue grow as you help.
+
+In **Founders' Court → The morning round**, connect the actual Python tools saved during restoration. Three projects bring greenhouse herbs to the bakery, library recipes into the delivery baskets, and all three buildings into a shared morning plan. Reopened buildings, earlier connections, and trail lessons determine when each becomes available.
+
+Follow **The lakeside path**, or speak with Elio, to fish with your companion at Willowmere. Every immediate cast becomes an observation, including “No catch.” A weather-filtered journal, charts, and three coding projects teach counting, empirical frequency, and a weather-based classifier evaluated against held-out observations and a simple baseline. The journal keeps the newest 120 casts; there are no timers or repeat-cast coin rewards.
+
+All 12 new projects have one-time XP/coin rewards and saved drafts. Existing version-1 saves migrate automatically. The new worlds remain fitted to the viewport, with reading and coding in deliberate scrollable dialogs. See [the feature guide](docs/learning-together.md) and [the artwork record](docs/learning-together-artwork.md).
+
 ## A village to call home
 
 The new **Village** is the default starting place. Click the ground to walk, click a destination to walk there and visit, or focus the scene and use **WASD / arrow keys**. Press **E / Enter** near a destination to interact. The destination list also opens activities directly for touch and keyboard access. The character and equipped pet explore a colourful village with a tavern, workshop, sheltered courtyard, garden, pond, and trail to the existing campaign. Movement routes around buildings and water; dialog opening, losing focus, and navigation stop movement.

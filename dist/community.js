@@ -34,7 +34,7 @@ export function renderCourtyard(state,companion={id:'pip',name:'Pip'}){
       <span class="court-lamplight" aria-hidden="true"></span>
       <button class="court-square-sign" data-community="exhibition">${icon('spark')} The makers’ exhibition <small>${shown.length} creations on display</small></button>
     </div></div>
-    <div class="court-bottom"><p>Visit a doorway to hear its story. Your finished tools belong on the square.</p><div>${control('journal',`${icon('book')} The neighbours’ notebook`)}${control('exhibition',`${icon('code')} Arrange the exhibition`)}<a class="button outline" href="#wardrobe">${icon('paw')} Your wardrobe</a></div></div>
+    <div class="court-bottom"><p>Visit a doorway to hear its story. Your finished tools belong on the square.</p><div><a class="button outline" href="#shared">${icon('leaf')} The morning round</a>${control('journal',`${icon('book')} The neighbours’ notebook`)}${control('exhibition',`${icon('code')} Arrange the exhibition`)}<a class="button outline" href="#wardrobe">${icon('paw')} Your wardrobe</a></div></div>
     <p class="community-status sr-only" role="status" aria-live="polite"></p></section>`;
 }
 export function renderWardrobe(state){

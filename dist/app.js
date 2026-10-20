@@ -1,6 +1,7 @@
 import { ambienceSettings, renderPetCorner, mountPetPlay } from './cozy-ui.js';
 import { renderAdventures, mountAdventures } from './adventures.js';
 import { renderCourtyard, renderWardrobe, mountCommunity } from './community.js';
+import { renderNeighbours, mountNeighbours } from './neighbours.js';
 import { wardrobeCount } from './wardrobe-model.js';
 import { activity, unlockAchievements } from './state.js';
 import { careForPet, choosePetBed, normalizeAmbience } from './cozy-model.js';
@@ -33,8 +34,9 @@ let roomSlot = 'chair';
 let roomEditor = null, petPlay = null;
 let adventureSession = null;
 let communitySession = null;
+let neighbourSession = null;
 let knownWardrobeCount = wardrobeCount(state);
-const ambience = createAmbience(() => state.ambience, () => route);
+const ambience = createAmbience(() => route === 'lake' ? {...state.ambience, weather: state.neighbours.weather === 'rain' ? 'rain' : 'clear'} : state.ambience, () => route);
 let worldSession = null;
 let villageSession = null;
 let villageClock = null;
@@ -48,7 +50,7 @@ let solved = false;
 let saveTimer;
 let audioContext;
 let celebration = null;
-const routes = { courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
+const routes = { apprentices: ['Learning together', 'book'], shared: ['The morning round', 'leaf'], lake: ['Willowmere Lake', 'leaf'], courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
 const questDialog = $('#quest-dialog');
 const settingsDialog = $('#settings-dialog');
 const villageDialog = $('#village-dialog');
@@ -89,6 +91,7 @@ function navigate(next) { if (!routes[next]) next = 'tavern'; if (route === next
 window.addEventListener('hashchange', () => { cancelRun(); route = location.hash.slice(1); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 function render() {
+  neighbourSession?.dispose(); neighbourSession = null;
   communitySession?.dispose(); communitySession = null;
   adventureSession?.dispose(); adventureSession = null;
   roomEditor?.dispose(); roomEditor = null;
@@ -110,7 +113,7 @@ function render() {
     <aside class="sidebar">
       <a class="brand" href="#village" aria-label="Hearthcode village"><img src="assets/favicon.svg" alt="" width="39" height="39"><span>Hearthcode<small>THE LEARNING TAVERN</small></span></a>
       <div class="sidebar-label">YOUR ADVENTURE</div>
-      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['adventures', 'courtyard', 'wardrobe'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
+      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['adventures', 'courtyard', 'wardrobe', 'apprentices', 'shared', 'lake'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
       <div class="side-note">${teaCup()}<p>There’s always time<br>for one more try.</p><span>THE KETTLE’S ON</span></div>
       <div class="sidebar-bottom">
         <button class="quiet-button settings-link" data-action="settings">${icon('settings')} Settings & saved progress</button>
@@ -120,10 +123,19 @@ function render() {
     </aside>
     <div class="workspace" data-route="${route}">
       <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
-      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
+      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ apprentices: () => renderNeighbours(state, 'apprentices', pet()), shared: () => renderNeighbours(state, 'shared', pet()), lake: () => renderNeighbours(state, 'lake', pet()), courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
   ambience.update();
+  if (['apprentices', 'shared', 'lake'].includes(route)) neighbourSession = mountNeighbours({
+    state, view: route, companion: pet(), runPython, cancelRun, onSave: saveAdventure,
+    onReward: result => {
+      activity(state); const earned = unlockAchievements(state);
+      saveAdventure(); chime();
+      celebrate({ xp: result.xp, coins: result.coins, achievements: earned }, $('#neighbour-dialog'));
+      notifyAchievements(earned);
+    }
+  });
   if (route === 'courtyard' || route === 'wardrobe') communitySession = mountCommunity({
     state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun,
     onSave: () => { saveAdventure(); const avatar = $('.avatar'); if (avatar) avatar.innerHTML = characterPortrait('traveler', 'player-portrait', state.wardrobe); },
@@ -165,6 +177,7 @@ function render() {
 
 function saveAdventure() {
   save();
+  ambience.update();
   const coins = $('.coin-pill b'), xp = $('.xp-pill b');
   if (coins) coins.textContent = state.coins.toLocaleString();
   if (xp) xp.textContent = state.xp.toLocaleString();
@@ -191,6 +204,7 @@ function renderTavern() {
       <div class="welcome-illustration">${bunting()}<div class="tavern-window"><img src="assets/tavern.png" width="1536" height="1024" alt="A welcoming tavern with a glowing fireplace, books, and a comfortable armchair"><span class="window-glow"></span></div><span class="window-sill"></span><div class="welcome-friend">${sprite(current.id, 'floating-pet')}<span>${current.name} saved you a spot.</span></div><span class="welcome-flower flower-left" aria-hidden="true">✿</span><span class="welcome-flower flower-right" aria-hidden="true">✿</span></div>
     </section>
     <div class="village-invitation">${icon('leaf')}<p><strong>There’s a whole village outside.</strong>Meet your neighbours, build something useful, and make a friend along the way.</p><button class="button outline" data-action="navigate" data-route="village">Take a stroll ${icon('arrow')}</button></div>
+    <a class="tavern-teaching-link" href="#apprentices">${icon('book')} Nell and Kit have saved you a place at the learning table. ${icon('arrow')}</a>
     <div class="journey-stats"><div>${icon('book')}<span><strong>${state.completed.length}<small> / ${quests.length}</small></strong><span>Discoveries made</span></span></div><div>${icon('spark')}<span><strong>Level ${level.level}</strong><span>${level.current} / ${level.needed} XP</span></span></div><div>${icon('paw')}<span><strong>${state.owned.length}<small> / ${pets.length}</small></strong><span>Friends for the journey</span></span></div></div>
     <div class="dashboard-grid"><div class="dashboard-main">
       <section class="next-section"><div class="section-heading"><h2>On your reading table</h2><span class="eyebrow">ONE THING AT A TIME</span></div>${next ? `<button class="next-quest-card" data-action="quest" data-id="${next.id}"><span class="quest-book">${icon(next.type === 'code' ? 'code' : 'book')}</span><span class="next-quest-text"><span class="eyebrow">QUEST ${String(quests.indexOf(next) + 1).padStart(2, '0')} · ${next.type === 'code' ? 'TRY SOME PYTHON' : 'THINK IT THROUGH'}</span><strong>${next.title}</strong><span>${next.subtitle}</span></span><span class="quest-card-reward">${rewardLine(next.xp, next.coins)}</span><span class="circle-arrow">${icon('arrow')}</span></button>` : `<div class="notice success">${icon('trophy')} All ${quests.length} quests complete. That’s something to be proud of.</div>`}</section>
@@ -216,7 +230,7 @@ function visitVillage(id) {
   villageSession?.pause();
   if (id === 'cafe') { openCafe(); return; }
   if (villagers.some(v => v.id === id)) { openVillager(id); return; }
-  const destination = { workbench: 'practice', companions: 'companions', trail: 'quests', room: 'room', festival: 'festival', highstreet: 'adventures', courtyard: 'courtyard' }[id];
+  const destination = { workbench: 'practice', companions: 'companions', trail: 'quests', room: 'room', festival: 'festival', highstreet: 'adventures', courtyard: 'courtyard', lakeside: 'lake', apprentices: 'apprentices' }[id];
   if (destination) navigate(destination);
 }
 function openCafe() {

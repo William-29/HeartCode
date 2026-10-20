@@ -6,9 +6,10 @@ import { freshAdventure, normalizeAdventure } from './adventure-model.js';
 import { freshRestoration, normalizeRestoration } from './restoration-model.js';
 import { freshWardrobe, normalizeWardrobe } from './wardrobe-model.js';
 import { exhibitCatalog } from './exhibition-model.js';
+import { freshNeighbours, normalizeNeighbours } from './neighbour-model.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
-  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), restoration: freshRestoration(), wardrobe: freshWardrobe(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), restoration: freshRestoration(), wardrobe: freshWardrobe(), neighbours: freshNeighbours(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
 }
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -42,6 +43,7 @@ export function normalizeState(value) {
   s.petCare = normalizePetCare(value.petCare, s.owned);
   s.adventure = normalizeAdventure(value.adventure, s);
   s.restoration = normalizeRestoration(value.restoration, s);
+  s.neighbours = normalizeNeighbours(value.neighbours, s);
   if (Array.isArray(s.restoration.exhibition)) {
     const owned = new Set(exhibitCatalog(s).map(item => item.id));
     s.restoration.exhibition = s.restoration.exhibition.filter(id => owned.has(id));

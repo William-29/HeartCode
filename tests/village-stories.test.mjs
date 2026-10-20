@@ -1,6 +1,7 @@
 import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
 import { renderAdventures } from '../dist/adventures.js';
 import { renderCourtyard, renderWardrobe } from '../dist/community.js';
+import { renderNeighbours } from '../dist/neighbours.js';
 import { wardrobeCount } from '../dist/wardrobe-model.js';
 import { careForPet, choosePetBed, normalizeAmbience } from '../dist/cozy-model.js';
 import test from 'node:test';
@@ -161,7 +162,7 @@ function appHarness() {
     setAttribute() {}
     scrollIntoView() {}
   }
-  for (const id of ['app', 'quest-dialog', 'village-dialog', 'settings-dialog', 'adventure-dialog', 'community-dialog', 'toasts']) nodes.set(id, new Element(id));
+  for (const id of ['app', 'quest-dialog', 'village-dialog', 'settings-dialog', 'adventure-dialog', 'community-dialog', 'neighbour-dialog', 'toasts']) nodes.set(id, new Element(id));
   const document = new EventTarget();
   document.documentElement = new Element(); document.body = new Element();
   document.querySelector = selector => {
@@ -181,6 +182,7 @@ function appHarness() {
     ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience, renderAdventures,
     mountAdventures: () => ({ dispose() {} }),
     renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: () => ({ dispose() {} }),
+    renderNeighbours, mountNeighbours: () => ({ dispose() {} }),
     mountRoomEditor: () => ({ dispose() {} }), mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
@@ -235,6 +237,21 @@ test('Founders’ Court and the wardrobe are reachable without adding sidebar ro
   assert.match(app.node('app').innerHTML, /hearthwick-outfits.png/);
   app.evaluate("route = 'room'; render()");
   assert.match(app.node('app').innerHTML, /data-route="wardrobe"/);
+});
+
+test('apprentices and the lake are reachable from the village, with the morning round linked in the court', () => {
+  const app = appHarness();
+  for (const [destination, route, title] of [['apprentices','apprentices','A place beside you'],['lakeside','lake','Willowmere Lake']]) {
+    app.call('visitVillage', destination);
+    assert.equal(app.evaluate('location.hash'), route);
+    app.evaluate(`route = '${route}'; render()`);
+    assert.match(app.node('app').innerHTML, new RegExp(title));
+    assert.equal((app.node('app').innerHTML.match(/class="nav-link /g) || []).length, 8);
+  }
+  app.evaluate("route = 'courtyard'; render()");
+  assert.match(app.node('app').innerHTML,/href="#shared"/);
+  app.evaluate("route = 'shared'; render()");
+  assert.match(app.node('app').innerHTML,/The herb basket/);
 });
 
 test('village UI flow meets Rowan, completes and tries a saved creation, and keeps campaign progress intact', async () => {
