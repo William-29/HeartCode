@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { discoveries } from '../dist/clockwork-content.js';
+import { noticeDiscoveries } from '../dist/neighbour-model.js';
 import assert from 'node:assert/strict';
 import { destinations, VILLAGE_START, isWalkable, normalizePosition, findRoute, segmentWalkable, moveBy, advanceRoute, nearbyDestination } from '../dist/village-model.js';
 import { renderVillage, mountVillage, fitVillageViewport } from '../dist/village.js';
@@ -133,6 +135,26 @@ test('direct visits need no movement and reduced motion remains reactive', () =>
   session.dispose();
   const manual = mountVillage({ state: { villageTime: 'evening' }, reducedMotion: true }); assert.ok(h.root.classes.has('village-still'));
   manual.dispose();
+}));
+
+test('following a companion walks a safe path, discovers its clue and opens the shared discovery journal once', () => villageHarness(h => {
+  for (const clue of discoveries) {
+    const state={villagePosition:VILLAGE_START,villageTime:'evening',neighbours:{found:[],completed:[]}},visits=[],moves=[];
+    assert.ok(isWalkable(clue));assert.ok(findRoute(VILLAGE_START,clue).length>=2);
+    const session=mountVillage({state,onExplore:p=>noticeDiscoveries(state,p),onVisit:id=>visits.push(id),onMove:p=>moves.push(p)});
+    assert.equal(session.followDiscovery(clue.id),true);assert.equal(state.neighbours.found.length,0);
+    let ticks=0;while(h.frames.size&&ticks++<400)h.step();
+    assert.ok(ticks<400);assert.ok(state.neighbours.found.includes(clue.id));assert.deepEqual(visits,['discoveries']);assert.deepEqual(moves.at(-1),{x:clue.x,y:clue.y});
+    session.dispose();assert.equal(h.listenerCount(),0);
+  }
+}));
+
+test('reduced-motion discovery visits arrive immediately; blocked or disposed walks never reveal a clue', () => villageHarness(h => {
+  const state={villageTime:'evening',neighbours:{found:[],completed:[]}},visits=[];
+  const session=mountVillage({state,reducedMotion:true,onExplore:p=>noticeDiscoveries(state,p),onVisit:id=>visits.push(id)});
+  h.openDialog();assert.equal(session.followDiscovery(discoveries[0].id),false);assert.equal(state.neighbours.found.length,0);
+  h.closeDialog();assert.equal(session.followDiscovery(discoveries[0].id),true);assert.ok(state.neighbours.found.includes(discoveries[0].id));assert.deepEqual(visits,['discoveries']);assert.equal(h.frames.size,0);
+  session.dispose();assert.equal(session.followDiscovery(discoveries[1].id),false);assert.equal(state.neighbours.found.length,1);
 }));
 
 test('routine changes walk villagers along safe paths and clicking a moving villager holds them for a visit', () => villageHarness(h => {

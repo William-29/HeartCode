@@ -2,6 +2,9 @@ import { icon, sprite } from './art.js';
 import { characterSprite, characterPortrait } from './characters.js';
 import { courtyardArt } from './community.js';
 import { weatherArt } from './cozy-ui.js';
+import { renderClockwork, renderDiscoveries, clockLedger, inspectionMarkup, orderMarkup, discoveryMarkup, discoveryBook, clockReport, createMusicPlayer } from './clockwork-ui.js';
+import { discoveries } from './clockwork-content.js';
+import { inspectMechanism, moveMechanism, mechanismReady } from './neighbour-model.js';
 import { apprentices, teachingProjects, sharedProjects, lakeProjects, neighbourProject } from './neighbour-content.js';
 import { neighbourUnlocked, lockReason, answerTeaching, completeNeighbour, confidence, cast, lakeSummary, splitObservations, projectSource, projectChecks, workingSource, workingResult, weathers, shores } from './neighbour-model.js';
 
@@ -18,6 +21,8 @@ function progressList(state,items){
   }).join('')}</ol>`;
 }
 export function renderNeighbours(state,view='apprentices',companion={id:'pip',name:'Pip'}){
+  if(view==='clockwork')return renderClockwork(state,companion);
+  if(view==='discoveries')return renderDiscoveries(state,companion);
   if(view==='lake')return renderLake(state,companion);
   if(view==='shared')return `<section class="neighbours-root neighbours-world" data-view="shared">${head('The morning round','Three open doors become one neighbourhood.','courtyard')}<div class="court-stage"><div class="court-frame shared-frame">${courtyardArt(state,'shared')}${weatherArt(state,'courtyard')}
     ${sharedProjects.map((p,i)=>`<button class="shared-place place-${i}" data-neighbour="project" data-id="${p.id}"><span>${icon(state.neighbours.completed.includes(p.id)?'check':i===0?'leaf':i===1?'book':'spark')}</span><strong>${['The herb basket','The recipe satchel','The shared round'][i]}</strong><small>${state.neighbours.completed.includes(p.id)?'A working village tradition':neighbourUnlocked(state,p)?'Ready to make together':'A promise for later'}</small></button>`).join('')}
@@ -51,13 +56,13 @@ function teachingSteps(state,p){
 function projectMarkup(state,p){
   const available=neighbourUnlocked(state,p),done=state.neighbours.completed.includes(p.id);
   if(!available)return `${top('A PROMISE FOR LATER')}<h2>${p.title}</h2><p>${p.story||p.lesson}</p><p class="neighbour-lock">${icon('lock')} ${esc(lockReason(state,p))}</p><div class="community-actions"><a class="button outline" href="#quests">Visit the learning trail</a><a class="button outline" href="#courtyard">Visit the restoration</a></div>`;
-  return `${top(p.kind==='teaching'?'LEARNING BY HELPING':p.kind==='shared'?'THE SHARED WORK LEDGER':'THE LAKE JOURNAL')}<h2>${p.title}</h2><p>${p.lesson||p.story}</p>${p.kind==='teaching'?teachingSteps(state,p):''}
+  return `${top(p.kind==='teaching'?'LEARNING BY HELPING':p.kind==='shared'?'THE SHARED WORK LEDGER':p.kind==='clock'?'MIRA’S REPAIR BENCH':p.kind==='discovery'?'THINGS WE FOUND TOGETHER':'THE LAKE JOURNAL')}<h2>${p.title}</h2><p>${p.lesson||p.story}</p>${p.kind==='teaching'?teachingSteps(state,p):p.inspection?inspectionMarkup(state,p):''}
     ${p.tools?`<details class="borrowed-tools"><summary>The working tools you are connecting</summary><p>These are your saved restoration functions. They are loaded for this project; you can call them directly.</p>${p.tools.map(id=>`<h4>${esc(id.replaceAll('-',' '))}</h4><pre>${esc(state.restoration.code[id])}</pre>`).join('')}</details>`:''}
     <h3>${p.kind==='teaching'?'3. Mend the code together':'Make the next small connection'}</h3><p>${p.task}</p><label for="neighbour-code">Your Python</label><textarea id="neighbour-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(state.neighbours.drafts[p.id]??state.neighbours.code[p.id]??p.starter)}</textarea>
     <div class="community-actions">${button('run','Run & check',p.id)}${button('stop','Stop','',true)}${button('reset','Restore starter',p.id)}${done&&p.kind!=='teaching'?button('use','Use my saved tool',p.id):''}</div>
     <details><summary>A gentle hint</summary><p>${p.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(p.solution)}</pre></details>
     <p class="neighbour-note">${done?'First-completion rewards already earned. You can revise and run this as often as you like.':`${p.xp} XP · ${p.coins} coins when you first finish. ${p.kind==='teaching'?'Explain and choose a test before completing the repair.':''}`}</p>
-    <pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here.</pre><div id="neighbour-result"></div><div class="community-actions">${p.kind==='teaching'?button('meet','Back to our conversation',p.npc):button(p.kind==='lake'?'journal':'shared-book','Back to the story')}</div>`;
+    <pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here.</pre><div id="neighbour-result"></div><div class="community-actions">${p.kind==='teaching'?button('meet','Back to our conversation',p.npc):button(p.kind==='lake'?'journal':p.kind==='clock'?'clock-ledger':p.kind==='discovery'?'discovery-book':'shared-book','Back to the story')}</div>`;
 }
 function journalMarkup(state,filter='all'){
   const all=state.neighbours.observations,rows=filter==='all'?all:all.filter(r=>r.weather===filter),summary=lakeSummary(rows),split=splitObservations(all);
@@ -70,6 +75,7 @@ function sharedMarkup(state){
   return `${top('FOUNDERS’ COURT · THE MORNING ROUND')}<h2>Our doors are open. What can we do together?</h2><p>Restoring a building gave it a future. Connecting the work gives the neighbours a reason to visit each other. Your Python joins the greenhouse’s baskets, the bakery’s oven, and the library’s recipe books.</p>${progressList(state,sharedProjects)}<div class="shared-memories">${sharedProjects.filter(p=>state.neighbours.completed.includes(p.id)).map(p=>`<blockquote>${p.outcome}${button('use','See the village use it',p.id)}</blockquote>`).join('')}</div>`;
 }
 function reportMarkup(p,r){
+  if(['clock','discovery'].includes(p.kind))return clockReport(p,r);
   if(p.kind==='shared'){
     const parts=p.id==='shared-herbs'?[['Pick from the greenhouse',r.pick],['Bundles in the basket',r.total]]:p.id==='shared-books'?[['Books packed',r.served],['Waiting their turn',r.waiting],['Copies left',r.stock]]:[['Kit’s oven batches',r.oven?.batches],['Elio’s morning observations',r.garden],['Nell’s book satchel',r.library?.served],['Waiting for a book',r.library?.waiting]];
     return `<div class="working-round"><h3>The village is using your Python</h3>${parts.map(([title,value])=>`<section><h4>${title}</h4><pre>${esc(JSON.stringify(value,null,2))}</pre></section>`).join('')}<p>${p.outcome}</p></div>`;
@@ -77,11 +83,12 @@ function reportMarkup(p,r){
   if(p.id==='lake-predict')return `<div class="working-round"><h3>A fair look at your lake model</h3><p>Your guesser matched <strong>${r.correct}/${r.total}</strong> held-out catches. The overall-most-common baseline matched <strong>${r.baseline_correct}/${r.total}</strong>.</p><p>${r.training_casts} training casts; ${r.test_casts} test casts. Training labels never include the held-out answers.</p><p>Next guess in your selected weather: <strong>${esc(r.next_guess)}</strong>. It is a guess, not a promise.</p><p>${r.correct>r.baseline_correct?'Weather helped on this small sample. Test more conditions before trusting it.':'This model did not beat the simpler baseline on this sample. More features or more representative observations may help.'} Each new cast changes the notebook; run the tool again to refresh this report.</p></div>`;
   return `<div class="working-round"><h3>Your Python, on your own observations</h3><pre>${esc(JSON.stringify(r,null,2))}</pre><p>${p.id==='lake-frequency'?'These fractions describe your sample, not a known probability for every future cast.':'Every quiet cast remains in the counts.'}</p></div>`;
 }
-export function mountNeighbours({state,view,companion,onSave,onReward,runPython,cancelRun,root=document.querySelector('.neighbours-root'),dialog=document.querySelector('#neighbour-dialog')}){
+export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDiscovery=()=>{},runPython,cancelRun,root=document.querySelector('.neighbours-root'),dialog=document.querySelector('#neighbour-dialog')}){
   let alive=true,busy=false,token=0,active=null;
+  let music=null,melody=null;
   const output=text=>{const el=dialog.querySelector('#neighbour-output');if(el)el.textContent=text;};
   function busyState(value){busy=value;for(const el of dialog.querySelectorAll('[data-neighbour]'))el.disabled=el.dataset.neighbour==='stop'?!value:el.dataset.neighbour==='close'?false:value;for(const el of dialog.querySelectorAll('textarea'))el.readOnly=value;}
-  function stop(){token++;if(busy)cancelRun();busyState(false);}
+  function stop(){token++;if(busy)cancelRun();music?.stop();busyState(false);}
   function show(html){stop();active=null;dialog.innerHTML=html;if(!dialog.open)dialog.showModal();dialog.scrollTop=0;dialog.querySelector('button')?.focus();}
   function close(){stop();active=null;if(dialog.open)dialog.close();root.querySelector('[data-neighbour]')?.focus({preventScroll:true});}
   function repaint(){
@@ -93,6 +100,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,runPython,
   }
   function showProject(p){if(!p)return;show(projectMarkup(state,p));if(neighbourUnlocked(state,p))active=p;}
   async function execute(code,checks,done){
+    music?.stop();
     if(busy)return;const mine=++token;busyState(true);output('Warming up Python…');
     try{
       const result=await runPython(code,checks,phase=>{if(alive&&mine===token)output(phase==='loading'?'Warming up Python…':'Running your Python…');});
@@ -103,7 +111,8 @@ export function mountNeighbours({state,view,companion,onSave,onReward,runPython,
   }
   function useTool(p){
     if(!p||!state.neighbours.completed.includes(p.id)||p.kind==='teaching')return;
-    show(`${top('YOUR WORK IN THE WORLD')}<h2>${p.title}</h2><p>${p.story}</p><p>Run the saved Python on ${p.kind==='lake'?'your current observations':'the village’s sample morning'}. You can revise the code whenever you like.</p><div class="community-actions">${button('run-use','Run my saved tool',p.id)}${button('stop','Stop','',true)}${button('project','Revisit the code',p.id)}</div><pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Ready when you are.</pre><div id="neighbour-result"></div>`);
+    show(`${top('YOUR WORK IN THE WORLD')}<h2>${p.title}</h2><p>${p.story}</p><p>Run the saved Python on ${p.kind==='lake'?'your current observations':p.kind==='clock'?'the repaired mechanism':p.kind==='discovery'?'the note you found together':'the village’s sample morning'}. You can revise the code whenever you like.</p><div class="community-actions">${button('run-use','Run my saved tool',p.id)}${button('stop','Stop','',true)}${button('project','Revisit the code',p.id)}</div><pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Ready when you are.</pre><div id="neighbour-result"></div>`);
+    melody=null;
     active=p;
   }
   function click(event){
@@ -112,6 +121,14 @@ export function mountNeighbours({state,view,companion,onSave,onReward,runPython,
     if(action==='close'){close();return;}
     if(action==='stop'){stop();output('Stopped. Your draft is saved.');return;}
     if(busy)return;
+    if(action==='clock-ledger'){show(clockLedger(state));return;}
+    if(action==='discovery-book'){show(discoveryBook(state,companion));return;}
+    if(action==='discovery'&&discoveries.some(d=>d.id===id)){show(discoveryMarkup(state,id,companion));return;}
+    if(action==='follow-discovery'&&discoveries.some(d=>d.id===id)){close();onFollowDiscovery(id);return;}
+    if(action==='inspect'&&active?.id===id){const result=inspectMechanism(state,id,Number(index));onSave();dialog.querySelector('#inspection-feedback').textContent=result.message;for(const b of dialog.querySelectorAll('[data-neighbour="inspect"]'))b.setAttribute('aria-pressed',String(result.ok&&b===el));return;}
+    if(action==='move-step'&&active?.id===id){if(moveMechanism(state,id,Number(index),Number(el.dataset.direction))){onSave();dialog.querySelector('#mechanism-order').innerHTML=orderMarkup(state,active);dialog.querySelector('#mechanism-order').querySelector('button:not([disabled])')?.focus();}return;}
+    if(action==='listen'&&active?.id==='clock-melody'&&melody){music||=createMusicPlayer();output(music.play(melody)?'Your saved Python’s notes are playing softly.':'These notes cannot play here. Your Python result is still shown below.');return;}
+    if(action==='quiet'){music?.stop();output('A quiet moment.');return;}
     if(action==='meet'&&apprentices.some(a=>a.id===id)){show(apprenticeMarkup(state,id));return;}
     if(action==='project'){showProject(neighbourProject(id));return;}
     if(action==='shared-book'){show(sharedMarkup(state));return;}
@@ -134,6 +151,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,runPython,
     if(action==='run'&&active){
       const p=active,code=dialog.querySelector('#neighbour-code').value;
       state.neighbours.drafts[p.id]=code;onSave();
+      if(p.inspection&&(!state.neighbours.inspected.includes(p.id)||!mechanismReady(state,p))){output('Inspect the mechanism and arrange its jobs first. Your code is saved.');return;}
       if(p.kind==='teaching'&&(!state.neighbours.explained.includes(p.id)||!state.neighbours.examples.includes(p.id))){output('Explain the mistake and choose a useful test together first. Your code is safe here.');return;}
       execute(projectSource(state,p,code),projectChecks(p),result=>{
         const reward=completeNeighbour(state,p.id,code);if(!reward.ok)throw new Error('Finish the earlier steps first.');
@@ -148,6 +166,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,runPython,
       const p=active;let code;try{code=workingSource(state,p);}catch(error){output(error.message);return;}
       execute(code,'',result=>{
         const report=workingResult(result.output);output('Your saved Python ran successfully. This visit earns no repeat rewards.');
+        if(p.id==='clock-melody')melody=report;
         dialog.querySelector('#neighbour-result').innerHTML=reportMarkup(p,report);
         if(p.kind==='shared')root.querySelector('.round-courier')?.classList.add('round-delivering');
       });
@@ -167,5 +186,5 @@ export function mountNeighbours({state,view,companion,onSave,onReward,runPython,
   const cancelled=()=>{stop();active=null;};
   root.addEventListener('click',click);root.addEventListener('change',change);
   dialog.addEventListener('click',click);dialog.addEventListener('change',change);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('cancel',cancelled);dialog.addEventListener('close',cancelled);
-  return {dispose(){alive=false;close();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};
+  return {dispose(){alive=false;close();music?.dispose();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};
 }

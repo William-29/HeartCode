@@ -2,6 +2,7 @@ import { weatherArt } from './cozy-ui.js';
 import { icon, sprite } from './art.js';
 import { sceneArt } from './alley-scene.js';
 import { characterSprite } from './characters.js';
+import { discoveries } from './clockwork-content.js';
 import { villagePeriod, scheduledPlaces, festivalProgress } from './village-life-model.js';
 import { routineControls, routineNotes } from './village-life.js';
 import { VILLAGE_WIDTH, VILLAGE_HEIGHT, destinations, normalizePosition, findRoute, moveBy, advanceRoute, nearbyDestination, WALK_SPEED } from './village-model.js';
@@ -28,6 +29,9 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
     <div class="village-viewport" tabindex="0" role="region" aria-label="Walkable village" aria-describedby="village-instructions">
       <div class="village-scene" style="aspect-ratio:${VILLAGE_WIDTH}/${VILLAGE_HEIGHT}">${sceneArt(projects)}${weatherArt(state)}
         ${places.map(place => `<button type="button" class="village-destination village-${place.id} ${place.color} ${met.has(place.id) ? 'has-met' : ''}" data-village-walk="${place.id}" style="left:${place.x / 10}%;top:${place.y / 6.5}%" aria-label="Walk to ${esc(place.name)}. ${esc(place.activity || place.hint)}">${['rowan', 'mira', 'elio'].includes(place.id) ? `<span class="village-npc">${villagerSprite(place.id)}<span class="village-hello" aria-hidden="true">${met.has(place.id) ? '♡' : '!'}</span></span>` : `<span class="village-place-icon">${icon(place.icon)}</span>`}<span class="village-place-name">${esc(place.name)}</span><span class="village-place-hint">${esc(place.place)}</span></button>`).join('')}
+        ${discoveries.map(d=>`<button class="village-discovery ${state.neighbours?.completed.includes(d.id)?'story-restored':''}" data-village-discovery="${d.id}" style="left:${d.x/10}%;top:${d.y/6.5}%" ${state.neighbours?.found.includes(d.id)?'':'hidden'} aria-label="${esc(d.title)}: revisit what your companion found">${icon(state.neighbours?.completed.includes(d.id)?'check':'paw')}</button>`).join('')}
+        ${state.neighbours?.completed.includes('discovery-tin')?'<span class="village-picnic-tin" title="Rowan’s remembered picnic tin" aria-hidden="true"></span>':''}
+        ${state.neighbours?.completed.includes('discovery-path')?'<span class="village-ribbon-path" title="The path to the listening bench is open again" aria-hidden="true"></span>':''}
         ${festivalProgress(state).celebrated ? '<div class="village-festival-ribbons" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ''}
         <div role="img" class="village-actor" style="left:${position.x / 10}%;top:${position.y / 6.5}%" aria-label="You and ${esc(companion.name)}"><span class="village-you">YOU</span><div class="village-party">${adventurer}<span class="village-following-pet">${sprite(companion.id)}</span></div></div>
         <div class="village-walk-marker" hidden aria-hidden="true"></div>
@@ -42,7 +46,7 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
   </section>`;
 }
 
-export function mountVillage({ state, previousPlaces, reducedMotion = false, onVisit = () => {}, onMove = () => {} }) {
+export function mountVillage({ state, previousPlaces, reducedMotion = false, onVisit = () => {}, onMove = () => {}, onExplore = () => [] }) {
   const root = document.querySelector('.village-shell');
   if (!root) return { dispose() {}, pause() {} };
   const viewport = root.querySelector('.village-viewport'), scene = root.querySelector('.village-scene');
@@ -63,6 +67,10 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
   const motion = () => { root.classList.toggle('village-still', reducedMotion || media.matches); if (reducedMotion || media.matches) { clearStrollTimers(); finishRoutines(); } else scheduleStrolls(); };
   const paint = () => {
     actor.style.left = `${position.x / 10}%`; actor.style.top = `${position.y / 6.5}%`;
+    const found=onExplore(position)||[];
+    for(const d of found){const clue=root.querySelector(`[data-village-discovery="${d.id}"]`);if(clue)clue.hidden=false;}
+    const nose=root.querySelector('.village-following-pet');
+    nose?.classList.toggle('pet-notices',discoveries.some(d=>!state.neighbours?.found.includes(d.id)&&Math.hypot(position.x-d.x,position.y-d.y)<110));
     const next = nearbyDestination(position, 65, places);
     if (next?.id !== near?.id) {
       near = next; interact.disabled = !near;
@@ -131,6 +139,7 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     actor.classList.remove('is-walking'); commit();
   };
   const visit = id => {
+    if(typeof id==='string'&&id.startsWith('discovery-')&&discoveries.some(d=>d.id===id)&&state.neighbours?.found.includes(id)&&!disposed&&!blocked()){stop();onVisit('discoveries');return;}
     if (disposed || blocked() || !places.some(place => place.id === id)) return;
     stopRoutine(id); stop(); status.textContent = `Visiting ${places.find(place => place.id === id).name}.`;
     onVisit(id);
@@ -170,6 +179,8 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     viewport.focus({ preventScroll: true }); start();
   };
   listen(root, 'click', event => {
+    const clue=event.target.closest('[data-village-discovery]');
+    if(clue){visit(clue.dataset.villageDiscovery);return;}
     if (event.target.closest('[data-village-go]')) { visit(root.querySelector('#village-destination').value); return; }
     const direct = event.target.closest('[data-village-visit]');
     if (direct) { visit(direct.dataset.villageVisit); return; }
@@ -221,6 +232,12 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
   const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
   resize?.observe(viewport); fit(); listen(window, 'resize', fit);
   return {
+    followDiscovery(id){
+      const clue=discoveries.find(d=>d.id===id);if(!clue||disposed||blocked())return false;
+      if(reducedMotion||media.matches){stop();position=normalizePosition(clue);dirty=true;paint();commit();onVisit('discoveries');}
+      else walk(clue,{...clue,name:'your companion’s clue'});
+      return true;
+    },
     places: () => places.map(place => ({ ...place })),
     pause() { stop(); pauseRoutines(); },
     dispose() { if (disposed) return; disposed = true; clearStrollTimers(); resize?.disconnect(); if (routineFrame) cancelAnimationFrame(routineFrame); routineFrame = 0; routines.clear(); stop(); listeners.splice(0).forEach(remove => remove()); }

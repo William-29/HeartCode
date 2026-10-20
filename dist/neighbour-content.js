@@ -1,4 +1,5 @@
 // Teaching, shared work, and observation extend the same learning trail.
+import { clockProjects, discoveryProjects } from './clockwork-content.js';
 export const apprentices = [
   {id:'nell',name:'Nell',place:'The reading table',look:{hair:'braid',outfit:'moss',scarf:'cream',accessory:'none'},story:'Nell carried the library’s rescued borrowing cards downstairs. She knows every reader by name, but worries that one wrong line might spoil the whole catalogue.',voices:['“Could we try a very small example together?”','“I tried another name on my own. It worked!”','“Now I know why a missing book needs a different answer.”','“I can explain my work to the next reader. Would you listen?”']},
   {id:'kit',name:'Kit',place:'The kitchen bench',look:{hair:'waves',outfit:'rust',scarf:'sage',accessory:'none'},story:'Kit helps Rowan prepare the morning trays. They have plenty of ideas and a habit of rushing the last step. You can make room for mistakes over a warm cup of tea.',voices:['“Mine nearly works. That counts as a start, doesn’t it?”','“I checked two trays instead of guessing. Much better.”','“The empty list was the example I kept forgetting.”','“I tested the rainy mornings too. The answer is less certain than I thought.”']}
@@ -110,5 +111,5 @@ export const lakeProjects=[
     'import copy\nf=scope.get("predict_catch")\nassert callable(f)\nr=[{"weather":"sun","catch":"Perch"},{"weather":"rain","catch":"Tench"},{"weather":"rain","catch":"Tench"},{"weather":"sun","catch":"Minnow"}];before=copy.deepcopy(r)\nassert f(r,"rain")=="Tench"\nassert f(r,"sun")=="Minnow", "Break ties alphabetically."\nassert f(r,"cloud")=="Tench", "Use all training rows for unseen weather."\nassert f([],"sun") is None\nassert r==before',
     {observations:18,previous:'lake-frequency',story:'Kit joins you at the jetty. Together you will keep every fifth observation aside, train on the rest, and compare the guesser with a simple overall-most-common baseline.',outcome:'Your first lake model is ready for an honest test. Being wrong is useful evidence, too.'})
 ];
-export const neighbourProjects=[...teachingProjects,...sharedProjects,...lakeProjects];
+export const neighbourProjects=[...teachingProjects,...sharedProjects,...lakeProjects,...clockProjects,...discoveryProjects];
 export const neighbourProject=id=>neighbourProjects.find(p=>p.id===id);

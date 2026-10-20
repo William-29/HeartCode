@@ -3,13 +3,16 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { freshState, normalizeState } from '../dist/state.js';
-import { quests } from '../dist/content.js';
+import { quests, pets } from '../dist/content.js';
 import { restorationProjects } from '../dist/restoration-content.js';
 import { completeRestoration, openBuilding } from '../dist/restoration-model.js';
 import { apprentices, teachingProjects, sharedProjects, lakeProjects, neighbourProjects } from '../dist/neighbour-content.js';
 import { freshNeighbours, neighbourUnlocked, answerTeaching, completeNeighbour, confidence, cast, lakeSummary, splitObservations, projectSource, projectChecks, workingSource, workingResult } from '../dist/neighbour-model.js';
 import { renderNeighbours, mountNeighbours } from '../dist/neighbours.js';
 import { ambientLevels } from '../dist/ambience.js';
+import { clockProjects, discoveryProjects, discoveries } from '../dist/clockwork-content.js';
+import { inspectMechanism, moveMechanism, mechanismOrder, mechanismReady, noticeDiscoveries } from '../dist/neighbour-model.js';
+import { createMusicPlayer } from '../dist/clockwork-ui.js';
 
 function progressed(n=60){
   const s=freshState();s.completed=quests.slice(0,n).map(q=>q.id);return s;
@@ -37,7 +40,7 @@ print(json.dumps([json.loads(runtime.run_source(c["code"],c.get("checks",""))) f
 }
 test('apprentices begin gently, keep separate learning stories, and require explanation plus an example before code rewards',()=>{
   const s=freshState(),first=teachingProjects[0];
-  assert.deepEqual(neighbourProjects.filter(p=>neighbourUnlocked(s,p)).map(p=>p.id),['nell-label']);
+  assert.deepEqual(teachingProjects.filter(p=>neighbourUnlocked(s,p)).map(p=>p.id),['nell-label']);
   assert.equal(completeNeighbour(s,first.id,first.solution).ok,false);
   assert.equal(answerTeaching(s,first.id,'explanation',0).ok,false);
   assert.equal(s.coins,0);assert.equal(confidence(s,'nell'),0);
@@ -66,7 +69,7 @@ test('connected projects require reopened places and saved tools, then unlock in
   }
   delete s.restoration.code['bakery-shopping'];assert.equal(neighbourUnlocked(s,sharedProjects[0]),false);
 });
-test('all twelve projects pass real Python checks; their buggy starters and blank submissions fail',()=>{
+test('all neighbour projects pass real Python checks; their buggy starters and blank submissions fail',()=>{
   const s=restored();observations(s);
   const cases=neighbourProjects.flatMap(p=>[p.solution,p.starter,''].map(code=>({code:projectSource(s,p,code),checks:projectChecks(p)})));
   const results=python(cases);
@@ -152,7 +155,7 @@ test('world scenes retain the existing art and character style, accessible entra
 
 function harness(state=restored(),view='apprentices'){
   const previousDocument=globalThis.document,decode=s=>s.replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#39;',"'").replaceAll('&amp;','&');
-  let pending,rewards=[],saves=0,cancels=0;
+  let pending,rewards=[],saves=0,cancels=0,followed=[];
   class Element extends EventTarget{
     constructor(dataset={}){super();this.dataset=dataset;this.open=false;this.value='';this.textContent='';this.fields=new Map();this.buttons=[];this.classList={add(){}};}
     set innerHTML(value){
@@ -175,9 +178,9 @@ function harness(state=restored(),view='apprentices'){
   }
   const root=new Element(),dialog=new Element();root.innerHTML=renderNeighbours(state,view);
   globalThis.document={activeElement:null,querySelector:s=>s==='.neighbours-root'?root:dialog};
-  const session=mountNeighbours({state,view,companion:{id:'pip',name:'Pip'},root,dialog,onSave(){saves++;},onReward(r){rewards.push(r);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
+  const session=mountNeighbours({state,view,companion:{id:'pip',name:'Pip'},root,dialog,onFollowDiscovery(id){followed.push(id);},onSave(){saves++;},onReward(r){rewards.push(r);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(where,action,id,extra={})=>{const el=new Element({neighbour:action,id,...extra});where.buttons.push(el);const event=new Event('click');Object.defineProperty(event,'target',{value:el});where.dispatchEvent(event);};
-  return {state,root,dialog,session,click:(...args)=>click(root,...args),work:(...args)=>click(dialog,...args),pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
+  return {state,root,dialog,session,followed,click:(...args)=>click(root,...args),work:(...args)=>click(dialog,...args),pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
     change(where,id,value){const field=where.querySelector('#'+id);field.value=value;const event=new Event('change');Object.defineProperty(event,'target',{value:field});where.dispatchEvent(event);},
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=previousDocument;}};
@@ -235,4 +238,93 @@ test('failed, stopped, closed and disposed learning runs never commit late progr
     ui.click('project',p.id);ui.work('run');ui.session.dispose();await ui.finish({passed:true,output:''});assert.equal(ui.rewards().length,0);
     assert.equal(ui.state.neighbours.completed.length,0);assert.ok(ui.cancels()>=3);
   }finally{ui.dispose();}
+});
+
+function prepareClock(s,p){
+  assert.equal(inspectMechanism(s,p.id,p.answer).ok,true);
+  if(p.order){
+    for(let i=0;i<p.order.length;i++){
+      let at=mechanismOrder(s,p).indexOf(p.order[i]);
+      while(at>i){assert.equal(moveMechanism(s,p.id,at,-1),true);at--;}
+    }
+    assert.equal(mechanismReady(s,p),true);
+  }
+}
+test('clock repairs require inspection, ordered parts and progressive lessons; repaired objects persist without repeat rewards',()=>{
+  const s=freshState();assert.equal(neighbourUnlocked(s,clockProjects[0]),true);
+  assert.equal(completeNeighbour(s,clockProjects[0].id,clockProjects[0].solution).ok,false);
+  assert.equal(inspectMechanism(s,'clock-latch',0).ok,false);assert.equal(s.coins,0);
+  s.completed=quests.map(q=>q.id);
+  assert.equal(neighbourUnlocked(s,clockProjects[3]),false);
+  for(const p of clockProjects){
+    prepareClock(s,p);assert.equal(completeNeighbour(s,p.id,p.solution).ok,true);
+    const coins=s.coins,xp=s.xp;assert.equal(completeNeighbour(s,p.id,p.solution).replay,true);assert.equal(s.coins,coins);assert.equal(s.xp,xp);
+  }
+  assert.equal(moveMechanism(s,'clock-melody',0,1),false);
+  assert.deepEqual(normalizeState(s),s);
+  assert.match(renderNeighbours(s,'clockwork'),/mechanism-working/);
+  const reports=python(clockProjects.map(p=>({code:workingSource(s,p)})));
+  assert.ok(reports.every(r=>r.passed),reports.map(r=>r.error).join('\n'));
+  assert.deepEqual(workingResult(reports[2].output),['C','E','G','E','C','E','G','E']);
+  assert.deepEqual(workingResult(reports[3].output)['12'],['Greenhouse','Kitchen','Library']);
+});
+test('all companions find the same clues through proximity and preserve them when pets change; no discovery currency farming',()=>{
+  for(const pet of pets.map(p=>p.id)){
+    const s=freshState();s.equipped=pet;
+    assert.deepEqual(noticeDiscoveries(s,{x:500,y:460}),[]);
+    for(const d of discoveries){assert.equal(neighbourUnlocked(s,discoveryProjects.find(p=>p.id===d.id)),false);assert.equal(noticeDiscoveries(s,d)[0].id,d.id);assert.deepEqual(noticeDiscoveries(s,d),[]);}
+    assert.equal(s.neighbours.found.length,3);assert.equal(s.xp,0);assert.equal(s.coins,0);
+    s.equipped='pip';assert.equal(s.neighbours.found.length,3);
+    s.completed=quests.map(q=>q.id);
+    for(const p of discoveryProjects)assert.equal(completeNeighbour(s,p.id,p.solution).ok,true);
+    const coins=s.coins;for(const p of discoveryProjects)assert.equal(completeNeighbour(s,p.id,p.solution).replay,true);assert.equal(s.coins,coins);
+    assert.deepEqual(normalizeState(s).neighbours,s.neighbours);
+  }
+});
+test('legacy saves and malformed clock/discovery imports preserve old progress without skipping the mechanism or finding invented clues',()=>{
+  const s=freshState();delete s.neighbours.found;delete s.neighbours.inspected;delete s.neighbours.orders;s.coins=500;
+  const restored=normalizeState(s);assert.deepEqual(restored.neighbours.found,[]);assert.equal(restored.coins,500);
+  const bad=progressed();bad.neighbours.found=['discovery-key','alien','discovery-key'];bad.neighbours.completed=['clock-melody','clock-round','discovery-path'];bad.neighbours.code={'clock-melody':'pass','clock-round':'pass','discovery-path':'pass'};bad.neighbours.orders={'clock-melody':['clean_notes','clean_notes','play_melody']};bad.neighbours.inspected=['clock-melody'];
+  const normalized=normalizeState(bad).neighbours;assert.deepEqual(normalized.found,['discovery-key']);assert.deepEqual(normalized.completed,[]);assert.deepEqual(normalized.orders,{});
+});
+test('workshop UI inspects, arranges and repairs all four keepsakes, and performs the saved melody on request',async()=>{
+  const ui=harness(progressed(),'clockwork');
+  try{
+    ui.click('clock-ledger');assert.match(ui.dialog.innerHTML,/Orrin/);
+    for(const p of clockProjects){
+      ui.work('project',p.id);ui.work('run');assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Inspect/);
+      ui.work('inspect',p.id,{index:String(p.answer)});
+      if(p.order){
+        for(let i=0;i<p.order.length;i++){let at=mechanismOrder(ui.state,p).indexOf(p.order[i]);while(at>i){ui.work('move-step',p.id,{index:String(at),direction:'-1'});at--;}}
+      }
+      ui.dialog.querySelector('#neighbour-code').value=p.solution;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+      assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Made together/);
+      ui.work('use',p.id);ui.work('run-use');await ui.finish(python([{code:ui.pending().code}])[0]);
+      assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Working again/);
+      if(p.object==='music')assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Listen to your melody/);
+    }
+    assert.equal(ui.rewards().length,4);
+  }finally{ui.dispose();}
+});
+test('discovery UI keeps unknown stories behind a village walk, then offers optional Python and a remembered outcome',async()=>{
+  const ui=harness(progressed(),'discoveries'),p=discoveryProjects[0];
+  try{
+    ui.click('discovery',p.id);assert.match(ui.dialog.innerHTML,/Follow my companion/);assert.doesNotMatch(ui.dialog.innerHTML,/grandfather Orrin/);
+    ui.work('follow-discovery',p.id);assert.deepEqual(ui.followed,[p.id]);assert.equal(ui.dialog.open,false);assert.equal(ui.state.neighbours.found.length,0);
+    noticeDiscoveries(ui.state,discoveries[0]);ui.click('discovery',p.id);assert.match(ui.dialog.innerHTML,/grandfather Orrin/);
+    ui.work('project',p.id);ui.dialog.querySelector('#neighbour-code').value=p.solution;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+    ui.work('use',p.id);ui.work('run-use');await ui.finish(python([{code:ui.pending().code}])[0]);assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/returned key/);
+    assert.equal(ui.rewards().length,1);assert.match(renderNeighbours(ui.state,'clockwork'),/returned-key/);
+  }finally{ui.dispose();}
+});
+test('music is opt-in, uses only bounded valid notes, and stops on blur, hiding, and disposal',()=>{
+  const win=new EventTarget(),doc=new EventTarget();let contexts=[],oscillators=[];
+  class Audio{constructor(){this.currentTime=0;this.destination={};this.closed=false;contexts.push(this);}resume(){return Promise.resolve();}close(){this.closed=true;return Promise.resolve();}createOscillator(){const o={frequency:{},connect(){},start(){this.started=true;},stop(){this.stopped=(this.stopped||0)+1;}};oscillators.push(o);return o;}createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}}
+  win.AudioContext=Audio;const player=createMusicPlayer({win,doc});assert.equal(contexts.length,0);
+  assert.equal(player.play(['C','E','G']),true);assert.equal(oscillators.length,3);assert.equal(oscillators[1].frequency.value,329.63);
+  win.dispatchEvent(new Event('blur'));assert.equal(contexts[0].closed,true);assert.ok(oscillators.every(o=>o.stopped===2));
+  assert.equal(player.play(['NOT A NOTE']),false);assert.equal(contexts.length,1);
+  assert.equal(player.play(Array(33).fill('C')),false);
+  player.play(['A']);doc.hidden=true;doc.dispatchEvent(new Event('visibilitychange'));assert.equal(contexts[1].closed,true);
+  player.play(['G']);player.dispose();assert.equal(contexts[2].closed,true);player.dispose();
 });

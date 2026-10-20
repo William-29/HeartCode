@@ -4,6 +4,8 @@ A cozy browser learning game with **60 progressive quests in 15 chapters** acros
 
 ## Learning together, shared projects, and Willowmere
 
+**New: Mira's clockmaker workshop and pet-led discoveries.** Visit the clockmaker in the village to inspect and repair four remembered keepsakes with Python, including a music box you can choose to hear. Follow your companion's clues on village paths to find three small stories for Mira, Rowan, and Elio. Every pet can find every clue. Seven additional coding projects have one-time rewards, saved drafts, and progressively deeper lessons. See [the feature and artwork guide](docs/clockwork-and-discoveries.md).
+
 Visit **The learning table** in the village or tavern to meet Nell and Kit. Six progressive conversations ask you to explain a Python mistake, choose a useful test, and repair real code. Their confidence and dialogue grow as you help.
 
 In **Founders' Court → The morning round**, connect the actual Python tools saved during restoration. Three projects bring greenhouse herbs to the bakery, library recipes into the delivery baskets, and all three buildings into a shared morning plan. Reopened buildings, earlier connections, and trail lessons determine when each becomes available.

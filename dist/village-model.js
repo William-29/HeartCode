@@ -16,7 +16,9 @@ export const destinations = Object.freeze([
   { id: 'highstreet', name: 'High Street', place: 'The station & market lane', hint: 'Mysteries, your shop, train trips & the learning garden', x: 600, y: 185, icon: 'book', color: 'gold' },
   { id: 'courtyard', name: 'Founders’ Court', place: 'The old village square', hint: 'Restore beloved places & exhibit your working projects', x: 660, y: 455, icon: 'home', color: 'coral' },
   { id: 'lakeside', name: 'The lakeside path', place: 'Willowmere jetty', hint: 'Fish with your pet & learn from your observations', x: 355, y: 580, icon: 'leaf', color: 'blue' },
-  { id: 'apprentices', name: 'The learning table', place: 'Nell & Kit at the tavern', hint: 'Teach a little Python over a warm cup of tea', x: 365, y: 285, icon: 'book', color: 'gold' }
+  { id: 'apprentices', name: 'The learning table', place: 'Nell & Kit at the tavern', hint: 'Teach a little Python over a warm cup of tea', x: 365, y: 285, icon: 'book', color: 'gold' },
+  { id: 'clockwork', name: 'The clockmaker', place: 'Mira’s repair bench', hint: 'Mend clocks and a remembered music box', x: 740, y: 292, icon: 'clock', color: 'gold' },
+  { id: 'discoveries', name: 'Companion discoveries', place: 'Little detours together', hint: 'Follow clues your pet has noticed', x: 445, y: 580, icon: 'paw', color: 'green' }
 ]);
 
 const solidRects = [

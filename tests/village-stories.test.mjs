@@ -2,6 +2,7 @@ import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
 import { renderAdventures } from '../dist/adventures.js';
 import { renderCourtyard, renderWardrobe } from '../dist/community.js';
 import { renderNeighbours } from '../dist/neighbours.js';
+import { noticeDiscoveries } from '../dist/neighbour-model.js';
 import { wardrobeCount } from '../dist/wardrobe-model.js';
 import { careForPet, choosePetBed, normalizeAmbience } from '../dist/cozy-model.js';
 import test from 'node:test';
@@ -182,7 +183,7 @@ function appHarness() {
     ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience, renderAdventures,
     mountAdventures: () => ({ dispose() {} }),
     renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: () => ({ dispose() {} }),
-    renderNeighbours, mountNeighbours: () => ({ dispose() {} }),
+    renderNeighbours, noticeDiscoveries, mountNeighbours: () => ({ dispose() {} }),
     mountRoomEditor: () => ({ dispose() {} }), mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
@@ -252,6 +253,17 @@ test('apprentices and the lake are reachable from the village, with the morning 
   assert.match(app.node('app').innerHTML,/href="#shared"/);
   app.evaluate("route = 'shared'; render()");
   assert.match(app.node('app').innerHTML,/The herb basket/);
+});
+
+test('the clockmaker and companion discovery routes preserve the eight-link navigation and return to the village',()=>{
+  const app=appHarness();
+  for(const route of ['clockwork','discoveries']){
+    app.call('visitVillage',route);assert.equal(app.evaluate('location.hash'),route);
+    app.evaluate(`route = '${route}'; render()`);
+    assert.match(app.node('app').innerHTML,/href="#village"/);
+    assert.equal((app.node('app').innerHTML.match(/class="nav-link /g)||[]).length,8);
+  }
+  app.call('openVillager','mira');assert.match(app.node('village-dialog').innerHTML,/data-route="clockwork"/);
 });
 
 test('village UI flow meets Rowan, completes and tries a saved creation, and keeps campaign progress intact', async () => {
