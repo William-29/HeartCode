@@ -190,3 +190,50 @@ main{flex:1;min-height:0;width:100%;overflow:auto;overscroll-behavior:contain;pa
   .sidebar .nav-link{padding:6px}
   .sidebar>nav{gap:2px}
 }
+
+/* Give the places most of the window; keep secondary controls compact. */
+.workspace:is([data-route="village"],[data-route="room"]) .topbar{flex-basis:48px}
+.workspace:is([data-route="village"],[data-route="room"]) main{max-width:none;padding:8px 14px;gap:6px}
+.village-shell{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:36px minmax(0,1fr) 36px;gap:6px 16px}
+.village-heading{grid-area:1 / 1;min-width:0}
+.village-heading .eyebrow,.village-heading p:not(.eyebrow),.village-weather,.village-routine-bar>span{display:none}
+.workspace[data-route="village"] .village-heading h1{font-size:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+.village-routine-bar{grid-area:1 / 2;font-size:10px;justify-content:flex-end}
+.village-routine-bar select{min-height:30px;padding:5px 20px 5px 8px}
+.village-stage{grid-area:2 / 1 / 3 / -1;--village-chrome:48px;height:100%}
+.village-topline{display:none}
+.village-status{position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.village-direct{grid-area:3 / 1;min-width:0;padding:0}
+.village-direct select{max-width:100%;min-width:0}
+.village-daybook{grid-area:3 / 2;position:static;align-self:center;justify-self:end;padding:0;background:transparent}
+.village-daybook[open]{position:absolute;bottom:0;right:0;grid-area:auto}
+.workspace[data-route="room"] .life-heading{display:flex;align-items:center;min-height:32px}
+.workspace[data-route="room"] .life-heading .eyebrow,.workspace[data-route="room"] .life-heading p:not(.eyebrow),.workspace[data-route="room"] .room-after-scene{display:none}
+.workspace[data-route="room"] .life-heading h1{font-size:24px}
+.room-decor{flex:none;width:100%;max-width:1000px;margin:0 auto;background:#f4e5ca;border:1px solid #c6a67b;border-radius:6px;padding:0 12px;box-shadow:0 2px 5px #61422710}
+.room-decor>summary{display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none;min-height:38px;color:#65492f;font-size:12px}
+.room-decor>summary::-webkit-details-marker{display:none}
+.room-decor>summary>.icon{width:17px;height:17px}
+.room-decor>summary>span:not(.decor-toggle){margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10px}
+.room-decor>summary>span>.icon{width:14px;height:14px}
+.decor-toggle::after{content:'+';font-size:20px}
+.room-decor[open] .decor-toggle::after{content:'−'}
+.room-decor .room-shop{padding-bottom:10px}
+.room-decor .room-shop>.section-heading{display:none}
+@media(max-width:1000px){
+  .workspace[data-route="village"] .village-heading h1{font-size:20px}
+}
+@media(max-width:760px){
+  .village-shell{grid-template-columns:1fr;grid-template-rows:30px minmax(0,1fr) 34px 24px;gap:4px}
+  .village-heading{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .village-routine-bar{grid-area:1 / 1;justify-content:center}
+  .village-stage{grid-area:2 / 1}
+  .village-direct{grid-area:3 / 1;justify-content:center}
+  .village-daybook{grid-area:4 / 1;width:auto}
+  .village-daybook summary{font-size:11px}
+  .village-daybook[open]{width:min(520px,100%)}
+  .workspace:is([data-route="village"],[data-route="room"]) main{padding:6px 8px}
+  .workspace[data-route="room"] .life-heading h1{font-size:20px}
+  .room-decor{padding:0 8px}
+  .room-decor>summary{font-size:11px;min-height:36px}
+}

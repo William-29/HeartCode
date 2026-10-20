@@ -154,7 +154,7 @@ The local game is complete and can be run with the launcher above. Hosted public
 
 ## A cozier room and a village that moves
 
-The room now matches the illustrated village: a glowing fireplace, quilted bed, evening window, warm timber, and ten detailed furnishing overlays. Choose a furnishing category below the scene to buy, place, or clear its two options. Furniture ownership and saved layouts carry forward. Artwork and final generation prompts are in [docs/room-art.md](docs/room-art.md).
+The room now matches the illustrated village: a glowing fireplace, quilted bed, evening window, warm timber, and ten detailed furnishing overlays. Open Decorate your room below the scene, then choose a furnishing category to buy, place, or clear its two options. Close the drawer for a larger room view. The village uses a compact header and controls to leave more space for exploration. Furniture ownership and saved layouts carry forward. Artwork and final generation prompts are in [docs/room-art.md](docs/room-art.md).
 
 Rowan, Mira, and Elio take short walks and pauses within every morning, afternoon, and evening routine. They stop when approached or selected, wait during conversations, and resume afterward. Reduced motion keeps them still; hidden or unfocused windows pause the walks. All routes use the same collision-aware paths as the player.
 
