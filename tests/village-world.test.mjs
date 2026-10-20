@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { destinations, VILLAGE_START, isWalkable, normalizePosition, findRoute, segmentWalkable, moveBy, advanceRoute, nearbyDestination } from '../dist/village-model.js';
-import { renderVillage, mountVillage } from '../dist/village.js';
+import { renderVillage, mountVillage, fitVillageViewport } from '../dist/village.js';
 import { scheduledPlaces } from '../dist/village-life-model.js';
 
 test('every village destination is reachable without crossing a building or the lake', () => {
@@ -60,7 +60,8 @@ test('the village includes direct accessible visits, safe names, and project-spe
   const state = { projects: [], metVillagers: [], villagePosition: VILLAGE_START };
   const html = renderVillage(state, { id: 'pip', name: '<script>cat</script>' });
   assert.equal((html.match(/data-village-walk=/g) || []).length, destinations.length);
-  assert.equal((html.match(/data-village-visit=/g) || []).length, destinations.length);
+  assert.ok(html.includes('id="village-destination"'));
+  for (const place of destinations) assert.ok(html.includes(`<option value="${place.id}">`));
   assert.ok(html.includes('aria-describedby="village-instructions"'));
   assert.ok(html.includes('&lt;script&gt;cat&lt;/script&gt;')); assert.ok(!html.includes('<script>cat'));
   assert.ok(!html.includes('class="village-improvement"'));
@@ -72,7 +73,7 @@ test('the village includes direct accessible visits, safe names, and project-spe
 function villageHarness(run) {
   class Element {
     constructor() {
-      this.listeners = new Map(); this.style = {}; this.dataset = {}; this.classes = new Set(); this.hidden = false; this.clientWidth = 1000; this.scrollLeft = 0; this.textContent = ''; this.innerHTML = '';
+      this.listeners = new Map(); this.style = {}; this.dataset = {}; this.classes = new Set(); this.hidden = false; this.clientWidth = 1000; this.clientHeight = 650; this.scrollLeft = 0; this.textContent = ''; this.innerHTML = '';
       this.classList = { add: name => this.classes.add(name), remove: name => this.classes.delete(name), toggle: (name, on) => on ? this.classes.add(name) : this.classes.delete(name) };
     }
     addEventListener(name, callback) { if (!this.listeners.has(name)) this.listeners.set(name, new Set()); this.listeners.get(name).add(callback); }
@@ -85,15 +86,17 @@ function villageHarness(run) {
   const root = new Element(), viewport = new Element(), scene = new Element(), actor = new Element(), marker = new Element(), status = new Element(), interact = new Element(), media = new Element(), doc = new Element(), win = new Element();
   const fields = new Map([['.village-viewport', viewport], ['.village-scene', scene], ['.village-actor', actor], ['.village-walk-marker', marker], ['.village-status', status], ['[data-village-interact]', interact]]);
   for (const id of ['rowan', 'mira', 'elio']) fields.set(`[data-village-walk="${id}"]`, new Element());
-  let dialogOpen = false, next = 0, time = 0; const frames = new Map();
+  let dialogOpen = false, next = 0, time = 0; const frames = new Map(), timers = new Map();
   root.querySelector = selector => fields.get(selector); root.querySelectorAll = () => []; root.contains = element => fields.has(element);
   doc.querySelector = selector => selector === '.village-shell' ? root : selector === 'dialog[open]' ? dialogOpen : null;
   viewport.closest = selector => selector === '.village-viewport' ? viewport : null;
-  const overrides = { document: doc, window: win, matchMedia: () => media, requestAnimationFrame: callback => { frames.set(++next, callback); return next; }, cancelAnimationFrame: id => frames.delete(id) };
+  const overrides = { setTimeout: (callback, delay) => { timers.set(++next, {callback, delay}); return next; }, clearTimeout: id => timers.delete(id), document: doc, window: win, matchMedia: () => media, requestAnimationFrame: callback => { frames.set(++next, callback); return next; }, cancelAnimationFrame: id => frames.delete(id) };
   const previous = new Map(Object.keys(overrides).map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   Object.assign(globalThis, overrides);
   try {
-    run({ root, viewport, scene, actor, media, doc, win, frames, marker,
+    run({ root, viewport, scene, actor, media, doc, win, frames, timers, marker,
+      closeDialog: () => { dialogOpen = false; },
+      fireTimers: () => { const pending = [...timers.values()]; timers.clear(); pending.forEach(timer => timer.callback()); },
       openDialog: () => { dialogOpen = true; },
       step: (milliseconds = 50) => { time += milliseconds; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(callback => callback(time)); },
       clickPlace: id => { const target = new Element(); target.dataset.villageWalk = id; target.closest = selector => selector === '[data-village-walk]' ? target : null; root.emit('click', { target }); },
@@ -166,3 +169,71 @@ test('routine travel finishes immediately for reduced motion and all transient f
   assert.equal(h.frames.size, 0); assert.deepEqual(moving.places(), scheduledPlaces(destinations, 'afternoon'));
   moving.dispose(); assert.equal(h.listenerCount(), 0);
 }));
+
+test('a fresh village wanders throughout every period, pauses between walks, and stays on safe ground', () => villageHarness(h => {
+  for (const period of ['morning', 'afternoon', 'evening']) {
+    const session = mountVillage({ state: { villageTime: period } });
+    const start = session.places();
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.timers.size, 3);
+    for (let lap = 0; lap < 5; lap++) {
+      h.fireTimers();
+      assert.ok(h.frames.size > 0, `${period}: ambient movement starts without a clock change`);
+      let count = 0;
+      while (h.frames.size && count++ < 500) {
+        h.step();
+        for (const place of session.places()) assert.ok(isWalkable(place), `${period}: ${place.id}`);
+      }
+      assert.ok(count < 500);
+      assert.equal(h.timers.size, 3);
+      if (lap === 0) for (const id of ['rowan', 'mira', 'elio']) {
+        const before = start.find(place => place.id === id), after = session.places().find(place => place.id === id);
+        assert.ok(Math.hypot(before.x - after.x, before.y - after.y) > 1, id);
+      }
+    }
+    session.dispose(); assert.equal(h.timers.size, 0); assert.equal(h.frames.size, 0); assert.equal(h.listenerCount(), 0);
+  }
+}));
+
+test('ambient villagers wait for conversations, proximity and focus, then resume without a reload', () => villageHarness(h => {
+  const session = mountVillage({ state: { villageTime: 'evening', villagePosition: { x: 270, y: 340 } } });
+  const rowan = session.places().find(place => place.id === 'rowan');
+  h.fireTimers(); h.step(); h.step();
+  assert.deepEqual(session.places().find(place => place.id === 'rowan'), rowan);
+  h.openDialog(); h.step();
+  const paused = session.places();
+  h.fireTimers(); assert.equal(h.frames.size, 0); assert.deepEqual(session.places(), paused);
+  h.closeDialog(); h.fireTimers(); assert.ok(h.frames.size > 0);
+  h.win.emit('blur'); assert.equal(h.frames.size, 0); assert.equal(h.timers.size, 0);
+  h.win.emit('focus'); assert.equal(h.timers.size, 3);
+  h.fireTimers(); assert.ok(h.frames.size > 0);
+  h.media.matches = true; h.media.emit('change');
+  assert.equal(h.frames.size, 0); assert.equal(h.timers.size, 0);
+  h.media.matches = false; h.media.emit('change'); assert.equal(h.timers.size, 3);
+  session.dispose(); assert.equal(h.timers.size, 0);
+}));
+
+test('clicking an ambient walker holds the same destination until arrival, including timer retries', () => villageHarness(h => {
+  const visits = [], session = mountVillage({ state: { villageTime: 'evening' }, onVisit: id => visits.push(id) });
+  h.fireTimers(); h.step(); h.step();
+  const stopped = session.places().find(place => place.id === 'rowan');
+  h.clickPlace('rowan');
+  for (let i = 0; i < 180 && !visits.length; i++) {
+    if (i % 20 === 0) h.fireTimers();
+    h.step();
+    const rowan = session.places().find(place => place.id === 'rowan');
+    assert.equal(rowan.x, stopped.x); assert.equal(rowan.y, stopped.y);
+  }
+  assert.deepEqual(visits, ['rowan']);
+  session.dispose();
+}));
+
+test('the village camera fits the entire scene at phone, tablet, desktop, and short window sizes', () => {
+  for (const [width, height] of [[300, 250], [720, 380], [1300, 580], [600, 120]]) {
+    const scale = fitVillageViewport(width, height);
+    assert.ok(scale > 0);
+    assert.ok(1000 * scale <= width + 1e-8);
+    assert.ok(650 * scale <= height + 1e-8);
+    assert.ok(Math.abs(1000 * scale - width) < 1e-8 || Math.abs(650 * scale - height) < 1e-8);
+  }
+});

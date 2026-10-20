@@ -21,6 +21,7 @@ try { const stored = localStorage.getItem(SAVE_KEY); if (stored) state = normali
 catch { saveWarning = 'Your saved adventure could not be loaded. This session starts fresh; use Settings to restore an exported save.'; }
 let route = location.hash.slice(1) || 'village';
 let mapSelection = null;
+let roomSlot = 'chair';
 let worldSession = null;
 let villageSession = null;
 let villageClock = null;
@@ -100,9 +101,9 @@ function render() {
         <div class="small-row"><span>To the next level</span><span>${level.current} / ${level.needed} XP</span></div>${progressBar(level.percent)}
       </div>
     </aside>
-    <div class="workspace">
-      <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
-      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet()), festival: () => renderFestival(state) })[route]()}</main>
+    <div class="workspace" data-route="${route}">
+      <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
+      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
   if (route === 'practice') bindEditor($('#practice-code'), 'practice');
@@ -162,10 +163,10 @@ function openCafe() {
   $('.dialog-top button', villageDialog)?.focus();
 }
 function refreshRoom(slot) {
-  const scroll = window.scrollY || 0;
+  roomSlot = slot;
   save(); render();
   $(`[data-action="room-remove"][data-id="${slot}"]`)?.focus({ preventScroll: true });
-  window.scrollTo(0, scroll);
+
 }
 function openVillager(id) {
   if (!villagers.some(v => v.id === id)) return;
@@ -379,6 +380,7 @@ document.addEventListener('click', event => {
   const button = event.target.closest('[data-action]'); if (!button || button.disabled) return;
   const { action, id } = button.dataset;
   switch (action) {
+    case 'room-slot': roomSlot = id; render(); $(`[data-action="room-slot"][data-id="${id}"]`)?.focus({ preventScroll: true }); break;
     case 'room-furnish': { const result = furnishRoom(state, id); if (!result.ok) { toast(result.reason, 'coin'); break; } refreshRoom(result.item.slot); if (result.purchased) chime(); toast(`${result.item.name} is in your room.`, 'home'); break; }
     case 'room-remove': { const result = removeFurnishing(state, id); if (result.ok) { refreshRoom(id); toast('A little space to try something new. Your furnishing is still yours.', 'home'); } break; }
     case 'festival-return': if (questDialog.open) closeQuest(); if (villageDialog.open) closeVillage(); navigate('festival'); break;

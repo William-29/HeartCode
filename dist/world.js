@@ -14,11 +14,10 @@ export function renderWorld(state, companion, selectedIndex, receipt) {
   const position = positionForProgress(state.completed.length);
   const percentage = Math.round(state.completed.length / quests.length * 100);
   return `<div class="page-heading world-heading"><div><p class="eyebrow">THE HEARTHLANDS · AN ADVENTURE IN LEARNING</p><h1>A world worth wandering<span class="gold">.</span></h1><p>A warm tavern. A winding trail. A little more magic with every quest.</p></div><span class="completion-pill">${icon('map')} ${percentage}% explored</span></div>
-    <div class="region-nav-heading"><span>${regions.length} regions · ${quests.length} quests</span><span>Scroll to explore the trail ${icon('arrow')}</span></div>
-    <div class="region-nav" role="group" aria-label="Visit a region">${regions.map((region, index) => `<button class="region-button ${index === Math.floor(selected / 4) ? 'selected' : ''}" data-world="region" data-index="${index}" aria-pressed="${index === Math.floor(selected / 4)}"><span>${state.completed.length >= (index + 1) * 4 ? icon('check') : String(index + 1).padStart(2, '0')}</span><span>${region.short}</span>${state.completed.length < index * 4 ? icon('lock') : ''}</button>`).join('')}</div>
+    <label class="region-picker" for="world-region-select">Explore a region <select id="world-region-select">${regions.map((region, index) => `<option value="${index}" ${index === Math.floor(selected / 4) ? 'selected' : ''}>${index + 1}. ${region.short}${state.completed.length >= (index + 1) * 4 ? ' - explored' : ''}</option>`).join('')}</select><span>${regions.length} regions &middot; ${quests.length} quests</span></label>
     <section class="world-shell" aria-label="The Hearthlands adventure map">
       <div class="world-topline"><span>${icon('map')} THE HEARTHLANDS <span class="world-divider">/</span> <b id="world-location">${regionForStop(current).mood}</b></span><span class="world-weather">${icon('spark')} Always a good day to wander</span></div>
-      <div class="world-viewport" tabindex="0" role="region" aria-label="Adventure map. Drag to explore; use arrow keys to pan, plus and minus to zoom, or the region buttons to jump." aria-describedby="world-instructions">
+      <div class="world-viewport" tabindex="0" role="region" aria-label="Adventure map. Drag to explore; use arrow keys to pan, plus and minus to zoom, or the region selector to jump." aria-describedby="world-instructions">
         <div class="world-canvas" style="width:${WORLD_WIDTH}px;height:${WORLD_HEIGHT}px">
           <img class="world-art world-art-original" src="assets/hearthlands.png" alt="" width="1600" height="1067" draggable="false">
           <img class="world-art world-art-expansion" src="assets/guildlands.png" alt="" width="3200" height="1067" draggable="false">
@@ -69,10 +68,11 @@ export function mountWorld({ state, selectedIndex, travel, reducedMotion, onSele
   const abort = new AbortController(), signal = abort.signal;
   const listen = (target, type, callback, options = {}) => target.addEventListener(type, callback, { ...options, signal });
   function revealRegion() {
-    const nav = document.querySelector('.region-nav'), button = nav?.querySelector?.('.region-button.selected');
-    if (button) nav.scrollLeft = button.offsetLeft - (nav.clientWidth - button.clientWidth) / 2;
+    const picker = document.querySelector('#world-region-select');
+    if (picker) picker.value = String(Math.floor(selected / 4));
   }
   revealRegion();
+  listen(document, 'change', event => { if (event.target.id === 'world-region-select') select(Number(event.target.value) * 4); });
   function clampPan() {
     const w = viewport.clientWidth, h = viewport.clientHeight;
     pan.x = WORLD_WIDTH * zoom <= w ? (w - WORLD_WIDTH * zoom) / 2 : Math.min(0, Math.max(w - WORLD_WIDTH * zoom, pan.x));

@@ -11,6 +11,10 @@ export function villagerSprite(id) { return characterSprite(id, 'village-npc-spr
 
 const adventurer = characterSprite('traveler', 'village-adventurer');
 
+export function fitVillageViewport(width, height) {
+  return Math.max(0, Math.min(width / VILLAGE_WIDTH, height / VILLAGE_HEIGHT));
+}
+
 export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
   const position = normalizePosition(state.villagePosition);
   const projects = Array.isArray(state.projects) ? state.projects : [];
@@ -31,7 +35,7 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
     </div>
     <div class="village-bottomline"><p id="village-instructions">Click to wander <span>·</span> <kbd>WASD</kbd> / <kbd>↑ ↓ ← →</kbd> to walk <span>·</span> <kbd>E</kbd> to chat</p><button type="button" class="village-interact" data-village-interact disabled>Explore the village ${icon('arrow')}</button></div></div>
     <p class="village-status" role="status" aria-live="polite">The kettle is on. Your next adventure can wait a moment.</p>
-    <nav class="village-direct" aria-label="Visit a village place directly"><span>Or pop straight over:</span>${places.map(place => `<button type="button" data-village-visit="${place.id}">${icon(place.icon)} ${esc(place.name)}</button>`).join('')}</nav>
+    <nav class="village-direct" aria-label="Visit a village place directly"><label for="village-destination">Pop over to</label><select id="village-destination">${places.map(place => `<option value="${place.id}">${esc(place.name)}</option>`).join('')}</select><button type="button" data-village-go>Visit ${icon('arrow')}</button></nav>
     ${routineNotes(state)}
     ${projects.length ? '<p class="village-growth-note">Your work is becoming part of this place. Look for the little things you’ve helped grow.</p>' : '<p class="village-growth-note">Help your neighbors build things with Python, and watch the village grow with you.</p>'}
   </section>`;
@@ -46,13 +50,16 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
   const media = matchMedia('(prefers-reduced-motion: reduce)');
   const places = scheduledPlaces(destinations, state.villageTime);
   const routines = new Map(); let routineFrame = 0, routineTime = null;
+  const anchors = places.filter(place => ['rowan', 'mira', 'elio'].includes(place.id)).map(place => ({ ...place }));
+  const timers = new Map(), laps = new Map();
+  let focused = true;
   let position = normalizePosition(state.villagePosition), route = [], destination = null, near = null;
   let frame = 0, lastTime = null, disposed = false, dirty = false, pointerDown = null;
   const held = new Set(), listeners = [];
   const listen = (target, name, callback, options) => { target.addEventListener(name, callback, options); listeners.push(() => target.removeEventListener(name, callback, options)); };
-  const blocked = () => document.hidden || !!document.querySelector('dialog[open]');
+  const blocked = () => !focused || document.hidden || !!document.querySelector('dialog[open]');
   const commit = () => { if (dirty) { dirty = false; onMove({ x: Math.round(position.x * 10) / 10, y: Math.round(position.y * 10) / 10 }); } };
-  const motion = () => { root.classList.toggle('village-still', reducedMotion || media.matches); if (reducedMotion || media.matches) finishRoutines(); };
+  const motion = () => { root.classList.toggle('village-still', reducedMotion || media.matches); if (reducedMotion || media.matches) { clearStrollTimers(); finishRoutines(); } else scheduleStrolls(); };
   const paint = () => {
     actor.style.left = `${position.x / 10}%`; actor.style.top = `${position.y / 6.5}%`;
     const next = nearbyDestination(position, 65, places);
@@ -70,17 +77,45 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     if (routine) { routine.button.classList.remove('npc-walking'); routines.delete(id); }
     if (!routines.size && routineFrame) { cancelAnimationFrame(routineFrame); routineFrame = 0; routineTime = null; }
   };
+  function clearStrollTimers() { for (const timer of timers.values()) clearTimeout(timer); timers.clear(); }
+  function scheduleStroll(anchor, delay = 4500) {
+    if (disposed || reducedMotion || media.matches || timers.has(anchor.id)) return;
+    timers.set(anchor.id, setTimeout(() => {
+      timers.delete(anchor.id);
+      if (disposed) return;
+      const place = places.find(place => place.id === anchor.id);
+      if (blocked() || routines.has(anchor.id) || destination?.id === anchor.id || Math.hypot(position.x - place.x, position.y - place.y) < 80) {
+        scheduleStroll(anchor, 1500); return;
+      }
+      const lap = laps.get(anchor.id) || 0;
+      const offsets = [[65, 25], [30, 65], [-45, 20], [0, 0]];
+      const [dx, dy] = offsets[lap % offsets.length];
+      laps.set(anchor.id, lap + 1);
+      const target = normalizePosition({ x: anchor.x + dx, y: anchor.y + dy });
+      const path = findRoute(place, target);
+      const button = root.querySelector(`[data-village-walk="${anchor.id}"]`);
+      if (button && path.length > 1) {
+        routines.set(anchor.id, { place, target, route: path.slice(1), button, ambient: true });
+        button.classList.add('npc-walking');
+        if (!routineFrame) { routineTime = null; routineFrame = requestAnimationFrame(stroll); }
+      }
+      scheduleStroll(anchor, 6500 + (lap % 3) * 900);
+    }, delay));
+  }
+  function scheduleStrolls() { anchors.forEach((anchor, index) => scheduleStroll(anchor, 650 + index * 1100)); }
+  function pauseRoutines() { for (const id of [...routines.keys()]) stopRoutine(id); }
   function finishRoutines() {
     for (const [id, routine] of routines) { Object.assign(routine.place, routine.target); paintNeighbor(routine); stopRoutine(id); }
     paint();
   }
   const stroll = time => {
     routineFrame = 0;
-    if (disposed || blocked()) { finishRoutines(); return; }
+    if (disposed || blocked()) { pauseRoutines(); return; }
     const seconds = routineTime == null ? 0 : Math.min(.05, Math.max(0, (time - routineTime) / 1000)); routineTime = time;
     for (const [id, routine] of routines) {
+      if (routine.ambient && Math.hypot(position.x - routine.place.x, position.y - routine.place.y) < 80) { stopRoutine(id); continue; }
       const oldX = routine.place.x;
-      const result = advanceRoute(routine.place, routine.route, seconds * 90);
+      const result = advanceRoute(routine.place, routine.route, seconds * (routine.ambient ? 48 : 90));
       Object.assign(routine.place, result.position); routine.route = result.route;
       routine.button.classList.toggle('npc-facing-left', routine.place.x < oldX);
       paintNeighbor(routine);
@@ -114,12 +149,6 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     }
     if (position.x !== old.x || position.y !== old.y) {
       dirty = true; actor.classList.toggle('facing-left', position.x < old.x); paint();
-      // Keep keyboard travel visible on narrow screens without moving the page.
-      if (held.size && viewport.clientWidth < scene.clientWidth) {
-        const px = position.x / VILLAGE_WIDTH * scene.clientWidth;
-        if (px < viewport.scrollLeft + 70) viewport.scrollLeft = Math.max(0, px - 70);
-        if (px > viewport.scrollLeft + viewport.clientWidth - 70) viewport.scrollLeft = px - viewport.clientWidth + 70;
-      }
     }
     if (!route.length && !held.size) {
       const arrived = destination; destination = null; marker.hidden = true; actor.classList.remove('is-walking'); lastTime = null; commit();
@@ -140,6 +169,7 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     viewport.focus({ preventScroll: true }); start();
   };
   listen(root, 'click', event => {
+    if (event.target.closest('[data-village-go]')) { visit(root.querySelector('#village-destination').value); return; }
     const direct = event.target.closest('[data-village-visit]');
     if (direct) { visit(direct.dataset.villageVisit); return; }
     if (event.target.closest('[data-village-interact]')) { if (near) visit(near.id); return; }
@@ -166,8 +196,9 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     if (!held.size && !route.length) stop();
   });
   listen(root, 'focusout', event => { if (!root.contains(event.relatedTarget)) stop(); });
-  listen(window, 'blur', stop);
-  listen(document, 'visibilitychange', () => { if (document.hidden) stop(); });
+  listen(window, 'blur', () => { focused = false; stop(); pauseRoutines(); clearStrollTimers(); });
+  listen(window, 'focus', () => { focused = true; scheduleStrolls(); });
+  listen(document, 'visibilitychange', () => { if (document.hidden) { stop(); pauseRoutines(); clearStrollTimers(); } else scheduleStrolls(); });
   listen(media, 'change', motion);
   if (!reducedMotion && !media.matches && !blocked() && Array.isArray(previousPlaces)) {
     for (const place of places.filter(place => ['rowan', 'mira', 'elio'].includes(place.id))) {
@@ -182,10 +213,15 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
     if (routines.size) routineFrame = requestAnimationFrame(stroll);
   }
   motion(); paint();
-  if (viewport.clientWidth < scene.clientWidth) viewport.scrollLeft = Math.max(0, position.x / VILLAGE_WIDTH * scene.clientWidth - viewport.clientWidth / 2);
+  const fit = () => {
+    const scale = fitVillageViewport(viewport.clientWidth, viewport.clientHeight || 650);
+    scene.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  };
+  const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
+  resize?.observe(viewport); fit(); listen(window, 'resize', fit);
   return {
     places: () => places.map(place => ({ ...place })),
-    pause() { stop(); finishRoutines(); },
-    dispose() { if (disposed) return; disposed = true; if (routineFrame) cancelAnimationFrame(routineFrame); routineFrame = 0; routines.clear(); stop(); listeners.splice(0).forEach(remove => remove()); }
+    pause() { stop(); pauseRoutines(); },
+    dispose() { if (disposed) return; disposed = true; clearStrollTimers(); resize?.disconnect(); if (routineFrame) cancelAnimationFrame(routineFrame); routineFrame = 0; routines.clear(); stop(); listeners.splice(0).forEach(remove => remove()); }
   };
 }

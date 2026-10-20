@@ -93,13 +93,13 @@ Curriculum references: [Python exceptions](https://docs.python.org/3/tutorial/er
 
 ## Explore the Hearthlands
 
-Open **Quest map** to wander across the world. Drag with a mouse or finger to pan. The +/− buttons zoom; the map button shows the whole world, and the paw button finds your adventurer. Scroll the region tabs to jump between fifteen destinations; the current region is automatically brought into view. Select any numbered stop to preview its quest, difficulty, and topic; available quests can be started from the panel beneath the map. Keyboard users can Tab through stops and controls, or focus the map and use arrow keys to pan, +/− to zoom, and Home to find their character.
+Open **Quest map** to wander across the world. Drag with a mouse or finger to pan. The +/− buttons zoom; the map button shows the whole world, and the paw button finds your adventurer. Use the region selector to jump between fifteen destinations; it follows the selected quest. Select any numbered stop to preview its quest, difficulty, and topic; available quests can be started from the panel beneath the map. Keyboard users can Tab through stops and controls, or focus the map and use arrow keys to pan, +/− to zoom, and Home to find their character.
 
 Completing a campaign quest for the first time returns you to the map. Your coat-and-scarf traveler walks along the curved trail with the equipped companion following, while the camera tracks them. Arrival reveals the next stop, celebrates new regions, and displays rewards, achievement bonuses, and the lesson takeaway. The trail now continues beyond the original guild into a panorama three times the original world width, ending at the academy. Replays and daily challenges do not move campaign progress forward.
 
 Progress is saved **before** travel begins. Skip walk, navigating away, or reloading cannot undo a reward or award it twice. The game's Reduce motion setting and the operating system's reduced-motion preference both skip the walk and disable ambient motion. Existing saves remain compatible. Fireflies, chimney smoke, drifting clouds, water glints, and walking sprites are decorative effects.
 
-The test suite has 68 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
+The test suite has 73 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
 
 ## Runtime and privacy
 
@@ -150,3 +150,12 @@ The extension panorama is generated artwork in `dist/assets/guildlands.png`; the
 The private Sites project identity and static output path are in `.openai/hosting.json`. Publish the contents of `dist` as a static site. Source repository credentials are not stored in this project.
 
 The local game is complete and can be run with the launcher above. Hosted publication requires access to the configured private Sites source repository. A registered Site identity alone does not mean a deployment is live.
+
+
+## A cozier room and a village that moves
+
+The room now matches the illustrated village: a glowing fireplace, quilted bed, evening window, warm timber, and ten detailed furnishing overlays. Choose a furnishing category below the scene to buy, place, or clear its two options. Furniture ownership and saved layouts carry forward. Artwork and final generation prompts are in [docs/room-art.md](docs/room-art.md).
+
+Rowan, Mira, and Elio take short walks and pauses within every morning, afternoon, and evening routine. They stop when approached or selected, wait during conversations, and resume afterward. Reduced motion keeps them still; hidden or unfocused windows pause the walks. All routes use the same collision-aware paths as the player.
+
+The village and room fit inside the available screen. All eight navigation destinations stay visible, including a two-row phone layout, with Settings in the top bar. The quest map remains draggable and zoomable. Reading-heavy pages and dialogs keep a single vertical content scroll so longer lessons remain accessible.

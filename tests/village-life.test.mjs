@@ -100,7 +100,7 @@ test('room and café escape player names and visits cannot change rewards', () =
   assert.ok(!html.includes('<img onerror=boom>')); assert.ok(!html.includes('<script>pet</script>'));
   assert.ok(html.includes('&lt;img onerror=boom&gt;')); assert.ok(html.includes('&lt;script&gt;pet&lt;/script&gt;'));
   assert.deepEqual(state, before);
-  for (const item of roomItems) assert.ok(renderRoom({ ...state, coins: 999 }, pet).includes(item.id));
+  for (const item of roomItems) assert.ok(renderRoom({ ...state, coins: 999 }, pet, item.slot).includes(item.id));
 });
 
 test('clock refresh waits for dialogs and hidden tabs, updates on return, and disposes its timer and listener', () => {
@@ -119,4 +119,20 @@ test('clock refresh waits for dialogs and hidden tabs, updates on return, and di
     clock.dispose(); assert.equal(cleared, 55);
     now = new Date(2026, 9, 20, 18, 0); document.dispatchEvent(new Event('visibilitychange')); assert.equal(updates, 1);
   } finally { for (const [key, descriptor] of Object.entries(previous)) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key]; } }
+});
+
+test('room categories keep only two choices on screen while retaining all owned furniture in the scene', () => {
+  const state = freshState(); state.coins = 1000;
+  furnishRoom(state, 'plant-fern');
+  const before = structuredClone(state);
+  for (const slot of ['chair', 'lamp', 'plant', 'rug', 'wall']) {
+    const html = renderRoom(state, pets[0], slot);
+    assert.equal((html.match(/data-action="room-slot"/g) || []).length, 5);
+    assert.equal((html.match(/class="room-shop-item /g) || []).length, 2);
+    assert.ok(html.includes(`data-id="${slot}" aria-pressed="true"`));
+    assert.ok(html.includes('assets/hearthwick-room.png'));
+    assert.ok(html.includes('assets/hearthwick-furnishings.png'));
+    for (const item of Object.values(state.home.placed)) assert.ok(html.includes(`item-${item}`));
+  }
+  assert.deepEqual(state, before);
 });
