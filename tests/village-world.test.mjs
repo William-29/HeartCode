@@ -75,7 +75,7 @@ test('the village includes direct accessible visits, safe names, and project-spe
 function villageHarness(run) {
   class Element {
     constructor() {
-      this.listeners = new Map(); this.style = {}; this.dataset = {}; this.classes = new Set(); this.hidden = false; this.clientWidth = 1000; this.clientHeight = 650; this.scrollLeft = 0; this.textContent = ''; this.innerHTML = '';
+      this.listeners = new Map(); this.style = { setProperty(key,value){this[key]=value;} }; this.dataset = {}; this.classes = new Set(); this.hidden = false; this.clientWidth = 1000; this.clientHeight = 650; this.scrollLeft = 0; this.textContent = ''; this.innerHTML = '';
       this.classList = { add: name => this.classes.add(name), remove: name => this.classes.delete(name), toggle: (name, on) => on ? this.classes.add(name) : this.classes.delete(name) };
     }
     addEventListener(name, callback) { if (!this.listeners.has(name)) this.listeners.set(name, new Set()); this.listeners.get(name).add(callback); }

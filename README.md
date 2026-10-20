@@ -4,6 +4,8 @@ A cozy browser learning game with **60 progressive quests in 15 chapters** acros
 
 ## Finding your way around
 
+Village signs now have reserved space for their text and click targets, including separate lakeside and companion-discovery signs. Moving nameplates and found-clue markers avoid covering them. The [layout review](docs/village-layout-review.md) records the additional scene fixes, 155 passing tests, and the browser verification limit.
+
 Your wardrobe is upstairs in **Your room**, with room/wardrobe tabs, a **Change your look** label on your character, and a sidebar portrait shortcut. It is available from the start; individual clothing rewards still follow their stories. The **Nearby** signpost connects related places without expanding the main navigation. The makers' exhibition now includes saved clock repairs, lake tools, shared village projects, and companion discoveries, with a route back from each working creation. See [the connection and bug-fix notes](docs/journey-polish.md) for the 151-test verification and preview limits.
 
 ## Learning together, shared projects, and Willowmere

@@ -1,3 +1,4 @@
+import { cluePositions, neighbourNameplates } from './village-layout.js';
 import { weatherArt } from './cozy-ui.js';
 import { icon, sprite } from './art.js';
 import { sceneArt } from './alley-scene.js';
@@ -22,14 +23,15 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
   const projects = Array.isArray(state.projects) ? state.projects : [];
   const met = new Set(state.metVillagers || []);
   const period = villagePeriod(state.villageTime), places = scheduledPlaces(destinations, state.villageTime);
+  const names = neighbourNameplates(places, discoveries), clues = cluePositions(discoveries, places);
   return `<section class="village-shell village-${period}" aria-labelledby="village-title">
     <div class="village-heading"><div><p class="eyebrow">A LITTLE PLACE TO CALL HOME</p><h1 id="village-title">${period === 'morning' ? 'A gentle morning' : period === 'afternoon' ? 'An easy afternoon' : 'Early evening'} in Hearthwick<span>.</span></h1><p>${period === 'evening' ? 'The lights are on. Stay a little while.' : 'The village is waking up around you. Stay a little while.'}</p></div><span class="village-weather">${icon('spark')} The warm light of home</span></div>
     ${routineControls(state)}
     <div class="village-stage"><div class="village-frame"><div class="village-topline"><span>${icon('home')} HEARTHWICK VILLAGE</span><span>${projects.length ? `${projects.length} little ${projects.length === 1 ? 'project' : 'projects'}, a happier village` : 'Every good story starts with hello'}</span></div>
     <div class="village-viewport" tabindex="0" role="region" aria-label="Walkable village" aria-describedby="village-instructions">
       <div class="village-scene" style="aspect-ratio:${VILLAGE_WIDTH}/${VILLAGE_HEIGHT}">${sceneArt(projects)}${weatherArt(state)}
-        ${places.map(place => `<button type="button" class="village-destination village-${place.id} ${place.color} ${met.has(place.id) ? 'has-met' : ''}" data-village-walk="${place.id}" style="left:${place.x / 10}%;top:${place.y / 6.5}%" aria-label="Walk to ${esc(place.name)}. ${esc(place.activity || place.hint)}">${['rowan', 'mira', 'elio'].includes(place.id) ? `<span class="village-npc">${villagerSprite(place.id)}<span class="village-hello" aria-hidden="true">${met.has(place.id) ? '♡' : '!'}</span></span>` : `<span class="village-place-icon">${icon(place.icon)}</span>`}<span class="village-place-name">${esc(place.name)}</span><span class="village-place-hint">${esc(place.place)}</span></button>`).join('')}
-        ${discoveries.map(d=>`<button class="village-discovery ${state.neighbours?.completed.includes(d.id)?'story-restored':''}" data-village-discovery="${d.id}" style="left:${d.x/10}%;top:${d.y/6.5}%" ${state.neighbours?.found.includes(d.id)?'':'hidden'} aria-label="${esc(d.title)}: revisit what your companion found">${icon(state.neighbours?.completed.includes(d.id)?'check':'paw')}</button>`).join('')}
+        ${places.map(place => `<button type="button" class="village-destination village-${place.id} ${place.color} ${met.has(place.id) ? 'has-met' : ''} ${names[place.id]?.hidden ? 'nameplate-tucked' : ''}" data-village-walk="${place.id}" style="left:${place.x / 10}%;top:${place.y / 6.5}%;--name-x:${names[place.id]?.x||0}px;--name-y:${names[place.id]?.y||5}px" aria-label="Walk to ${esc(place.name)}. ${esc(place.activity || place.hint)}">${['rowan', 'mira', 'elio'].includes(place.id) ? `<span class="village-npc">${villagerSprite(place.id)}<span class="village-hello" aria-hidden="true">${met.has(place.id) ? '♡' : '!'}</span></span>` : `<span class="village-place-icon">${icon(place.icon)}</span>`}<span class="village-place-name">${esc(place.name)}</span><span class="village-place-hint">${esc(place.place)}</span></button>`).join('')}
+        ${discoveries.filter(d=>clues[d.id]).map(d=>`<button class="village-discovery ${state.neighbours?.completed.includes(d.id)?'story-restored':''}" data-village-discovery="${d.id}" style="left:${clues[d.id].x/10}%;top:${clues[d.id].y/6.5}%" ${state.neighbours?.found.includes(d.id)?'':'hidden'} aria-label="${esc(d.title)}: revisit what your companion found">${icon(state.neighbours?.completed.includes(d.id)?'check':'paw')}</button>`).join('')}
         ${state.neighbours?.completed.includes('discovery-tin')?'<span class="village-picnic-tin" title="Rowan’s remembered picnic tin" aria-hidden="true"></span>':''}
         ${state.neighbours?.completed.includes('discovery-path')?'<span class="village-ribbon-path" title="The path to the listening bench is open again" aria-hidden="true"></span>':''}
         ${festivalProgress(state).celebrated ? '<div class="village-festival-ribbons" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ''}
@@ -65,7 +67,18 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
   const blocked = () => !focused || document.hidden || !!document.querySelector('dialog[open]');
   const commit = () => { if (dirty) { dirty = false; onMove({ x: Math.round(position.x * 10) / 10, y: Math.round(position.y * 10) / 10 }); } };
   const motion = () => { root.classList.toggle('village-still', reducedMotion || media.matches); if (reducedMotion || media.matches) { clearStrollTimers(); finishRoutines(); } else scheduleStrolls(); };
+  const paintNames = () => {
+    const labels = neighbourNameplates(places, discoveries);
+    for (const [id, label] of Object.entries(labels)) {
+      const button = root.querySelector(`[data-village-walk="${id}"]`);
+      if (!button) continue;
+      button.style.setProperty('--name-x', `${label.x}px`);
+      button.style.setProperty('--name-y', `${label.y}px`);
+      button.classList.toggle('nameplate-tucked', label.hidden);
+    }
+  };
   const paint = () => {
+    paintNames();
     actor.style.left = `${position.x / 10}%`; actor.style.top = `${position.y / 6.5}%`;
     const found=onExplore(position)||[];
     for(const d of found){const clue=root.querySelector(`[data-village-discovery="${d.id}"]`);if(clue)clue.hidden=false;}

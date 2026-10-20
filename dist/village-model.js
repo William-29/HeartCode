@@ -7,18 +7,18 @@ export const destinations = Object.freeze([
   { id: 'rowan', name: 'Rowan', place: 'The Hearth & Honey', hint: 'Stories & tavern projects', x: 270, y: 340, icon: 'home', color: 'coral' },
   { id: 'mira', name: 'Mira', place: 'The Tinker’s Workshop', hint: 'Playful Python projects', x: 675, y: 333, icon: 'spark', color: 'lavender' },
   { id: 'elio', name: 'Elio', place: 'Willowmere Lake', hint: 'Curious little AI experiments', x: 350, y: 500, icon: 'leaf', color: 'blue' },
-  { id: 'workbench', name: 'Your workbench', place: 'The open-air workshop', hint: 'Practice & build freely', x: 782, y: 340, icon: 'code', color: 'gold' },
-  { id: 'companions', name: 'Companion garden', place: 'A place for little friends', hint: 'Meet & choose your pet', x: 800, y: 510, icon: 'paw', color: 'green' },
+  { id: 'workbench', name: 'Your workbench', place: 'The open-air workshop', hint: 'Practice & build freely', x: 840, y: 375, icon: 'code', color: 'gold' },
+  { id: 'companions', name: 'Companion garden', place: 'A place for little friends', hint: 'Meet & choose your pet', x: 825, y: 555, icon: 'paw', color: 'green' },
   { id: 'trail', name: 'The learning trail', place: 'Beyond the village', hint: 'Continue your 60-quest journey', x: 500, y: 100, icon: 'map', color: 'green' },
-  { id: 'room', name: 'Your room', place: 'Above the tavern', hint: 'Decorate & display your keepsakes', x: 170, y: 310, icon: 'home', color: 'coral' },
+  { id: 'room', name: 'Your room', place: 'Above the tavern', hint: 'Decorate & display your keepsakes', x: 160, y: 310, icon: 'home', color: 'coral' },
   { id: 'cafe', name: 'A quiet table', place: 'The café terrace', hint: 'Take a little break with your pet', x: 385, y: 390, icon: 'clock', color: 'gold' },
-  { id: 'festival', name: 'The lantern festival', place: 'The village green', hint: 'Help prepare & try your creations', x: 590, y: 555, icon: 'spark', color: 'gold' },
+  { id: 'festival', name: 'The lantern festival', place: 'The village green', hint: 'Help prepare & try your creations', x: 600, y: 535, icon: 'spark', color: 'gold' },
   { id: 'highstreet', name: 'High Street', place: 'The station & market lane', hint: 'Mysteries, your shop, train trips & the learning garden', x: 600, y: 185, icon: 'book', color: 'gold' },
-  { id: 'courtyard', name: 'Founders’ Court', place: 'The old village square', hint: 'Restore beloved places & exhibit your working projects', x: 660, y: 455, icon: 'home', color: 'coral' },
-  { id: 'lakeside', name: 'The lakeside path', place: 'Willowmere jetty', hint: 'Fish with your pet & learn from your observations', x: 355, y: 580, icon: 'leaf', color: 'blue' },
-  { id: 'apprentices', name: 'The learning table', place: 'Nell & Kit at the tavern', hint: 'Teach a little Python over a warm cup of tea', x: 365, y: 285, icon: 'book', color: 'gold' },
+  { id: 'courtyard', name: 'Founders’ Court', place: 'The old village square', hint: 'Restore beloved places & exhibit your working projects', x: 775, y: 465, icon: 'home', color: 'coral' },
+  { id: 'lakeside', name: 'The lakeside path', place: 'Willowmere jetty', hint: 'Fish with your pet & learn from your observations', x: 355, y: 590, icon: 'leaf', color: 'blue' },
+  { id: 'apprentices', name: 'The learning table', place: 'Nell & Kit at the tavern', hint: 'Teach a little Python over a warm cup of tea', x: 390, y: 285, icon: 'book', color: 'gold' },
   { id: 'clockwork', name: 'The clockmaker', place: 'Mira’s repair bench', hint: 'Mend clocks and a remembered music box', x: 740, y: 292, icon: 'clock', color: 'gold' },
-  { id: 'discoveries', name: 'Companion discoveries', place: 'Little detours together', hint: 'Follow clues your pet has noticed', x: 445, y: 580, icon: 'paw', color: 'green' }
+  { id: 'discoveries', name: 'Companion discoveries', place: 'Little detours together', hint: 'Follow clues your pet has noticed', x: 540, y: 615, icon: 'paw', color: 'green' }
 ]);
 
 const solidRects = [

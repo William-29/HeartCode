@@ -1,0 +1,36 @@
+/* Bounded signboards: text and click targets share the same reserved space. */
+.village-scene .village-destination{box-sizing:border-box;width:160px;height:68px;min-height:68px;transform:translate(-50%,-100%);padding:0;justify-content:flex-start;z-index:8}
+.village-destination>.village-place-icon{box-sizing:border-box;flex:0 0 32px;height:32px;margin:0 0 4px}
+.village-destination>.village-place-name{box-sizing:border-box;width:100%;min-width:0;height:32px;padding:2px 7px;display:grid;place-items:center;white-space:normal;font:600 12px/13px Georgia,serif;letter-spacing:0;overflow-wrap:anywhere;transform:none!important}
+.village-place-name::before,.village-place-name::after{display:none}
+.village-scene .village-place-hint{display:none!important}
+.village-scene :is(.village-rowan,.village-mira,.village-elio){width:56px;height:68px;min-height:68px;z-index:7;overflow:visible}
+.village-scene :is(.village-rowan,.village-mira,.village-elio)>.village-place-name{position:absolute;left:calc(50% + var(--name-x,0px));top:calc(100% + var(--name-y,5px));width:64px;height:20px;padding:2px 4px;transform:translateX(-50%)!important;font:600 11px/14px Georgia,serif;pointer-events:auto}
+.village-scene .nameplate-tucked>.village-place-name{visibility:hidden;pointer-events:none}
+.village-place-name{pointer-events:none}
+.village-interact{max-width:100%;white-space:normal;line-height:1.2}
+.village-direct select{width:205px;text-overflow:ellipsis}
+.village-daybook[open]{max-height:min(380px,70dvh);overflow:auto}
+/* Floating help uses available scene width, including narrow or short windows. */
+.court-building{width:24cqw;min-width:0}
+.court-building strong,.court-building small{box-sizing:border-box;max-width:100%;white-space:normal;text-align:center;overflow-wrap:anywhere}
+.shared-place{width:22cqw;padding:0}
+.shared-place strong,.shared-place small{box-sizing:border-box;width:100%;white-space:normal;text-align:center;overflow-wrap:anywhere}
+.discovery-frame .discovery-sign{width:23cqw;transform:translate(-50%,-100%)}
+.discovery-sign strong,.discovery-sign small{box-sizing:border-box;width:100%;max-width:none;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.court-table-project:hover,.court-table-project:focus-visible{z-index:10}
+.court-square-sign{box-sizing:border-box;width:max-content;max-width:38cqw;white-space:normal;text-align:center}
+.court-table-project:nth-child(-n+3) .exhibit-hover{left:0;transform:none}
+.court-table-project:nth-child(n+4) .exhibit-hover{left:auto;right:0;transform:none}
+.exhibit-hover{box-sizing:border-box;width:min(140px,38cqw);pointer-events:none}
+.lake-journal-sign{box-sizing:border-box;max-width:80%;white-space:normal}
+.apprentice-person{width:18cqw;display:flex;flex-direction:column;align-items:center}
+.apprentice-name{box-sizing:border-box;width:100%;padding:5px;white-space:normal;overflow-wrap:anywhere}
+.table-motto{box-sizing:border-box;max-width:96%}
+.room-decor[open]{max-height:45%;overflow:auto;overscroll-behavior:contain}
+.court-heading>div,.neighbour-bottom>div,.court-bottom>div{min-width:0}
+.court-heading>.button{flex:none;max-width:40%;white-space:normal;text-align:center}
+.neighbour-bottom,.court-bottom{flex-wrap:wrap}
+@media(max-width:700px){.shared-place small{display:none}.court-heading .eyebrow{font-size:8px}.court-heading{gap:8px}.court-heading h1{font-size:22px}.court-bottom>p{display:none}.court-bottom .button{padding:6px 8px}.neighbour-bottom>.button{font-size:11px;padding:8px}.discovery-sign strong{font-size:10px;padding:4px}.lake-journal-sign{padding:6px 9px}}
+@media(max-height:530px){.courtyard-root .court-heading .eyebrow,.courtyard-root .court-heading p,.court-bottom>p{display:none}.courtyard-root .court-heading h1{font-size:22px}.court-bottom .button{padding:5px 8px;min-height:28px}.court-heading>.button{padding:6px 9px;font-size:11px}}
+@container(max-height:300px){.shared-place small,.discovery-sign small,.court-building small,.apprentice-name small,.table-motto{display:none}.discovery-sign>span{width:24px;height:24px}.discovery-sign strong{font-size:10px;line-height:12px;padding:3px}.workbench-object>span{font-size:9px}.workbench-object small{display:none}.clockmaker-mira>span:last-child{font-size:10px;padding:3px}.lake-journal-sign{font-size:11px;padding:6px 9px}}
