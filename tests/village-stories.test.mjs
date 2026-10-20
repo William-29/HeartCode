@@ -1,5 +1,7 @@
 import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
 import { renderAdventures } from '../dist/adventures.js';
+import { renderCourtyard, renderWardrobe } from '../dist/community.js';
+import { wardrobeCount } from '../dist/wardrobe-model.js';
 import { careForPet, choosePetBed, normalizeAmbience } from '../dist/cozy-model.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -159,7 +161,7 @@ function appHarness() {
     setAttribute() {}
     scrollIntoView() {}
   }
-  for (const id of ['app', 'quest-dialog', 'village-dialog', 'settings-dialog', 'adventure-dialog', 'toasts']) nodes.set(id, new Element(id));
+  for (const id of ['app', 'quest-dialog', 'village-dialog', 'settings-dialog', 'adventure-dialog', 'community-dialog', 'toasts']) nodes.set(id, new Element(id));
   const document = new EventTarget();
   document.documentElement = new Element(); document.body = new Element();
   document.querySelector = selector => {
@@ -178,6 +180,7 @@ function appHarness() {
     renderRoom, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
     ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience, renderAdventures,
     mountAdventures: () => ({ dispose() {} }),
+    renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: () => ({ dispose() {} }),
     mountRoomEditor: () => ({ dispose() {} }), mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
@@ -218,6 +221,20 @@ test('High Street is reachable from the village while keeping the eight main nav
   assert.equal((app.node('app').innerHTML.match(/class="nav-link /g) || []).length, 8);
   app.call('saveAdventure');
   assert.ok(app.stored.has(stateApi.SAVE_KEY));
+});
+
+test('Founders’ Court and the wardrobe are reachable without adding sidebar rows or losing room customization', () => {
+  const app = appHarness();
+  app.call('visitVillage', 'courtyard');
+  assert.equal(app.evaluate('location.hash'), 'courtyard');
+  app.evaluate("route = 'courtyard'; render()");
+  assert.match(app.node('app').innerHTML, /The makers’ exhibition/);
+  assert.equal((app.node('app').innerHTML.match(/class="nav-link /g) || []).length, 8);
+  app.evaluate("route = 'wardrobe'; render()");
+  assert.match(app.node('app').innerHTML, /The familiar cap/);
+  assert.match(app.node('app').innerHTML, /hearthwick-outfits.png/);
+  app.evaluate("route = 'room'; render()");
+  assert.match(app.node('app').innerHTML, /data-route="wardrobe"/);
 });
 
 test('village UI flow meets Rowan, completes and tries a saved creation, and keeps campaign progress intact', async () => {

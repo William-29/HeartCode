@@ -3,6 +3,7 @@ import { normalizeAmbience } from './cozy-model.js';
 // Locally synthesized loops: no audio downloads, microphones, or autoplay.
 export function ambientLevels(prefs, scene) {
   const p = normalizeAmbience(prefs);
+  scene = scene === 'courtyard' ? 'village' : scene === 'wardrobe' ? 'room' : scene;
   return {
     rain: p.rain && p.weather === 'rain' && ['village', 'room'].includes(scene) ? p.volume * (scene === 'room' ? .018 : .035) : 0,
     fire: p.fire && ['room', 'tavern'].includes(scene) ? p.volume * .055 : 0,

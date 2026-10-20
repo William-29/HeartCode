@@ -1,4 +1,9 @@
 /* Warm, consistently scaled neighbors. The source crop always ends at their feet. */
+.dressed-character-art{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform-origin:50% 100%;filter:drop-shadow(1px 1px .7px #332c2642);animation:hearth-character-breathe 5.7s ease-in-out infinite}
+.hearth-character-portrait>.dressed-character-art{animation:none;filter:none}
+.village-actor.is-walking .dressed-character-art,.world-traveler.walking .dressed-character-art{animation:hearth-character-walk .42s ease-in-out infinite}
+.village-still .dressed-character-art,.reduce-motion .dressed-character-art{animation:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){.dressed-character-art{animation:none!important;transform:none!important}}
 .hearth-character{--character-height:74px;position:relative;display:inline-block;flex:none;width:calc(var(--character-height)*var(--character-ratio));height:var(--character-height);vertical-align:bottom;line-height:0;pointer-events:none;isolation:isolate}
 .hearth-character-art{position:absolute;display:block;inset:0;width:100%;height:100%;background-image:url('./assets/hearthwick-neighbors.png');background-repeat:no-repeat;background-size:var(--character-size);background-position:var(--character-position);image-rendering:auto;transform-origin:50% 100%;filter:drop-shadow(-.6px 0 0 #f9dfb05c) drop-shadow(1px 1px .7px #332c2642);animation:hearth-character-breathe 5.7s ease-in-out infinite}
 .character-rowan>.hearth-character-art{animation-delay:-1.4s}.character-mira>.hearth-character-art{animation-duration:6.3s;animation-delay:-3.1s}.character-elio>.hearth-character-art{animation-duration:5.2s;animation-delay:-2.2s}

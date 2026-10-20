@@ -3,9 +3,12 @@ import { projects, villagers, projectUnlocked, friendship } from './projects.js'
 import { freshHome, normalizeHome, periods, festivalProgress } from './village-life-model.js';
 import { normalizeAmbience, normalizePetCare } from './cozy-model.js';
 import { freshAdventure, normalizeAdventure } from './adventure-model.js';
+import { freshRestoration, normalizeRestoration } from './restoration-model.js';
+import { freshWardrobe, normalizeWardrobe } from './wardrobe-model.js';
+import { exhibitCatalog } from './exhibition-model.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
-  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), restoration: freshRestoration(), wardrobe: freshWardrobe(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
 }
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -38,6 +41,12 @@ export function normalizeState(value) {
   s.ambience = normalizeAmbience(value.ambience);
   s.petCare = normalizePetCare(value.petCare, s.owned);
   s.adventure = normalizeAdventure(value.adventure, s);
+  s.restoration = normalizeRestoration(value.restoration, s);
+  if (Array.isArray(s.restoration.exhibition)) {
+    const owned = new Set(exhibitCatalog(s).map(item => item.id));
+    s.restoration.exhibition = s.restoration.exhibition.filter(id => owned.has(id));
+  }
+  s.wardrobe = normalizeWardrobe(value.wardrobe, s);
   s.villageTime = periods.includes(value.villageTime) ? value.villageTime : 'auto';
   s.festivalCelebrated = value.festivalCelebrated === true && festivalProgress(s).ready;
   s.reducedMotion = value.reducedMotion === true;

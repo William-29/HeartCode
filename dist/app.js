@@ -1,5 +1,7 @@
 import { ambienceSettings, renderPetCorner, mountPetPlay } from './cozy-ui.js';
 import { renderAdventures, mountAdventures } from './adventures.js';
+import { renderCourtyard, renderWardrobe, mountCommunity } from './community.js';
+import { wardrobeCount } from './wardrobe-model.js';
 import { activity, unlockAchievements } from './state.js';
 import { careForPet, choosePetBed, normalizeAmbience } from './cozy-model.js';
 import { mountRoomEditor } from './room-editor.js';
@@ -30,6 +32,8 @@ let mapSelection = null;
 let roomSlot = 'chair';
 let roomEditor = null, petPlay = null;
 let adventureSession = null;
+let communitySession = null;
+let knownWardrobeCount = wardrobeCount(state);
 const ambience = createAmbience(() => state.ambience, () => route);
 let worldSession = null;
 let villageSession = null;
@@ -44,7 +48,7 @@ let solved = false;
 let saveTimer;
 let audioContext;
 let celebration = null;
-const routes = { adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
+const routes = { courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
 const questDialog = $('#quest-dialog');
 const settingsDialog = $('#settings-dialog');
 const villageDialog = $('#village-dialog');
@@ -85,6 +89,7 @@ function navigate(next) { if (!routes[next]) next = 'tavern'; if (route === next
 window.addEventListener('hashchange', () => { cancelRun(); route = location.hash.slice(1); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 function render() {
+  communitySession?.dispose(); communitySession = null;
   adventureSession?.dispose(); adventureSession = null;
   roomEditor?.dispose(); roomEditor = null;
   petPlay?.dispose(); petPlay = null;
@@ -105,20 +110,36 @@ function render() {
     <aside class="sidebar">
       <a class="brand" href="#village" aria-label="Hearthcode village"><img src="assets/favicon.svg" alt="" width="39" height="39"><span>Hearthcode<small>THE LEARNING TAVERN</small></span></a>
       <div class="sidebar-label">YOUR ADVENTURE</div>
-      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => key !== 'adventures').map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
+      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['adventures', 'courtyard', 'wardrobe'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
       <div class="side-note">${teaCup()}<p>There’s always time<br>for one more try.</p><span>THE KETTLE’S ON</span></div>
       <div class="sidebar-bottom">
         <button class="quiet-button settings-link" data-action="settings">${icon('settings')} Settings & saved progress</button>
-        <div class="player-card"><div class="avatar">${characterPortrait("traveler", "player-portrait")}</div><div><strong>${esc(state.name)}</strong><span>Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}</span></div></div>
+        <div class="player-card"><div class="avatar">${characterPortrait("traveler", "player-portrait", state.wardrobe)}</div><div><strong>${esc(state.name)}</strong><span>Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}</span></div></div>
         <div class="small-row"><span>To the next level</span><span>${level.current} / ${level.needed} XP</span></div>${progressBar(level.percent)}
       </div>
     </aside>
     <div class="workspace" data-route="${route}">
       <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
-      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
+      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
   ambience.update();
+  if (route === 'courtyard' || route === 'wardrobe') communitySession = mountCommunity({
+    state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun,
+    onSave: () => { saveAdventure(); const avatar = $('.avatar'); if (avatar) avatar.innerHTML = characterPortrait('traveler', 'player-portrait', state.wardrobe); },
+    onOriginalDemo: openProjectDemo,
+    onReward: result => {
+      if (!result.opening) activity(state);
+      const earned = unlockAchievements(state);
+      saveAdventure(); chime();
+      if (result.opening) toast('A beloved place has reopened. A keepsake is waiting in your wardrobe.', 'home', 6500);
+      else celebrate({ xp: result.xp, coins: result.coins, achievements: earned }, $('#community-dialog'));
+      notifyAchievements(earned);
+    }
+  });
+  const unlockedClothes = wardrobeCount(state);
+  if (unlockedClothes > knownWardrobeCount) toast('Something new is waiting in your wardrobe. A little piece of your story.', 'spark', 6000);
+  knownWardrobeCount = unlockedClothes;
   if (route === 'adventures') adventureSession = mountAdventures({
     state, runPython, cancelRun,
     onSave: saveAdventure,
@@ -195,7 +216,7 @@ function visitVillage(id) {
   villageSession?.pause();
   if (id === 'cafe') { openCafe(); return; }
   if (villagers.some(v => v.id === id)) { openVillager(id); return; }
-  const destination = { workbench: 'practice', companions: 'companions', trail: 'quests', room: 'room', festival: 'festival', highstreet: 'adventures' }[id];
+  const destination = { workbench: 'practice', companions: 'companions', trail: 'quests', room: 'room', festival: 'festival', highstreet: 'adventures', courtyard: 'courtyard' }[id];
   if (destination) navigate(destination);
 }
 function openCafe() {

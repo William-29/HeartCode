@@ -1,0 +1,135 @@
+export const buildings = [
+  {
+    id:'bakery', name:'Mabel’s Bakery', short:'Bakery', neighbour:'rowan', keeper:'Rowan', icon:'home',
+    position:{x:23,y:55}, reward:'Mabel’s indigo apron',
+    history:'Before the tavern had a kitchen, Mabel baked for the whole lane. Rowan remembers being small enough to sit on the flour sacks while his mother counted the morning loaves. When she retired, the shop closed. The oven is sound; what is missing is a way for a new team to share her work.',
+    promise:'A shared morning bake, with orders planned by your Python and a loaf set aside for the neighbours who helped.',
+    memories:[
+      '“She never wrote ‘customers’ in the ledger. She wrote ‘people to feed’.” Rowan opens a biscuit tin of handwritten recipes.',
+      'Rowan finds the old flour scoop behind a shelf. Mira has repaired the oven latch, and Bea offers to collect the first orders.',
+      'The recipe book lies open on a clean counter. The shopping list is ready; all that remains is a plan for the oven.',
+      'The first warm loaf is cut into enough pieces for everyone. Rowan hangs Mabel’s apron on your peg. “She would have liked how you made room for other people.”'
+    ],
+    changes:['Shutters closed · recipes waiting','Oven latch repaired · flour measured','Counter ready · ingredients ordered','Morning bake open · orders planned'],
+    service:'Run the morning bake', opening:'Light the oven with Rowan'
+  },
+  {
+    id:'library', name:'The Lantern Library', short:'Library', neighbour:'mira', keeper:'Mira', icon:'book',
+    position:{x:51,y:50}, reward:'The brass swallow brooch',
+    history:'The library began as a shelf of books loaned between neighbours. A leaking window damaged its paper index, and the reading room closed while the books were moved upstairs. Mira learned her first repairs from a book borrowed here. She wants everyone to find their way back to a story.',
+    promise:'A working lending desk, searchable shelves, and a reading chair kept warm for the next curious visitor.',
+    memories:[
+      'Mira shows you a faded borrowing card. “My first clock book. I renewed it eleven times. Nobody minded.”',
+      'The repaired window catches the afternoon light. Titles emerge from a box of smudged cards as your catalogue takes shape.',
+      'The shelves are in order again. Nell brings a pot of tea and asks whether the lending desk can keep track of the last copy.',
+      'Mira rings the little bell once. A child chooses the same clock book. The librarian pins a brass swallow to your lapel: a reminder that stories find their way home.'
+    ],
+    changes:['Index damaged · reading room closed','Window repaired · titles recovered','Shelves arranged · search working','Lending desk open · stories circulating'],
+    service:'Visit the lending desk', opening:'Ring the library bell'
+  },
+  {
+    id:'greenhouse', name:'June’s Glasshouse', short:'Greenhouse', neighbour:'elio', keeper:'Elio', icon:'leaf',
+    position:{x:82,y:55}, reward:'June’s moss-wool cardigan',
+    history:'Elio’s aunt June gave away seedlings every spring. After a winter of cracked panes, she moved her plants into neighbours’ kitchens. The glasshouse has been quiet ever since. Elio has kept her notebooks and hopes to make it a place where the whole village can learn by tending something together.',
+    promise:'A community seedling nursery, with a watering ledger and a small, honestly tested plant-care classifier.',
+    memories:[
+      'Elio presses a dried marigold between two notebook pages. “Every plant she gave away came with someone’s name on the pot.”',
+      'New glass arrives in padded crates. Mira fixes the frame while Elio sorts June’s labelled pots by the door.',
+      'The benches are clean and the watering ledger is in use. Now Elio wants to compare new readings with the examples June recorded.',
+      'The doors open on a row of seedlings labelled for their new homes. June’s cardigan is waiting on a hook. Elio says, “There’s still work to do tomorrow. That’s what makes it a living place.”'
+    ],
+    changes:['Cracked panes · seedlings sheltered elsewhere','Frame mended · replacement glass counted','Benches planted · watering ledger working','Community nursery open · care model running'],
+    service:'Check the seedling bench', opening:'Open the glasshouse with Elio'
+  }
+];
+const make=(id,building,stage,requires,title,task,starter,solution,checks,extra)=>({
+  id,building,stage,requires,title,task,starter,solution,checks,xp:110+stage*70,coins:55+stage*35,...extra
+});
+const num=(name,label,value)=>({name,label,value,type:'number',min:0});
+const json=(name,label,value)=>({name,label,value:JSON.stringify(value),type:'json'});
+const text=(name,label,value)=>({name,label,value,type:'text'});
+export const restorationProjects = [
+  make('bakery-flour','bakery',1,2,'The recipe in the biscuit tin',
+    'Write flour_needed(loaves, grams_per_loaf). Return the total grams needed. Keep decimal quantities: small batches matter too.',
+    'def flour_needed(loaves, grams_per_loaf):\n    # Multiply the two amounts.\n    return 0\n\nprint(flour_needed(6, 250))',
+    'def flour_needed(loaves, grams_per_loaf):\n    return loaves * grams_per_loaf',
+    'f=scope.get("flour_needed")\nassert callable(f), "Keep flour_needed(loaves, grams_per_loaf)."\nfor n,g in [(6,250),(0,200),(3,125.5),(1,80)]:\n    assert abs(f(n,g)-n*g)<1e-8, "Multiply loaves by grams per loaf; preserve decimals."',
+    {lesson:'A useful tool begins with a reliable small calculation. Parameters let one recipe serve different batch sizes. Return the answer so a later planning tool can use it.',
+      hint:'Use * for multiplication. The function should return loaves * grams_per_loaf.',
+      outcome:'Your flour calculation lets Rowan test Mabel’s recipe while Mira repairs the oven latch. The repair bench appears outside.',
+      functionName:'flour_needed',demo:[num('loaves','Loaves',6),num('grams_per_loaf','Grams per loaf',250)],demoNote:'The amount of flour for the next test bake, in grams.'}),
+  make('bakery-shopping','bakery',2,12,'A pantry for the first morning',
+    'Write shopping_list(recipe, stock, batches). recipe and stock are dictionaries of ingredient quantities. Return only positive shortages after scaling the recipe by batches. A missing stock item has zero available. Do not change either input.',
+    'def shopping_list(recipe, stock, batches):\n    shopping = {}\n    for ingredient, amount in recipe.items():\n        needed = amount * batches\n        available = stock.get(ingredient, 0)\n        # Add only a positive shortage to shopping.\n    return shopping',
+    'def shopping_list(recipe, stock, batches):\n    shopping = {}\n    for ingredient, amount in recipe.items():\n        shortage = amount * batches - stock.get(ingredient, 0)\n        if shortage > 0:\n            shopping[ingredient] = shortage\n    return shopping',
+    'f=scope.get("shopping_list")\nassert callable(f)\nfor recipe,stock,n in [({"flour":250,"yeast":5},{"flour":300},2),({"flour":10},{"flour":99},0),({},{"tea":1},4),({"salt":1.5,"water":100},{"salt":1},3)]:\n    r=recipe.copy();s=stock.copy()\n    expected={k:v*n-stock.get(k,0) for k,v in recipe.items() if v*n>stock.get(k,0)}\n    assert f(recipe,stock,n)==expected, "Scale the recipe, subtract stock, and order positive shortages only."\n    assert recipe==r and stock==s, "Keep the original recipe and pantry unchanged."',
+    {lesson:'The flour tool handled one number. This project handles a whole recipe. A dictionary stores ingredient names and quantities; get(name, 0) supplies a sensible value when the pantry has no entry. New results belong in a new dictionary.',
+      hint:'shortage = needed - available. If shortage > 0, assign shopping[ingredient] = shortage.',
+      outcome:'Bea brings exactly the missing ingredients. Rowan clears the counter and hangs a clean cloth by the door.',
+      functionName:'shopping_list',demo:[json('recipe','Recipe for one batch',{flour:250,yeast:5,salt:3}),json('stock','Pantry stock',{flour:400,salt:20}),num('batches','Batches',3)],demoNote:'The delivery list for the reopened bakery.'}),
+  make('bakery-planner','bakery',3,28,'Enough oven space for everyone',
+    'Build plan_bakes(orders, capacity). orders is a list of [bread, count] pairs with nonnegative integer counts. Merge repeated bread names in first-seen order, omit zero totals, and fill batches greedily up to capacity. Return {"totals": ..., "batches": [...]}. Reject capacity <= 0 with ValueError. Do not change orders.',
+    'def combine_orders(orders):\n    totals = {}\n    for bread, count in orders:\n        totals[bread] = totals.get(bread, 0) + count\n    return {name: count for name, count in totals.items() if count > 0}\n\n\ndef plan_bakes(orders, capacity):\n    if capacity <= 0:\n        raise ValueError("The oven needs a positive capacity")\n    totals = combine_orders(orders)\n    batches = []\n    current = {}\n    used = 0\n    # For each bread, distribute its count across batches.\n    # When a batch reaches capacity, save it and start another.\n    # Remember the final partly filled batch.\n    return {"totals": totals, "batches": batches}',
+    'def plan_bakes(orders, capacity):\n    if capacity <= 0:\n        raise ValueError("Positive capacity required")\n    totals = {}\n    for name, count in orders:\n        totals[name] = totals.get(name, 0) + count\n    totals = {k:v for k,v in totals.items() if v > 0}\n    batches = []\n    current = {}\n    used = 0\n    for name, count in totals.items():\n        remaining = count\n        while remaining:\n            take = min(remaining, capacity-used)\n            current[name] = take\n            remaining -= take\n            used += take\n            if used == capacity:\n                batches.append(current)\n                current = {}\n                used = 0\n    if current:\n        batches.append(current)\n    return {"totals": totals, "batches": batches}',
+    'import copy\nf=scope.get("plan_bakes")\nassert callable(f)\ncases=[([["rye",3],["bun",4],["rye",2]],4,{"totals":{"rye":5,"bun":4},"batches":[{"rye":4},{"rye":1,"bun":3},{"bun":1}]}),([],3,{"totals":{},"batches":[]}),([["roll",0],["rye",2]],5,{"totals":{"rye":2},"batches":[{"rye":2}]}),([["a",1],["b",1],["c",3]],2,{"totals":{"a":1,"b":1,"c":3},"batches":[{"a":1,"b":1},{"c":2},{"c":1}]})]\nfor orders,cap,expected in cases:\n    before=copy.deepcopy(orders)\n    assert f(orders,cap)==expected, "Merge repeated orders, keep first-seen order, fill each batch, and keep the last partial batch."\n    assert orders==before, "Leave the order book unchanged."\nfor cap in [0,-1]:\n    try:\n        f([["rye",1]],cap)\n    except ValueError:\n        continue\n    raise AssertionError("Reject nonpositive capacity with ValueError.")',
+    {lesson:'A larger project has stages: combine the orders, schedule work, then return a report. Keep a simple invariant: used never exceeds capacity. A while loop can split one large order across several batches. Test a full oven, a partial oven, no orders, and duplicate names.',
+      hint:'For each remaining order, take min(remaining, capacity - used). Save current whenever used == capacity. Reset current and used, then continue. Append a nonempty current after the loop.',
+      outcome:'The oven schedule has a place for every order. Mabel’s Bakery is ready for its first shared morning bake.',
+      functionName:'plan_bakes',demo:[json('orders','Morning orders',[['rye',3],['bun',4],['rye',2]]),{...num('capacity','Loaves per oven batch',4),min:1,integer:true}],demoNote:'The baking team follows these batches in order.'}),
+  make('library-titles','library',1,4,'Names on the borrowing cards',
+    'Write clean_title(title). Remove leading and trailing whitespace and use Python’s title-case formatting.',
+    'def clean_title(title):\n    # Two string methods can restore a smudged title.\n    return title\n\nprint(clean_title("  the clock book  "))',
+    'def clean_title(title):\n    return title.strip().title()',
+    'f=scope.get("clean_title")\nassert callable(f)\nfor value in ["  the clock book  ","\\tA GUIDE TO TEA\\n","","  moss & rain"]:\n    assert f(value)==value.strip().title(), "Use strip() to trim edges, then title() for Python title case."',
+    {lesson:'Strings have useful methods. strip() trims whitespace from the ends; title() applies a consistent title-case rule. It is a simple catalogue convention, not a perfect language-aware book-title editor.',
+      hint:'Chain the methods: title.strip().title().',
+      outcome:'The first titles are legible again. Mira repairs the library window while Nell carries the recovered cards downstairs.',
+      functionName:'clean_title',demo:[text('title','Handwritten title','  the clock book  ')],demoNote:'A cleaned title ready for the recovered catalogue.'}),
+  make('library-search','library',2,12,'A shelf you can find your way around',
+    'Write find_books(catalog, query). catalog maps titles to available copy counts. Return alphabetically sorted titles that contain query, ignoring case, and have at least one copy. An empty query matches every available title. Do not change the catalogue.',
+    'def find_books(catalog, query):\n    matches = []\n    # Inspect each title and copy count.\n    return sorted(matches)',
+    'def find_books(catalog, query):\n    return sorted(title for title,count in catalog.items() if count > 0 and query.lower() in title.lower())',
+    'f=scope.get("find_books")\nassert callable(f)\nfor books,q in [({"Tea Tales":2,"Clock Book":1,"Tea Gardens":0},"TEA"),({"B":1,"A":2},""),({},"a"),({"Rain":0,"RAIN Stories":1},"rain")]:\n    before=books.copy()\n    assert f(books,q)==sorted(t for t,n in books.items() if n>0 and q.lower() in t.lower()), "Search without case sensitivity and include only available copies."\n    assert books==before, "Search must not change the catalogue."',
+    {lesson:'A useful search combines text handling, a condition, and sorting. Keep display titles as written; lowercase temporary values for comparison. Sorting makes repeated searches predictable.',
+      hint:'query.lower() in title.lower() checks the text; count > 0 checks availability.',
+      outcome:'Nell arranges the shelves using your searchable index. The reading chair returns to its place beside the window.',
+      functionName:'find_books',demo:[json('catalog','Available copies',{'Clock Book':2,'Tea Tales':1,'Garden Notes':0}),text('query','Search words','book')],demoNote:'Readers can find a book before walking to the shelves.'}),
+  make('library-loans','library',3,28,'A book for the next reader',
+    'Write lend_books(catalog, requests). Work on a COPY of the catalogue. Process titles in request order: lend a copy when stock > 0, otherwise add the title to waiting. Return {"stock": new_stock, "served": titles_lent, "waiting": titles_waiting}. Repeated requests must use the updated stock; unknown titles wait.',
+    'def lend_books(catalog, requests):\n    stock = catalog.copy()\n    served = []\n    waiting = []\n    # Each request should see the remaining stock.\n    return {"stock": stock, "served": served, "waiting": waiting}',
+    'def lend_books(catalog, requests):\n    stock = catalog.copy()\n    served = []\n    waiting = []\n    for title in requests:\n        if stock.get(title, 0) > 0:\n            stock[title] -= 1\n            served.append(title)\n        else:\n            waiting.append(title)\n    return {"stock": stock, "served": served, "waiting": waiting}',
+    'f=scope.get("lend_books")\nassert callable(f)\nfor books,requests in [({"Clock Book":1,"Tea":2},["Clock Book","Clock Book","Tea","Unknown"]),({},["Moon"]),({"A":0},[]),({"A":2},["A","A","A"])]:\n    before=books.copy();stock=books.copy();served=[];waiting=[]\n    for title in requests:\n        if stock.get(title,0)>0:\n            stock[title]-=1;served.append(title)\n        else:\n            waiting.append(title)\n    assert f(books,requests)=={"stock":stock,"served":served,"waiting":waiting}, "Process requests in order against remaining stock. Unknown or unavailable titles wait."\n    assert books==before, "Copy the catalogue before changing counts."',
+    {lesson:'This project models a small transaction system. Order matters: the second person requesting the last copy must see the first loan. Return both the new state and a report, while preserving the original input so mistakes can be investigated.',
+      hint:'stock.get(title, 0) handles unknown books. Decrease stock before processing the next request.',
+      outcome:'Your lending desk keeps the last copy from being promised twice. The library is ready to welcome readers again.',
+      functionName:'lend_books',demo:[json('catalog','Catalogue',{'Clock Book':1,'Tea Tales':2}),json('requests','Borrowing requests',['Clock Book','Clock Book','Tea Tales'])],demoNote:'A complete lending report, including the queue for unavailable books.'}),
+  make('greenhouse-glass','greenhouse',1,2,'The panes June saved',
+    'Write glass_order(total, intact, spares). Return how many panes must be bought after counting intact panes and usable spares. Never return a negative order.',
+    'def glass_order(total, intact, spares):\n    return 0\n\nprint(glass_order(24, 15, 4))',
+    'def glass_order(total, intact, spares):\n    return max(total - intact - spares, 0)',
+    'f=scope.get("glass_order")\nassert callable(f)\nfor total,intact,spares in [(24,15,4),(10,10,5),(8,2,0),(0,0,0),(20,3,7)]:\n    assert f(total,intact,spares)==max(total-intact-spares,0), "Subtract both intact panes and usable spares, then clamp to zero."',
+    {lesson:'A small function can prevent waste. Subtract the pieces already available before placing an order. max(shortage, 0) turns an oversupply into a zero order.',
+      hint:'Take total - intact - spares, then use max(..., 0).',
+      outcome:'Your order saves the spare panes June kept. The neighbours mend the frame and bring the new glass to the court.',
+      functionName:'glass_order',demo:[num('total','Panes in the frame',24),num('intact','Intact panes',15),num('spares','Usable spares',4)],demoNote:'Replacement panes needed for this repair.'}),
+  make('greenhouse-water','greenhouse',2,10,'A ledger for the morning round',
+    'Write watering_plan(beds, target). beds maps plant names to fictional moisture readings, or None if missing. Return a dictionary of deficits for valid readings below target. Ignore missing readings and keep the original input unchanged.',
+    'def watering_plan(beds, target):\n    plan = {}\n    # None means no observation, not dry soil.\n    return plan',
+    'def watering_plan(beds, target):\n    return {name:target-reading for name,reading in beds.items() if reading is not None and reading < target}',
+    'f=scope.get("watering_plan")\nassert callable(f)\nfor beds,t in [({"fern":20,"mint":None,"sage":60},40),({"seed":0},30),({},20),({"a":30,"b":29.5},30)]:\n    before=beds.copy()\n    assert f(beds,t)=={k:t-v for k,v in beds.items() if v is not None and v<t}, "Use only observed readings below target; zero is a valid reading."\n    assert beds==before, "Do not alter the observation ledger."',
+    {lesson:'A missing value is not a zero. Check is not None before comparing numbers. This is a fictional sensor exercise: the deficit is a data value, not a real-world watering prescription.',
+      hint:'First check reading is not None, then reading < target. Store target - reading.',
+      outcome:'The benches are ready and every labelled pot has a place on the morning round. Elio brings June’s notebooks back inside.',
+      functionName:'watering_plan',demo:[json('beds','Fictional moisture readings',{fern:20,mint:null,sage:60}),num('target','Target reading',40)],demoNote:'The morning ledger flags observed deficits, while missing readings need another measurement.'}),
+  make('greenhouse-model','greenhouse',3,24,'Learning from June’s notebook',
+    'Build classify_plants(examples, readings). examples contains [moisture, label] pairs. For each reading, choose the label of the closest example by absolute distance; ties use the first example. Return {"labels": [...], "counts": {label: count}}. Reject empty examples with ValueError. Do not change the inputs.',
+    'def nearest_label(examples, reading):\n    # min(..., key=...) can select the closest pair.\n    pass\n\n\ndef classify_plants(examples, readings):\n    if not examples:\n        raise ValueError("Collect labelled examples first")\n    labels = []\n    counts = {}\n    # Predict each reading, then count the predicted labels.\n    return {"labels": labels, "counts": counts}',
+    'def classify_plants(examples, readings):\n    if not examples:\n        raise ValueError("Collect labelled examples first")\n    labels = [min(examples, key=lambda pair: abs(pair[0]-reading))[1] for reading in readings]\n    counts = {}\n    for label in labels:\n        counts[label] = counts.get(label, 0) + 1\n    return {"labels": labels, "counts": counts}',
+    'import copy\nf=scope.get("classify_plants")\nassert callable(f)\nfor examples,readings in [([[10,"check"],[50,"rest"]],[12,48,30]),([[0,"A"],[10,"B"]],[5,6,-1]),([[3,"x"]],[]),([[2,"a"],[7,"b"],[20,"c"]],[8,19,1])]:\n    before=copy.deepcopy((examples,readings));labels=[min(examples,key=lambda p:abs(p[0]-r))[1] for r in readings];counts={}\n    for label in labels: counts[label]=counts.get(label,0)+1\n    assert f(examples,readings)=={"labels":labels,"counts":counts}, "Predict from the nearest training example, keep first-example ties, and count every label."\n    assert (examples,readings)==before, "Keep training examples and new readings unchanged."\ntry:\n    f([], [1])\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError("An empty training set needs ValueError.")',
+    {lesson:'Nearest-neighbour classification stores labelled examples and compares a new observation with them. It learns through examples rather than a handwritten threshold. It can still be wrong: one feature and a tiny notebook cannot explain every plant. The reopened bench includes labelled held-out readings to evaluate your predictions.',
+      hint:'min(examples, key=lambda pair: abs(pair[0] - reading))[1] returns the nearest label. Use counts.get(label, 0) + 1 to build the summary.',
+      outcome:'The classifier turns June’s examples into a tool the volunteers can inspect and test. The nursery is ready to reopen.',
+      functionName:'classify_plants',demo:[json('examples','Training examples',[[10,'check'],[30,'check'],[65,'rest'],[85,'rest']]),json('readings','New moisture readings',[20,48,70])],demoNote:'Compare predictions with the held-out labels shown at the bench. These are fictional plant-care categories.'})
+];
+export const restorationById=id=>restorationProjects.find(p=>p.id===id);
+export const buildingById=id=>buildings.find(b=>b.id===id);

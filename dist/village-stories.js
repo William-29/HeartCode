@@ -2,6 +2,8 @@ import { projects, villagers, friendship, projectUnlocked } from './projects.js'
 import { icon } from './art.js';
 import { characterPortrait } from './characters.js';
 import { villagePeriod, schedules } from './village-life-model.js';
+import { buildings } from './restoration-content.js';
+import { buildingStage } from './restoration-model.js';
 
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -21,10 +23,14 @@ export function renderVillager(state, id) {
   const bond = friendship(state, id);
   const greeting = villager.friendLines[Math.min(bond.count, villager.friendLines.length - 1)];
   const routine = schedules[villagePeriod(state.villageTime)][id];
+  const place = buildings.find(b => b.neighbour === id);
+  const repairStage = state.restoration ? buildingStage(state, place.id) : 0;
+  const opened = state.restoration?.opened.includes(place.id);
+  const restorationNote = `<aside class="neighbour-restoration-note"><p class="eyebrow">OVER IN FOUNDERS’ COURT</p><h3>${place.name}</h3><p>${opened ? place.memories[3] : repairStage ? place.memories[Math.min(repairStage, 2)] : place.memories[0]}</p><button class="text-button" data-action="village-route" data-route="courtyard">${opened ? 'See the place you helped reopen' : 'Hear the story and lend a hand'} ${icon('arrow')}</button></aside>`;
   return `<div class="dialog-top"><span class="eyebrow">${esc(routine.place)}</span><button class="icon-button" data-action="close-village" aria-label="Close conversation">${icon('close')}</button></div><div class="village-conversation"><header class="villager-introduction">${portrait(id)}<div><p class="eyebrow">${esc(villager.role)}</p><h2>${esc(villager.name)}</h2><div class="friendship-line"><span aria-hidden="true">${'♥'.repeat(bond.count)}${'♡'.repeat(2 - bond.count)}</span><span>${esc(bond.label)} · ${bond.count}/2 projects</span></div></div></header><blockquote>${esc(greeting || villager.intro)}</blockquote><p class="villager-routine">${icon('clock')} ${esc(routine.activity)}</p><p class="village-story-intro">${esc(villager.intro)}</p><div class="section-heading"><h3>A little help goes a long way</h3></div><div class="villager-projects">${projects.filter(p => p.npc === id).map(p => {
     const done = state.projects.includes(p.id), unlocked = projectUnlocked(state, p.id);
     return `<article class="villager-project ${done ? 'project-finished' : ''}"><span class="project-thread-mark">${icon(done ? 'check' : unlocked ? 'code' : 'lock')}</span><div><p class="eyebrow">${done ? 'MADE TOGETHER' : `${p.minutes} MIN · ${p.requires ? 'BUILD ON YOUR LEARNING' : 'BEGINNER FRIENDLY'}`}</p><h3>${esc(p.title)}</h3><p>${esc(done ? p.storyAfter : p.storyBefore)}</p>${!done ? `<span class="project-reward">${icon('spark')} ${p.xp} XP &nbsp; ${icon('coin')} ${p.coins} coins &nbsp; ♥ Friendship</span>` : ''}${unlocked ? `<div class="project-actions"><button class="button ${done ? 'outline' : 'primary'}" data-action="project" data-id="${p.id}">${done ? 'Revisit code' : 'Let’s make it'} ${icon('arrow')}</button>${done && p.demo && state.projectCode[p.id] ? `<button class="text-button" data-action="project-demo" data-id="${p.id}">Try your creation ${icon('play')}</button>` : ''}${done && state.projectCode[p.id] ? `<button class="text-button" data-action="project-download" data-id="${p.id}">${icon('download')} Keep the Python file</button>` : ''}</div>` : `<p class="project-locked">${icon('lock')} ${esc(projectRequirement(state, p))} <button class="text-button" data-action="village-route" data-route="quests">Follow the quest trail ${icon('arrow')}</button></p>`}</div></article>`;
-  }).join('')}</div><div class="conversation-footer"><button class="text-button" data-action="close-village">Back to the village ${icon('leaf')}</button>${id === 'rowan' ? '<button class="text-button" data-action="village-route" data-route="tavern">Step inside the tavern →</button>' : id === 'mira' ? '<button class="text-button" data-action="village-route" data-route="practice">Use the workbench →</button>' : ''}</div></div>`;
+  }).join('')}</div>${restorationNote}<div class="conversation-footer"><button class="text-button" data-action="close-village">Back to the village ${icon('leaf')}</button>${id === 'rowan' ? '<button class="text-button" data-action="village-route" data-route="tavern">Step inside the tavern →</button>' : id === 'mira' ? '<button class="text-button" data-action="village-route" data-route="practice">Use the workbench →</button>' : ''}</div></div>`;
 }
 
 export function renderProjectDemo(project) {

@@ -6,9 +6,9 @@ import { rewardChest } from './cozy-art.js';
 import { WORLD_WIDTH, WORLD_HEIGHT, regions, stops, regionForStop, positionForProgress, legPath, pointOnLeg } from './world-model.js';
 
 const esc = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-const traveler = characterSprite('traveler', 'traveler-sprite');
 
 export function renderWorld(state, companion, selectedIndex, receipt) {
+  const traveler = characterSprite('traveler', 'traveler-sprite', state.wardrobe);
   const current = Math.min(state.completed.length, quests.length - 1);
   const selected = Number.isInteger(selectedIndex) ? selectedIndex : current;
   const position = positionForProgress(state.completed.length);

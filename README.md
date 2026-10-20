@@ -111,6 +111,12 @@ The test suite has 86 tests, including curved route continuity, reward/travel co
 
 ## Source
 
+### Founders’ Court, exhibition, and wardrobe
+
+Visit **Founders’ Court** from the village to restore the bakery, library, and glasshouse through nine projects. Repairs reveal neighbours’ memories, change the artwork, and reopen useful services. Display and run up to six finished creations on the square, with all completed projects retained in the exhibition catalogue.
+
+Choose independently fitted hair, outfits, scarves, and keepsakes in **Your wardrobe**, accessible from your room and the court. Clothing unlocks through lessons, friendship projects, and restoration rather than purchases. See [the feature guide](docs/founders-court.md) and [artwork and prompts](docs/restoration-artwork.md).
+
 ### High Street adventures
 
 Visit **High Street** from the village to investigate three Python mysteries, run your own tool shop with returning customers, take progressively unlocked train trips to three towns, and train a small garden model. Beginner activities start immediately; advanced activities follow existing lesson progress. Ten new coding challenges award XP and coins once. Saved shop tools execute for customers, and the garden uses fitted parameters to predict growth.

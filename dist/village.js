@@ -10,13 +10,13 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&a
 
 export function villagerSprite(id) { return characterSprite(id, 'village-npc-sprite'); }
 
-const adventurer = characterSprite('traveler', 'village-adventurer');
 
 export function fitVillageViewport(width, height) {
   return Math.max(0, Math.min(width / VILLAGE_WIDTH, height / VILLAGE_HEIGHT));
 }
 
 export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
+  const adventurer = characterSprite('traveler', 'village-adventurer', state.wardrobe);
   const position = normalizePosition(state.villagePosition);
   const projects = Array.isArray(state.projects) ? state.projects : [];
   const met = new Set(state.metVillagers || []);

@@ -1,5 +1,6 @@
 // Every appearance comes from the same painted sheet, including conversation
 // portraits. Crops are source rectangles, so they scale without editing the art.
+import { dressedArt } from './wardrobe-art.js';
 const ATLAS = { width: 1774, height: 887 };
 const characters = Object.freeze({
   traveler: { label: 'Your Hearthwick adventurer', body: [40, 26, 375, 829], face: [104, 22, 265, 265] },
@@ -20,12 +21,14 @@ function cropStyle([x, y, width, height]) {
   return `--character-ratio:${(width / height).toFixed(6)};--character-size:${(ATLAS.width / width * 100).toFixed(6)}% ${(ATLAS.height / height * 100).toFixed(6)}%;--character-position:${(x / (ATLAS.width - width) * 100).toFixed(6)}% ${(y / (ATLAS.height - height || 1) * 100).toFixed(6)}%`;
 }
 
-export function characterSprite(id = 'traveler', className = '') {
+export function characterSprite(id = 'traveler', className = '', appearance = null) {
+  if(id==='traveler'&&appearance)return `<span class="hearth-character character-traveler dressed-character ${classTokens(className)}" style="--character-ratio:.444444" aria-hidden="true">${dressedArt(appearance)}</span>`;
   const key = identity(id), character = characters[key];
   return `<span class="hearth-character character-${key} ${classTokens(className)}" style="${cropStyle(character.body)}" aria-hidden="true"><span class="hearth-character-art"></span></span>`;
 }
 
-export function characterPortrait(id = 'traveler', className = '') {
+export function characterPortrait(id = 'traveler', className = '', appearance = null) {
+  if(id==='traveler'&&appearance)return `<span class="hearth-character hearth-character-portrait character-traveler dressed-character ${classTokens(className)}" role="img" aria-label="Your Hearthwick adventurer">${dressedArt(appearance,true)}</span>`;
   const key = identity(id), character = characters[key];
   return `<span class="hearth-character hearth-character-portrait character-${key} ${classTokens(className)}" style="${cropStyle(character.face)}" role="img" aria-label="${character.label}"><span class="hearth-character-art" aria-hidden="true"></span></span>`;
 }
