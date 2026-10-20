@@ -1,3 +1,4 @@
+import { weatherArt } from './cozy-ui.js';
 import { icon, sprite } from './art.js';
 import { sceneArt } from './alley-scene.js';
 import { characterSprite } from './characters.js';
@@ -25,7 +26,7 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
     ${routineControls(state)}
     <div class="village-stage"><div class="village-frame"><div class="village-topline"><span>${icon('home')} HEARTHWICK VILLAGE</span><span>${projects.length ? `${projects.length} little ${projects.length === 1 ? 'project' : 'projects'}, a happier village` : 'Every good story starts with hello'}</span></div>
     <div class="village-viewport" tabindex="0" role="region" aria-label="Walkable village" aria-describedby="village-instructions">
-      <div class="village-scene" style="aspect-ratio:${VILLAGE_WIDTH}/${VILLAGE_HEIGHT}">${sceneArt(projects)}
+      <div class="village-scene" style="aspect-ratio:${VILLAGE_WIDTH}/${VILLAGE_HEIGHT}">${sceneArt(projects)}${weatherArt(state)}
         ${places.map(place => `<button type="button" class="village-destination village-${place.id} ${place.color} ${met.has(place.id) ? 'has-met' : ''}" data-village-walk="${place.id}" style="left:${place.x / 10}%;top:${place.y / 6.5}%" aria-label="Walk to ${esc(place.name)}. ${esc(place.activity || place.hint)}">${['rowan', 'mira', 'elio'].includes(place.id) ? `<span class="village-npc">${villagerSprite(place.id)}<span class="village-hello" aria-hidden="true">${met.has(place.id) ? '♡' : '!'}</span></span>` : `<span class="village-place-icon">${icon(place.icon)}</span>`}<span class="village-place-name">${esc(place.name)}</span><span class="village-place-hint">${esc(place.place)}</span></button>`).join('')}
         ${festivalProgress(state).celebrated ? '<div class="village-festival-ribbons" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ''}
         <div role="img" class="village-actor" style="left:${position.x / 10}%;top:${position.y / 6.5}%" aria-label="You and ${esc(companion.name)}"><span class="village-you">YOU</span><div class="village-party">${adventurer}<span class="village-following-pet">${sprite(companion.id)}</span></div></div>

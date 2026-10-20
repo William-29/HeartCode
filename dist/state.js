@@ -1,9 +1,10 @@
 import { quests, pets, achievements } from './content.js';
 import { projects, villagers, projectUnlocked, friendship } from './projects.js';
 import { freshHome, normalizeHome, periods, festivalProgress } from './village-life-model.js';
+import { normalizeAmbience, normalizePetCare } from './cozy-model.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
-  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
 }
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -33,6 +34,8 @@ export function normalizeState(value) {
   s.lastActivity = typeof value.lastActivity === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.lastActivity) && Number.isFinite(dayNumber(value.lastActivity)) ? value.lastActivity : null;
   s.sound = value.sound === true;
   s.home = normalizeHome(value.home);
+  s.ambience = normalizeAmbience(value.ambience);
+  s.petCare = normalizePetCare(value.petCare, s.owned);
   s.villageTime = periods.includes(value.villageTime) ? value.villageTime : 'auto';
   s.festivalCelebrated = value.festivalCelebrated === true && festivalProgress(s).ready;
   s.reducedMotion = value.reducedMotion === true;
@@ -101,6 +104,6 @@ export function adoptPet(state, id) {
   if (state.owned.includes(id)) { state.equipped = id; return { ok: true, equipped: true, achievements: [] }; }
   if (state.completed.length < pet.required) return { ok: false, reason: `Complete ${pet.required} quests to meet ${pet.name}.` };
   if (state.coins < pet.cost) return { ok: false, reason: `You need ${pet.cost - state.coins} more coins.` };
-  state.coins -= pet.cost; state.owned.push(id); state.equipped = id;
+  state.coins -= pet.cost; state.owned.push(id); state.equipped = id; state.petCare = normalizePetCare(state.petCare, state.owned);
   return { ok: true, equipped: false, achievements: unlockAchievements(state) };
 }

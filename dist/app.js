@@ -1,3 +1,7 @@
+import { ambienceSettings, renderPetCorner, mountPetPlay } from './cozy-ui.js';
+import { careForPet, choosePetBed, normalizeAmbience } from './cozy-model.js';
+import { mountRoomEditor } from './room-editor.js';
+import { createAmbience } from './ambience.js';
 import { chapters, quests, pets, achievements, dailyQuestions } from './content.js';
 import { freshState, normalizeState, SAVE_KEY, dateKey, isUnlocked, nextQuest, levelInfo, visibleStreak, completeQuest, completeDaily, adoptPet, meetVillager, completeProject } from './state.js';
 import { icon, sprite } from './art.js';
@@ -22,6 +26,8 @@ catch { saveWarning = 'Your saved adventure could not be loaded. This session st
 let route = location.hash.slice(1) || 'village';
 let mapSelection = null;
 let roomSlot = 'chair';
+let roomEditor = null, petPlay = null;
+const ambience = createAmbience(() => state.ambience, () => route);
 let worldSession = null;
 let villageSession = null;
 let villageClock = null;
@@ -76,6 +82,8 @@ function navigate(next) { if (!routes[next]) next = 'tavern'; if (route === next
 window.addEventListener('hashchange', () => { cancelRun(); route = location.hash.slice(1); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 function render() {
+  roomEditor?.dispose(); roomEditor = null;
+  petPlay?.dispose(); petPlay = null;
   const previousPlaces = villageSession?.places?.();
   celebration?.dispose();
   celebration = null;
@@ -106,6 +114,9 @@ function render() {
       <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
+  ambience.update();
+  if (route === 'room') roomEditor = mountRoomEditor({ state, selectedSlot: roomSlot, onSave: save });
+  if (route === 'companions') { const friendId = state.equipped; petPlay = mountPetPlay({ state, onComplete: action => { const result = careForPet(state, friendId, action, dateKey()); if (!result.ok) return; save(); render(); toast(result.unlocked.length ? `A new sleeping spot: ${result.unlocked.map(bed => bed.name).join(', ')}!` : result.learned.length ? `New trick learned: ${result.learned.join(', ')}! +${result.points} friendship.` : result.points ? `A happy moment together. +${result.points} friendship.` : "A happy moment together. Today's friendship for this activity is already earned.", 'paw'); } }); }
   if (route === 'practice') bindEditor($('#practice-code'), 'practice');
   if (route === 'village') villageSession = mountVillage({ state, previousPlaces, reducedMotion: state.reducedMotion, onVisit: visitVillage, onMove: position => { state.villagePosition = position; clearTimeout(saveTimer); saveTimer = setTimeout(save, 350); } });
   if (route === 'village') villageClock = mountVillageClock(state, render);
@@ -165,7 +176,7 @@ function openCafe() {
 function refreshRoom(slot) {
   roomSlot = slot;
   save(); render();
-  $(`[data-action="room-remove"][data-id="${slot}"]`)?.focus({ preventScroll: true });
+  ($(`[data-action="room-remove"][data-id="${slot}"]`) || $(`[data-action="room-slot"][data-id="${slot}"]`))?.focus({ preventScroll: true });
 
 }
 function openVillager(id) {
@@ -245,7 +256,7 @@ function renderPractice() {
 }
 
 function renderCompanions() {
-  return `<div class="page-heading"><div><p class="eyebrow">EVERY ADVENTURER NEEDS A LITTLE COMPANY</p><h1>Friends by the fire<span class="gold">.</span></h1><p>Earn coins, make progress, and give a curious creature a place to call home.</p></div><div class="balance-badge">${icon('coin')} <strong>${state.coins}</strong> coins to spend</div></div><div class="companion-banner">${icon('paw')}<span><strong>${state.owned.length} of ${pets.length} companions welcomed.</strong> Your active friend joins you around the tavern. Companions are cosmetic; every learner gets the same free hints.</span></div><div class="pet-shop-grid">${pets.map(p => {
+  return `<div class="page-heading"><div><p class="eyebrow">EVERY ADVENTURER NEEDS A LITTLE COMPANY</p><h1>Friends by the fire<span class="gold">.</span></h1><p>Earn coins, make progress, and give a curious creature a place to call home.</p></div><div class="balance-badge">${icon('coin')} <strong>${state.coins}</strong> coins to spend</div></div><div class="companion-banner">${icon('paw')}<span><strong>${state.owned.length} of ${pets.length} companions welcomed.</strong> Your active friend joins you around the tavern. Companions are cosmetic; every learner gets the same free hints.</span></div>${renderPetCorner(state, pet())}<div class="pet-shop-grid">${pets.map(p => {
     const owned = state.owned.includes(p.id), equipped = state.equipped === p.id, questLocked = state.completed.length < p.required, affordable = state.coins >= p.cost;
     return `<article class="pet-shop-card ${p.color} ${equipped ? 'equipped' : ''}"><div class="pet-shop-top"><span class="eyebrow">${p.rarity}</span>${equipped ? '<span class="active-badge">BY YOUR SIDE</span>' : owned ? icon('check') : icon('lock')}</div><div class="pet-habitat ${p.color}"><span class="pixel-star star-one">✦</span>${sprite(p.id, 'floating-pet')}<div class="pet-ground"></div></div><h2>${p.name}</h2><span class="pet-species">${p.species}</span><p>${p.description}</p><div class="pet-requirement">${icon(questLocked ? 'lock' : 'check')} ${p.required === 0 ? 'Your first friend, on the house' : `${p.required} quests completed · ${Math.min(state.completed.length, p.required)}/${p.required}`}</div><button class="button ${equipped ? 'subtle' : owned ? 'outline' : 'primary'} full" data-action="adopt" data-id="${p.id}" ${equipped || (!owned && (questLocked || !affordable)) ? 'disabled' : ''}>${equipped ? icon('check') + ' Adventuring together' : owned ? 'Bring along ' + icon('arrow') : questLocked ? icon('lock') + ` Unlock after ${p.required} quests` : affordable ? icon('coin') + ` Adopt for ${p.cost} coins` : icon('coin') + ` ${p.cost - state.coins} more coins needed`}</button>${!owned && questLocked ? `<span class="pet-price">Adoption: ${p.cost} coins</span>` : ''}</article>`;
   }).join('')}</div>`;
@@ -355,9 +366,9 @@ function setRunning(prefix, value) { const run = $(`#${prefix}-run`), stop = $(`
 function openSettings() {
   cancelRun();
   villageSession?.pause();
-  settingsDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">MAKE YOURSELF AT HOME</span><button class="icon-button" data-action="close-settings" aria-label="Close settings">${icon('close')}</button></div><div class="settings-body"><h2>Your adventure, your way.</h2><form id="settings-form"><label class="field-label" for="adventurer-name">Adventurer name</label><input id="adventurer-name" name="name" maxlength="24" value="${esc(state.name)}" required><label class="toggle-row"><span><strong>Reward sounds</strong><small>A gentle chime when you complete a quest.</small></span><input type="checkbox" name="sound" ${state.sound ? 'checked' : ''}></label><label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep companions, lamplight, and effects still.</small></span><input type="checkbox" name="motion" ${state.reducedMotion ? 'checked' : ''}></label><button class="button primary full" type="submit">Save preferences ${icon('check')}</button></form><div class="settings-divider"></div><h3>Keep your story safe</h3><p>Progress is saved on this browser and device. Export a backup to carry your adventure to another browser. Import replaces the progress currently saved here.</p><div class="backup-actions"><button class="button outline" data-action="export">${icon('download')} Export save</button><label class="button outline file-label">Import save<input type="file" id="import-save" accept="application/json,.json" aria-label="Import a Hearthcode save"></label></div><div class="settings-divider"></div><details class="reset-details"><summary>Start a new adventure</summary><p>This clears your quests, coins, XP, companions, room furnishings, and festival progress in this browser. Export a backup first if you want to keep them.</p><button class="button danger" data-action="reset-progress">Reset my progress</button></details><p class="settings-footnote">Made for learning at your pace. No accounts, ads, or paid upgrades.</p></div>`;
+  settingsDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">MAKE YOURSELF AT HOME</span><button class="icon-button" data-action="close-settings" aria-label="Close settings">${icon('close')}</button></div><div class="settings-body"><h2>Your adventure, your way.</h2><form id="settings-form"><label class="field-label" for="adventurer-name">Adventurer name</label><input id="adventurer-name" name="name" maxlength="24" value="${esc(state.name)}" required><label class="toggle-row"><span><strong>Reward sounds</strong><small>A gentle chime when you complete a quest.</small></span><input type="checkbox" name="sound" ${state.sound ? 'checked' : ''}></label><label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep companions, lamplight, and effects still.</small></span><input type="checkbox" name="motion" ${state.reducedMotion ? 'checked' : ''}></label>${ambienceSettings(state)}<button class="button primary full" type="submit">Save preferences ${icon('check')}</button></form><div class="settings-divider"></div><h3>Keep your story safe</h3><p>Progress is saved on this browser and device. Export a backup to carry your adventure to another browser. Import replaces the progress currently saved here.</p><div class="backup-actions"><button class="button outline" data-action="export">${icon('download')} Export save</button><label class="button outline file-label">Import save<input type="file" id="import-save" accept="application/json,.json" aria-label="Import a Hearthcode save"></label></div><div class="settings-divider"></div><details class="reset-details"><summary>Start a new adventure</summary><p>This clears your quests, coins, XP, companions, room furnishings, and festival progress in this browser. Export a backup first if you want to keep them.</p><button class="button danger" data-action="reset-progress">Reset my progress</button></details><p class="settings-footnote">Made for learning at your pace. No accounts, ads, or paid upgrades.</p></div>`;
   settingsDialog.showModal();
-  $('#settings-form').addEventListener('submit', event => { event.preventDefault(); state.name = $('#adventurer-name').value.trim() || 'Adventurer'; state.sound = event.target.sound.checked; state.reducedMotion = event.target.motion.checked; save(); settingsDialog.close(); render(); toast('Your corner of the tavern feels a little more like you.', 'check'); });
+  $('#settings-form').addEventListener('submit', event => { event.preventDefault(); state.name = $('#adventurer-name').value.trim() || 'Adventurer'; state.sound = event.target.sound.checked; state.reducedMotion = event.target.motion.checked; const fields = event.target.elements; state.ambience = normalizeAmbience({ weather: fields.namedItem('weather').value, motion: fields.namedItem('weatherMotion').checked, rain: fields.namedItem('ambient-rain').checked, fire: fields.namedItem('ambient-fire').checked, cafe: fields.namedItem('ambient-cafe').checked, volume: Number(fields.namedItem('ambientVolume').value) / 100 }); save(); settingsDialog.close(); render(); toast('Your corner of the tavern feels a little more like you.', 'check'); });
   $('#import-save').addEventListener('change', importSave);
 }
 function exportSave() {
@@ -380,6 +391,7 @@ document.addEventListener('click', event => {
   const button = event.target.closest('[data-action]'); if (!button || button.disabled) return;
   const { action, id } = button.dataset;
   switch (action) {
+    case 'pet-bed': if (choosePetBed(state, state.equipped, id)) { save(); render(); toast('Your friend has a cozy spot in your room.', 'paw'); } break;
     case 'room-slot': roomSlot = id; render(); $(`[data-action="room-slot"][data-id="${id}"]`)?.focus({ preventScroll: true }); break;
     case 'room-furnish': { const result = furnishRoom(state, id); if (!result.ok) { toast(result.reason, 'coin'); break; } refreshRoom(result.item.slot); if (result.purchased) chime(); toast(`${result.item.name} is in your room.`, 'home'); break; }
     case 'room-remove': { const result = removeFurnishing(state, id); if (result.ok) { refreshRoom(id); toast('A little space to try something new. Your furnishing is still yours.', 'home'); } break; }

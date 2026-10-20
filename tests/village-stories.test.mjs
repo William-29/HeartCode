@@ -1,3 +1,5 @@
+import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
+import { careForPet, choosePetBed, normalizeAmbience } from '../dist/cozy-model.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -131,7 +133,7 @@ test('quotes, backslashes and Python-looking text stay inert when demo values en
 // The adapter exercises the actual app functions and queued native-dialog close
 // ordering. It deliberately makes no assertions about browser layout or pixels.
 function appHarness() {
-  const closeEvents = [], nodes = new Map(), stored = new Map(), pendingRuns = [], mounted = [];
+  const closeEvents = [], nodes = new Map(), stored = new Map(), pendingRuns = [], mounted = [], petSessions = [];
   const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   class Element extends EventTarget {
     constructor(id = '') { super(); this.id = id; this.open = false; this.isConnected = true; this.children = []; this.nodes = new Map(); this.html = ''; this.textContent = ''; this.value = ''; this.disabled = false; this.hidden = false; this.style = {}; this.classes = new Set(); this.classList = { add: (...items) => items.forEach(item => this.classes.add(item)), remove: (...items) => items.forEach(item => this.classes.delete(item)), toggle: (item, value) => value ? this.classes.add(item) : this.classes.delete(item) }; }
@@ -140,6 +142,7 @@ function appHarness() {
       this.html = html; this.nodes = new Map();
       for (const match of html.matchAll(/<(\w+)\b[^>]*\bid="([^"]+)"[^>]*>/g)) {
         const node = new Element(match[2]);
+        if (match[1] === 'details') node.open = /\sopen(?:\s|>)/.test(match[0]);
         if (match[1] === 'textarea') node.value = decode(html.slice(match.index + match[0].length).split('</textarea>')[0]);
         this.nodes.set(node.id, node);
       }
@@ -172,6 +175,8 @@ function appHarness() {
   const scope = {
     ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
     renderRoom, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
+    ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience,
+    mountRoomEditor: () => ({ dispose() {} }), mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
     localStorage: { getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value) },
@@ -192,7 +197,7 @@ function appHarness() {
     flushClose: () => { while (closeEvents.length) closeEvents.shift()(); },
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
-    pendingRuns, stored,
+    pendingRuns, stored, petSessions,
     click: (action, id) => {
       const button = { dataset: { action, id }, disabled: false };
       const event = new Event('click');
@@ -332,4 +337,42 @@ test('sitting at the café pauses movement, opens a pet scene, and never awards 
   app.call('closeVillage'); app.flushClose();
   assert.equal(app.node('village-dialog').open, false);
   assert.deepEqual({ xp: app.state().xp, coins: app.state().coins }, before);
+});
+
+test('weather and independent sound settings save through the actual settings form', () => {
+  const app = appHarness();
+  app.call('openSettings');
+  const form = app.node('settings-form');
+  app.node('adventurer-name').value = 'Neighbor';
+  form.sound = { checked: true }; form.motion = { checked: false };
+  const fields = { weather:{value:'rain'}, weatherMotion:{checked:false}, 'ambient-rain':{checked:true}, 'ambient-fire':{checked:false}, 'ambient-cafe':{checked:true}, ambientVolume:{value:'65'} };
+  form.elements = { namedItem: name => fields[name] };
+  form.dispatchEvent(new Event('submit'));
+  assert.deepEqual(JSON.parse(JSON.stringify(app.state().ambience)), { weather:'rain', motion:false, rain:true, fire:false, cafe:true, volume:.65 });
+  assert.equal(app.state().sound,true); assert.equal(app.node('settings-dialog').open,false);
+  assert.deepEqual(stateApi.normalizeState(JSON.parse(app.stored.get(stateApi.SAVE_KEY))).ambience, JSON.parse(JSON.stringify(app.state().ambience)));
+});
+
+test('pet activity completion updates the companion page, persists rewards, and equips the unlocked room bed', () => {
+  const app = appHarness(); app.evaluate("route = 'companions'; render()");
+  const before = { coins:app.state().coins, xp:app.state().xp };
+  for (const action of ['pet','fetch','train']) app.petSessions.at(-1).onComplete(action);
+  assert.equal(app.state().petCare.pip.points,9); assert.equal(app.state().petCare.pip.bed,'blanket');
+  assert.deepEqual([...app.state().petCare.pip.tricks],['hop']);
+  app.petSessions.at(-1).onComplete('fetch');assert.equal(app.state().petCare.pip.points,9);
+  app.click('pet-bed','none');assert.equal(app.state().petCare.pip.bed,null);
+  app.click('pet-bed','blanket');
+  app.evaluate("route = 'room'; render()");
+  assert.ok(app.node('app').innerHTML.includes('bed-blanket'));
+  assert.equal(stateApi.normalizeState(JSON.parse(app.stored.get(stateApi.SAVE_KEY))).petCare.pip.points,9);
+  assert.deepEqual({ coins:app.state().coins, xp:app.state().xp },before);
+});
+
+test('the decoration drawer stays open when switching categories, buying and clearing furnishings', () => {
+  const app=appHarness();app.state().coins=100;app.evaluate("route = 'room'; render()");
+  assert.equal(app.node('room-decor').open,false);
+  app.node('room-decor').open=true;app.click('room-slot','plant');assert.equal(app.node('room-decor').open,true);
+  app.click('room-furnish','plant-fern');assert.equal(app.node('room-decor').open,true);
+  app.click('room-remove','plant');assert.equal(app.node('room-decor').open,true);
+  app.node('room-decor').open=false;app.evaluate('render()');assert.equal(app.node('room-decor').open,false);
 });

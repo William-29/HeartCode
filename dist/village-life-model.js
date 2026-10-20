@@ -1,3 +1,4 @@
+import { normalizeLayout, wallpapers } from './cozy-model.js';
 export const periods = Object.freeze(['morning', 'afternoon', 'evening']);
 export function villagePeriod(preference = 'auto', now = new Date()) {
   if (periods.includes(preference)) return preference;
@@ -40,7 +41,7 @@ export const roomItems = Object.freeze([
   { id: 'wall-stars', slot: 'wall', name: 'Stargazer print', cost: 140, description: 'A tiny observatory above your desk.' }
 ]);
 export function freshHome() {
-  return { owned: roomItems.filter(item => !item.cost).map(item => item.id), placed: { chair: 'chair-cinnamon', lamp: 'lamp-brass', plant: null, rug: 'rug-braided', wall: 'wall-books' } };
+  return { owned: roomItems.filter(item => !item.cost).map(item => item.id), placed: { chair: 'chair-cinnamon', lamp: 'lamp-brass', plant: null, rug: 'rug-braided', wall: 'wall-books' }, layout: normalizeLayout(), wallpaper: 'honey' };
 }
 export function normalizeHome(value) {
   const home = freshHome();
@@ -49,6 +50,8 @@ export function normalizeHome(value) {
     const id = value?.placed?.[slot];
     if (id === null || (home.owned.includes(id) && roomItems.some(item => item.id === id && item.slot === slot))) home.placed[slot] = id;
   }
+  home.layout = normalizeLayout(value?.layout);
+  home.wallpaper = Object.hasOwn(wallpapers, value?.wallpaper) ? value.wallpaper : 'honey';
   return home;
 }
 export function furnishRoom(state, id) {
