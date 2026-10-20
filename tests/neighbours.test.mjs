@@ -240,6 +240,29 @@ test('failed, stopped, closed and disposed learning runs never commit late progr
   }finally{ui.dispose();}
 });
 
+test('exhibition visits run the saved clock and retain a way back without awarding rewards',async()=>{
+  const s=freshState(),p=clockProjects[0];prepareClock(s,p);completeNeighbour(s,p.id,p.solution);
+  const ui=harness(s,'clockwork'),coins=s.coins;
+  try{
+    ui.session.openDemo(p.id,true);
+    assert.equal(ui.dialog.open,true);assert.match(ui.dialog.innerHTML,/#courtyard\/exhibition/);
+    ui.work('run-use');await ui.finish(python([{code:ui.pending().code}])[0]);
+    assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Working again/);
+    assert.equal(s.coins,coins);assert.equal(ui.rewards().length,0);
+  }finally{ui.dispose();}
+});
+
+test('a queued close event from an earlier dialog cannot clear a newly opened project',async()=>{
+  const ui=harness(restored(),'shared'),p=sharedProjects[0];
+  try{
+    ui.click('project',p.id);ui.work('close');ui.click('project',p.id);
+    ui.dialog.dispatchEvent(new Event('close'));
+    ui.dialog.querySelector('#neighbour-code').value=p.solution;ui.work('run');
+    assert.ok(ui.pending());await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+    assert.equal(ui.rewards().length,1);
+  }finally{ui.dispose();}
+});
+
 function prepareClock(s,p){
   assert.equal(inspectMechanism(s,p.id,p.answer).ok,true);
   if(p.order){

@@ -1,3 +1,4 @@
+import { routeFromHash, parentPlace, placeNavigation } from './navigation.js';
 import { ambienceSettings, renderPetCorner, mountPetPlay } from './cozy-ui.js';
 import { renderAdventures, mountAdventures } from './adventures.js';
 import { renderCourtyard, renderWardrobe, mountCommunity } from './community.js';
@@ -29,7 +30,7 @@ let state = freshState();
 let saveWarning = '';
 try { const stored = localStorage.getItem(SAVE_KEY); if (stored) state = normalizeState(JSON.parse(stored)); }
 catch { saveWarning = 'Your saved adventure could not be loaded. This session starts fresh; use Settings to restore an exported save.'; }
-let route = location.hash.slice(1) || 'village';
+let route = routeFromHash(location.hash);
 let mapSelection = null;
 let roomSlot = 'chair';
 let roomEditor = null, petPlay = null;
@@ -89,8 +90,19 @@ function celebrate(options, parent = document.body) {
   celebration?.dispose();
   celebration = showCelebration({ companion: pet().id, name: pet().name, ...options }, { parent, reducedMotion: state.reducedMotion });
 }
-function navigate(next) { if (!routes[next]) next = 'tavern'; if (route === next) { render(); return; } location.hash = next; }
-window.addEventListener('hashchange', () => { cancelRun(); route = location.hash.slice(1); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
+function leaveActivity() {
+  cancelRun();
+  if (questDialog.open) closeQuest();
+  if (villageDialog.open) closeVillage();
+  if (settingsDialog.open) settingsDialog.close();
+}
+function navigate(next) {
+  if (!routes[routeFromHash(next)]) next = 'village';
+  leaveActivity();
+  if ((route === next && !location.hash.includes('/')) || location.hash.replace(/^#/, '') === next) { render(); return; }
+  location.hash = next;
+}
+window.addEventListener('hashchange', () => { leaveActivity(); route = routeFromHash(location.hash); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 function render() {
   neighbourSession?.dispose(); neighbourSession = null;
@@ -115,16 +127,16 @@ function render() {
     <aside class="sidebar">
       <a class="brand" href="#village" aria-label="Hearthcode village"><img src="assets/favicon.svg" alt="" width="39" height="39"><span>Hearthcode<small>THE LEARNING TAVERN</small></span></a>
       <div class="sidebar-label">YOUR ADVENTURE</div>
-      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['adventures', 'courtyard', 'wardrobe', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
+      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['adventures', 'courtyard', 'wardrobe', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : parentPlace(route) === key ? 'active-parent' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
       <div class="side-note">${teaCup()}<p>There’s always time<br>for one more try.</p><span>THE KETTLE’S ON</span></div>
       <div class="sidebar-bottom">
         <button class="quiet-button settings-link" data-action="settings">${icon('settings')} Settings & saved progress</button>
-        <div class="player-card"><div class="avatar">${characterPortrait("traveler", "player-portrait", state.wardrobe)}</div><div><strong>${esc(state.name)}</strong><span>Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}</span></div></div>
+        <div class="player-card"><button class="avatar" data-action="navigate" data-route="wardrobe" aria-label="Change your look in your room">${characterPortrait("traveler", "player-portrait", state.wardrobe)}</button><div><strong>${esc(state.name)}</strong><span id="player-level">Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}</span></div></div>
         <div class="small-row"><span>To the next level</span><span>${level.current} / ${level.needed} XP</span></div>${progressBar(level.percent)}
       </div>
     </aside>
     <div class="workspace" data-route="${route}">
-      <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
+      <header class="topbar">${placeNavigation(route, routes)}<div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
       <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ clockwork: () => renderNeighbours(state, 'clockwork', pet()), discoveries: () => renderNeighbours(state, 'discoveries', pet()), apprentices: () => renderNeighbours(state, 'apprentices', pet()), shared: () => renderNeighbours(state, 'shared', pet()), lake: () => renderNeighbours(state, 'lake', pet()), courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
@@ -143,6 +155,7 @@ function render() {
     state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun,
     onSave: () => { saveAdventure(); const avatar = $('.avatar'); if (avatar) avatar.innerHTML = characterPortrait('traveler', 'player-portrait', state.wardrobe); },
     onOriginalDemo: openProjectDemo,
+    onNeighbourDemo: item => navigate(`${item.place}/exhibit/${item.id}`),
     onReward: result => {
       if (!result.opening) activity(state);
       const earned = unlockAchievements(state);
@@ -152,6 +165,9 @@ function render() {
       notifyAchievements(earned);
     }
   });
+  const [, destination, creation] = location.hash.replace(/^#/, '').split('/');
+  if (route === 'courtyard' && destination === 'exhibition') communitySession?.openExhibition();
+  if (destination === 'exhibit' && creation) neighbourSession?.openDemo(creation, true);
   const unlockedClothes = wardrobeCount(state);
   if (unlockedClothes > knownWardrobeCount) toast('Something new is waiting in your wardrobe. A little piece of your story.', 'spark', 6000);
   knownWardrobeCount = unlockedClothes;
@@ -186,7 +202,7 @@ function saveAdventure() {
   if (coins) coins.textContent = state.coins.toLocaleString();
   if (xp) xp.textContent = state.xp.toLocaleString();
   const level = levelInfo(state.xp);
-  const player = $('.player-card span');
+  const player = $('#player-level');
   if (player) player.textContent = `Level ${level.level} · ${level.level < 4 ? 'Curious apprentice' : level.level < 7 ? 'Tavern scholar' : 'Guild adventurer'}`;
   const amount = $('.sidebar-bottom .small-row span:last-child');
   if (amount) amount.textContent = `${level.current} / ${level.needed} XP`;
@@ -276,7 +292,7 @@ function openProjectDemo(id) {
   if (questDialog.open) closeQuest();
   cancelRun(); villageSession?.pause(); activeDemo = project;
   activeGame = project.id === 'project-guessing-game' ? { secret: 1 + Math.floor(Math.random() * 100), attempts: [], won: false } : null;
-  villageDialog.innerHTML = renderProjectDemo(project) + (route === 'festival' ? '<div class="festival-demo-return"><button class="text-button" data-action="festival-return">Return to the festival</button></div>' : '');
+  villageDialog.innerHTML = renderProjectDemo(project) + (route === 'courtyard' ? '<div class="festival-demo-return"><button class="text-button" data-action="navigate" data-route="courtyard/exhibition">Back to the makers’ exhibition</button></div>' : '') + (route === 'festival' ? '<div class="festival-demo-return"><button class="text-button" data-action="festival-return">Return to the festival</button></div>' : '');
   if (!villageDialog.open) villageDialog.showModal();
   $('#project-demo-form').addEventListener('submit', executeProjectDemo);
 }
@@ -384,14 +400,14 @@ function completeActive(output = '', submittedCode = '') {
   }
   render(); notifyAchievements(result.achievements);
   const next = q.id !== 'daily' ? quests[quests.indexOf(q) + 1] : null;
-  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${result.replay ? 'PRACTICE MAKES PROGRESS' : 'ANOTHER LITTLE SPARK'}</span><button class="icon-button" data-action="close-quest" aria-label="Close quest">${icon('close')}</button></div><div class="success-screen"><div class="success-illustration">${rewardChest()}</div><p class="eyebrow">${q.id === 'daily' ? 'DAILY SPARK COMPLETE' : 'QUEST COMPLETE'}</p><h2>${q.id === 'masters-pipeline' ? 'Master of the Hearthlands.' : q.id === 'guild-trial' ? 'You’re a legend of the tavern.' : result.replay ? 'Still got the magic.' : 'Look at you, learning new spells.'}</h2><p>${esc(q.takeaway)}</p>${output.trim() ? `<pre class="success-output">${esc(output.slice(0, 2000))}</pre>` : ''}<div class="success-rewards">${result.replay ? '<span>Practice complete · First-clear rewards already collected.</span>' : rewardLine(result.xp, result.coins)}</div>${leveled ? `<div class="level-up">${icon('spark')} Level up! You’re now level ${levelInfo(state.xp).level}.</div>` : ''}<div class="success-pet">${sprite(pet().id)}<span>${pet().name} looks very proud of you.</span></div><div class="success-actions"><button class="button outline" data-action="close-quest">Back to the tavern</button>${next ? `<button class="button primary" data-action="quest" data-id="${next.id}">Next quest ${icon('arrow')}</button>` : `<button class="button primary" data-action="browse-pets">Visit your companions ${icon('paw')}</button>`}</div></div>`;
+  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${result.replay ? 'PRACTICE MAKES PROGRESS' : 'ANOTHER LITTLE SPARK'}</span><button class="icon-button" data-action="close-quest" aria-label="Close quest">${icon('close')}</button></div><div class="success-screen"><div class="success-illustration">${rewardChest()}</div><p class="eyebrow">${q.id === 'daily' ? 'DAILY SPARK COMPLETE' : 'QUEST COMPLETE'}</p><h2>${q.id === 'masters-pipeline' ? 'Master of the Hearthlands.' : q.id === 'guild-trial' ? 'You’re a legend of the tavern.' : result.replay ? 'Still got the magic.' : 'Look at you, learning new spells.'}</h2><p>${esc(q.takeaway)}</p>${output.trim() ? `<pre class="success-output">${esc(output.slice(0, 2000))}</pre>` : ''}<div class="success-rewards">${result.replay ? '<span>Practice complete · First-clear rewards already collected.</span>' : rewardLine(result.xp, result.coins)}</div>${leveled ? `<div class="level-up">${icon('spark')} Level up! You’re now level ${levelInfo(state.xp).level}.</div>` : ''}<div class="success-pet">${sprite(pet().id)}<span>${pet().name} looks very proud of you.</span></div><div class="success-actions"><button class="button outline" data-action="close-quest">Back to your adventure</button>${next ? `<button class="button primary" data-action="quest" data-id="${next.id}">Next quest ${icon('arrow')}</button>` : `<button class="button primary" data-action="browse-pets">Visit your companions ${icon('paw')}</button>`}</div></div>`;
   $('.success-actions button', questDialog)?.focus();
   if (!result.replay) celebrate({ xp: result.xp, coins: result.coins, level: leveled ? levelInfo(state.xp).level : null, daily: q.id === 'daily', achievements: result.achievements }, questDialog);
 }
 function renderProjectSuccess(project, result, output, leveled) {
   render(); notifyAchievements(result.achievements);
   const villager = villagers.find(v => v.id === project.npc);
-  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${result.replay ? 'A FRESH POLISH' : 'MADE WITH A FRIEND'}</span><button class="icon-button" data-action="close-quest" aria-label="Close project">${icon('close')}</button></div><div class="success-screen"><div class="success-illustration">${rewardChest()}</div><p class="eyebrow">VILLAGE PROJECT COMPLETE</p><h2>${esc(project.title)}</h2><p>${esc(project.storyAfter)}</p><p>${esc(project.takeaway)}</p>${output.trim() ? `<pre class="success-output">${esc(output.slice(0, 2000))}</pre>` : ''}<div class="success-rewards">${result.replay ? '<span>Updated creation saved · Rewards already earned.</span>' : rewardLine(result.xp, result.coins)}</div><p class="friendship-success">♥ ${esc(villager.name)} · ${result.friendship.count}/2 projects together · ${esc(result.friendship.label)}</p>${leveled ? `<div class="level-up">${icon('spark')} You reached level ${levelInfo(state.xp).level}.</div>` : ''}<div class="success-actions"><button class="button outline" data-action="festival-return">See the festival ${icon('spark')}</button><button class="button outline" data-action="villager" data-id="${project.npc}">Talk to ${esc(villager.name)}</button>${project.demo ? `<button class="button primary" data-action="project-demo" data-id="${project.id}">Try your creation ${icon('play')}</button>` : ''}<button class="text-button" data-action="project-download" data-id="${project.id}">${icon('download')} Keep the Python file</button></div></div>`;
+  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${result.replay ? 'A FRESH POLISH' : 'MADE WITH A FRIEND'}</span><button class="icon-button" data-action="close-quest" aria-label="Close project">${icon('close')}</button></div><div class="success-screen"><div class="success-illustration">${rewardChest()}</div><p class="eyebrow">VILLAGE PROJECT COMPLETE</p><h2>${esc(project.title)}</h2><p>${esc(project.storyAfter)}</p><p>${esc(project.takeaway)}</p>${output.trim() ? `<pre class="success-output">${esc(output.slice(0, 2000))}</pre>` : ''}<div class="success-rewards">${result.replay ? '<span>Updated creation saved · Rewards already earned.</span>' : rewardLine(result.xp, result.coins)}</div><p class="friendship-success">♥ ${esc(villager.name)} · ${result.friendship.count}/2 projects together · ${esc(result.friendship.label)}</p>${leveled ? `<div class="level-up">${icon('spark')} You reached level ${levelInfo(state.xp).level}.</div>` : ''}<div class="success-actions"><button class="button outline" data-action="festival-return">See the festival ${icon('spark')}</button><button class="button outline" data-action="villager" data-id="${project.npc}">Talk to ${esc(villager.name)}</button>${project.demo ? `<button class="button primary" data-action="project-demo" data-id="${project.id}">Try your creation ${icon('play')}</button>` : ''}<button class="text-button" data-action="navigate" data-route="courtyard/exhibition">Give it a place at the exhibition ${icon('arrow')}</button><button class="text-button" data-action="project-download" data-id="${project.id}">${icon('download')} Keep the Python file</button></div></div>`;
   $('.success-actions button', questDialog)?.focus();
   if (!result.replay) celebrate({ xp: result.xp, coins: result.coins, level: leveled ? levelInfo(state.xp).level : null, achievements: result.achievements }, questDialog);
 }
@@ -406,28 +422,28 @@ function bindEditor(textarea, key) {
   textarea.addEventListener('scroll', () => { textarea.previousElementSibling.scrollTop = textarea.scrollTop; });
   textarea.addEventListener('keydown', event => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); if (key === 'practice') executePractice(); else executeQuest(); }
-    if (event.key === 'Escape') { allowTab = true; event.stopPropagation(); }
+    if (event.key === 'Escape') { allowTab = true; event.preventDefault(); event.stopPropagation(); }
     if (event.key === 'Tab' && !allowTab && !event.shiftKey) { event.preventDefault(); const start = textarea.selectionStart; textarea.setRangeText('    ', start, textarea.selectionEnd, 'end'); textarea.dispatchEvent(new Event('input')); }
     else if (event.key === 'Tab') allowTab = false;
   });
 }
 async function executeQuest() {
   if (!activeQuest || solved || activeQuest.type !== 'code' || $('#quest-run')?.disabled) return;
-  const q = activeQuest, code = $('#quest-code').value;
+  const q = activeQuest, editor = $('#quest-code'), code = editor.value;
   saveDraft(q.id, code); $('#quest-feedback').innerHTML = ''; setRunning('quest', true);
-  const result = await runPython(code, q.checks, phase => { const status = $('#quest-status'); if (status) status.textContent = phase === 'loading' ? 'Warming up Python… the first run can take a moment.' : 'Running your spell and checking its results…'; });
-  if (activeQuest !== q || !questDialog.open) return;
+  const result = await runPython(code, q.checks, phase => { const status = $('#quest-status'); if (activeQuest === q && editor === $('#quest-code') && status) status.textContent = phase === 'loading' ? 'Warming up Python… the first run can take a moment.' : 'Running your spell and checking its results…'; });
+  if (activeQuest !== q || !questDialog.open || editor !== $('#quest-code')) return;
   setRunning('quest', false); $('#quest-status').textContent = result.cancelled ? 'Execution stopped.' : 'Your draft is saved. Keep experimenting.';
   if (result.passed) completeActive(result.output, code);
   else $('#quest-feedback').innerHTML = `<div class="feedback ${result.cancelled ? '' : 'error'}"><strong>${result.runtimeError ? 'The workbench needs a connection' : result.cancelled ? 'Spell stopped' : 'A clue for your next try'}</strong><p>${esc(result.error)}</p>${result.output ? `<pre>${esc(result.output)}</pre>` : ''}</div>`;
 }
 async function executePractice() {
   if (!$('#practice-code') || $('#practice-run').disabled) return;
-  const code = $('#practice-code').value; saveDraft('practice', code); setRunning('practice', true);
+  const editor = $('#practice-code'), code = editor.value; saveDraft('practice', code); setRunning('practice', true);
   $('.output-panel').classList.remove('practice-done');
   $('.output-heading').innerHTML = `${icon('code')} OUTPUT`;
-  const result = await runPython(code, '', phase => { if ($('#practice-status')) $('#practice-status').textContent = phase === 'loading' ? 'Warming up Python…' : 'Running your code…'; });
-  if (route !== 'practice' || !$('#practice-output')) return;
+  const result = await runPython(code, '', phase => { if (editor === $('#practice-code') && $('#practice-status')) $('#practice-status').textContent = phase === 'loading' ? 'Warming up Python…' : 'Running your code…'; });
+  if (route !== 'practice' || editor !== $('#practice-code') || !$('#practice-output')) return;
   setRunning('practice', false); $('#practice-output').textContent = (result.output || '') + (result.passed ? result.output ? '' : 'Code finished successfully. Use print() to display a result.' : '\n' + result.error); $('#practice-output').classList.toggle('output-error', !result.passed && !result.cancelled); $('#practice-status').textContent = result.passed ? 'Spell complete. What will you try next?' : 'Edit your code and try again.';
   $('.output-panel').classList.toggle('practice-done', result.passed);
   $('.output-heading').innerHTML = `${icon(result.passed ? 'check' : 'code')} ${result.passed ? 'NICELY DONE · YOUR CODE RAN' : 'OUTPUT'}`;
@@ -449,7 +465,7 @@ function exportSave() {
 async function importSave(event) {
   const file = event.target.files[0]; if (!file) return;
   try {
-    if (file.size > 1000000) throw new Error('That file is too large to be a Hearthcode save.');
+    if (file.size > 20 * 1024 * 1024) throw new Error('That file is too large to be a Hearthcode save.');
     const imported = normalizeState(JSON.parse(await file.text()));
     const backup = JSON.stringify(state);
     try { localStorage.setItem('hearthcode-before-import', backup); } catch { /* Export remains available when storage is restricted. */ }
@@ -459,6 +475,9 @@ async function importSave(event) {
 }
 
 document.addEventListener('click', event => {
+  if (event.target.closest('.skip-link')) { event.preventDefault(); $('#main')?.focus(); return; }
+  const nearby = $('.nearby-places[open]');
+  if (nearby && !event.target.closest('.nearby-places')) nearby.open = false;
   const button = event.target.closest('[data-action]'); if (!button || button.disabled) return;
   const { action, id } = button.dataset;
   switch (action) {
@@ -500,6 +519,7 @@ document.addEventListener('change', event => {
   if (event.target.id === 'sample-select' && practiceSamples[event.target.value]) { cancelRun(); state.drafts.practice = practiceSamples[event.target.value]; save(); render(); }
 });
 document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') { const menu = $('.nearby-places[open]'); if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); } }
   if (!event.target.matches('.answer-option') || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
   event.preventDefault(); const options = [...questDialog.querySelectorAll('.answer-option')]; const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1; const next = options[(options.indexOf(event.target) + direction + options.length) % options.length]; next.focus(); next.click();
 });

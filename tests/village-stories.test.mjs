@@ -1,3 +1,4 @@
+import { routeFromHash, parentPlace, placeNavigation } from '../dist/navigation.js';
 import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
 import { renderAdventures } from '../dist/adventures.js';
 import { renderCourtyard, renderWardrobe } from '../dist/community.js';
@@ -138,7 +139,7 @@ test('quotes, backslashes and Python-looking text stay inert when demo values en
 // The adapter exercises the actual app functions and queued native-dialog close
 // ordering. It deliberately makes no assertions about browser layout or pixels.
 function appHarness() {
-  const closeEvents = [], nodes = new Map(), stored = new Map(), pendingRuns = [], mounted = [], petSessions = [];
+  const closeEvents = [], nodes = new Map(), selectors = new Map(), stored = new Map(), pendingRuns = [], mounted = [], petSessions = [];
   const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   class Element extends EventTarget {
     constructor(id = '') { super(); this.id = id; this.open = false; this.isConnected = true; this.children = []; this.nodes = new Map(); this.html = ''; this.textContent = ''; this.value = ''; this.disabled = false; this.hidden = false; this.style = {}; this.classes = new Set(); this.classList = { add: (...items) => items.forEach(item => this.classes.add(item)), remove: (...items) => items.forEach(item => this.classes.delete(item)), toggle: (item, value) => value ? this.classes.add(item) : this.classes.delete(item) }; }
@@ -167,7 +168,7 @@ function appHarness() {
   const document = new EventTarget();
   document.documentElement = new Element(); document.body = new Element();
   document.querySelector = selector => {
-    if (!selector.startsWith('#')) return new Element();
+    if (!selector.startsWith('#')) { if (!selectors.has(selector)) selectors.set(selector,new Element()); return selectors.get(selector); }
     return nodes.get(selector.slice(1)) || [...nodes.values()].map(node => node.querySelector(selector)).find(Boolean) || null;
   };
   document.createElement = () => new Element();
@@ -178,12 +179,12 @@ function appHarness() {
     return new Promise(resolve => { currentRun = { code, checks, resolve }; pendingRuns.push(currentRun); });
   };
   const scope = {
-    ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
+    routeFromHash, parentPlace, placeNavigation, ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
     renderRoom, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
     ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience, renderAdventures,
     mountAdventures: () => ({ dispose() {} }),
-    renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: () => ({ dispose() {} }),
-    renderNeighbours, noticeDiscoveries, mountNeighbours: () => ({ dispose() {} }),
+    renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: options => ({ dispose() {}, openExhibition() { nodes.get('community-dialog').innerHTML = 'The makers exhibition'; nodes.get('community-dialog').showModal(); }, options }),
+    renderNeighbours, noticeDiscoveries, mountNeighbours: () => ({ dispose() {}, openDemo() {} }),
     mountRoomEditor: () => ({ dispose() {} }), mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
@@ -201,7 +202,7 @@ function appHarness() {
   return {
     call: (name, ...args) => context[name](...args),
     evaluate: expression => vm.runInContext(expression, context),
-    state: () => vm.runInContext('state', context), node: id => document.querySelector(`#${id}`), mounted,
+    selector: selector => document.querySelector(selector), state: () => vm.runInContext('state', context), node: id => document.querySelector(`#${id}`), mounted,
     flushClose: () => { while (closeEvents.length) closeEvents.shift()(); },
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
@@ -209,11 +210,70 @@ function appHarness() {
     click: (action, id) => {
       const button = { dataset: { action, id }, disabled: false };
       const event = new Event('click');
-      Object.defineProperty(event, 'target', { value: { closest: () => button } });
+      Object.defineProperty(event, 'target', { value: { closest: selector => selector === '[data-action]' ? button : null } });
       document.dispatchEvent(event);
     }
   };
 }
+
+test('side activity saves update the level label without replacing the player portrait', () => {
+  const app=appHarness(),portrait=app.selector('.player-card span');
+  portrait.textContent='painted character';
+  app.state().xp=900;app.call('saveAdventure');
+  assert.equal(portrait.textContent,'painted character');
+  assert.match(app.node('player-level').textContent,/Level /);
+  assert.match(app.node('app').innerHTML,/aria-label="Change your look in your room"/);
+});
+
+test('a late practice run cannot replace output in a newly rendered editor', async () => {
+  const app=appHarness();app.evaluate("route='practice'; render()");
+  app.node('practice-code').value='print("old output")';
+  const execution=app.call('executePractice');
+  app.evaluate('render()');app.node('practice-output').textContent='A fresh workbench';
+  app.finish({passed:true,output:'old output'});await execution;
+  assert.equal(app.node('practice-output').textContent,'A fresh workbench');
+  assert.equal(app.node('practice-run').disabled,false);
+});
+
+test('reopening the same quest discards the previous editor result', async () => {
+  const app=appHarness(),quest=content.quests.find(q=>q.type==='code');
+  app.state().completed=content.quests.slice(0,content.quests.indexOf(quest)).map(q=>q.id);
+  app.call('openQuest',quest.id);const execution=app.call('executeQuest');
+  app.call('closeQuest');app.call('openQuest',quest.id);app.flushClose();
+  await execution;
+  assert.equal(app.node('quest-dialog').open,true);
+  assert.equal(app.state().completed.includes(quest.id),false);
+  assert.equal(app.node('quest-feedback').innerHTML,'');
+});
+
+test('moving to another place closes open stories and cancels their running Python', async () => {
+  const app=appHarness(),p=byId('tavern-bill');
+  app.state().projects=[p.id];app.state().projectCode[p.id]=p.solution;
+  app.call('openProjectDemo',p.id);
+  const form=app.node('project-demo-form');form.values=defaults(p);
+  const execution=app.call('executeProjectDemo',{target:form,preventDefault(){}});
+  app.call('navigate','room');await execution;
+  assert.equal(app.node('village-dialog').open,false);assert.equal(app.cancelled(),1);
+  assert.equal(app.evaluate('location.hash'),'room');
+});
+
+test('direct exhibition links open the exhibition and room keeps its parent navigation selected', () => {
+  const app=appHarness();
+  app.evaluate("location.hash='#courtyard/exhibition'; route=routeFromHash(location.hash); render()");
+  assert.equal(app.node('community-dialog').open,true);
+  app.evaluate("location.hash='#wardrobe'; route=routeFromHash(location.hash); render()");
+  assert.match(app.node('app').innerHTML,/href="#room" aria-label="Your room" class="nav-link active-parent"/);
+});
+
+test('a valid exported adventure with more than one megabyte of drafts can be restored', async () => {
+  const app=appHarness(),saved=stateApi.freshState();saved.name='Returning scholar';
+  for(const q of content.quests.slice(0,36))saved.drafts[q.id]='#'+ 'x'.repeat(29998);
+  const text=JSON.stringify(saved);assert.ok(Buffer.byteLength(text)>1000000);
+  await app.call('importSave',{target:{files:[{size:Buffer.byteLength(text),text:async()=>text}],value:'backup.json'}});
+  assert.equal(app.state().name,'Returning scholar');
+  assert.equal(Object.keys(app.state().drafts).length,36);
+  assert.equal(app.state().drafts[content.quests[0].id],saved.drafts[content.quests[0].id]);
+});
 
 test('High Street is reachable from the village while keeping the eight main navigation links', () => {
   const app = appHarness();

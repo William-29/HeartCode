@@ -1,3 +1,4 @@
+import { setBusyControls, editorIndent } from './editor-controls.js';
 import { adventures, adventureById, trainStops, gardenBeds, heldOutBeds } from './adventure-content.js';
 import { available, ready, collectClue, chooseTheory, finishAdventure, travel, observe, customerSource, resultValue, trainingSource, keepModel, plant } from './adventure-model.js';
 import { icon } from './art.js';
@@ -72,7 +73,7 @@ export function renderAdventures(state) {
 }
 function challengeMarkup(state,item) {
   const code=state.adventure.drafts[item.id]??state.adventure.code[item.id]??item.starter;
-  return `<div class="dialog-top"><span class="eyebrow">${esc(item.voice)} · ${item.xp} XP / ${item.coins} coins once</span><button class="icon-button" data-work="close" aria-label="Close activity">${icon('close')}</button></div><h2>${item.title}</h2><p>${item.lesson}</p><div class="adventure-task">${item.task}</div><label for="adventure-code">Your Python</label><textarea id="adventure-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(code)}</textarea><div class="adventure-actions">${buttonWork('run','Run & check')}${buttonWork('stop','Stop',true)}${buttonWork('reset','Restore starter')}</div><details><summary>A gentle hint</summary><p>${item.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(item.solution)}</pre><p>Try changing the inputs to explain why this works.</p></details><pre id="adventure-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here. Python may take a moment to load the first time.</pre>`;
+  return `<div class="dialog-top"><span class="eyebrow">${esc(item.voice)} · ${item.xp} XP / ${item.coins} coins once</span><button class="icon-button" data-work="close" aria-label="Close activity">${icon('close')}</button></div><h2>${item.title}</h2><p>${item.lesson}</p><div class="adventure-task">${item.task}</div><label for="adventure-code">Your Python</label><textarea id="adventure-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(code)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p><div class="adventure-actions">${buttonWork('run','Run & check')}${buttonWork('stop','Stop',true)}${buttonWork('reset','Restore starter')}</div><details><summary>A gentle hint</summary><p>${item.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(item.solution)}</pre><p>Try changing the inputs to explain why this works.</p></details><pre id="adventure-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here. Python may take a moment to load the first time.</pre>`;
 }
 const buttonWork=(action,label,disabled=false)=>`<button class="button ${action==='run'?'primary':'outline'}" data-work="${action}" ${disabled?'disabled':''}>${label}</button>`;
 
@@ -88,10 +89,11 @@ export function mountAdventures({state,onSave,onReward,runPython,cancelRun,root=
   };
   const output=text=>{const el=dialog.querySelector('#adventure-output');if(el)el.textContent=text;};
   function stop(){serial++;if(busy)cancelRun();busy=false;setBusy(false);}
+  const disabledBeforeRun = new Map();
   function setBusy(value){
     busy=value;
-    for(const el of dialog.querySelectorAll('[data-work]')) el.disabled=el.dataset.work==='stop'?!value:el.dataset.work==='close'?false:value;
-    const code=dialog.querySelector('#adventure-code');if(code)code.readOnly=value;
+    setBusyControls(dialog,'[data-work]',value,disabledBeforeRun,'work',['close']);
+    for(const el of dialog.querySelectorAll('textarea,input'))el.readOnly=value;
   }
   function focusActivity(item){
     const id=item?.id||item?.customerId;
@@ -180,10 +182,10 @@ export function mountAdventures({state,onSave,onReward,runPython,cancelRun,root=
   function input(event){if(event.target.id==='adventure-code'&&current?.id){state.adventure.drafts[current.id]=event.target.value.slice(0,30000);save();}}
   function keydown(event){
     if(event.target.id!=='adventure-code')return;
-    if(event.key==='Tab'&&!busy){event.preventDefault();const el=event.target,start=el.selectionStart,end=el.selectionEnd;el.setRangeText('    ',start,end,'end');input(event);}
+    if(!busy)editorIndent(event,input);
     if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();dialog.querySelector('[data-work="run"]')?.click();}
   }
-  const onClose=()=>{stop();const last=current;current=null;focusActivity(last);};
+  const onClose=event=>{if(event.type==='close'&&dialog.open)return;stop();const last=current;current=null;focusActivity(last);};
   root.addEventListener('click',click);dialog.addEventListener('click',work);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('close',onClose);dialog.addEventListener('cancel',onClose);
   return {dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',work);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('close',onClose);dialog.removeEventListener('cancel',onClose);}};
 }

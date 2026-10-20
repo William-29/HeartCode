@@ -1,0 +1,31 @@
+/* Small signposts, not another dashboard. Keep the room and lane roomy. */
+.workspace>.topbar{position:relative;z-index:30}
+.place-navigation{display:flex;align-items:center;gap:18px;min-width:0}
+.breadcrumb{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.breadcrumb a{color:inherit;text-decoration:none}.breadcrumb a:hover{text-decoration:underline}
+.nearby-places{position:relative;flex:none;font-size:12px;color:#745437;z-index:50}
+.nearby-places summary{cursor:pointer;list-style:none;padding:7px 10px;border:1px solid #c9ae84;border-radius:16px;background:#f8edd7}
+.nearby-places summary::-webkit-details-marker{display:none}.nearby-places summary span{padding-left:7px}
+.nearby-places nav{position:absolute;left:0;top:calc(100% + 8px);width:232px;padding:12px 16px;background:#f9ecd3;border:1px solid #ba9566;border-radius:4px 12px 12px;box-shadow:0 12px 30px #4b2c3133;max-height:calc(100dvh - 125px);overflow:auto}
+.nearby-places nav p{font:italic 15px Georgia,serif;margin:2px 0 9px;color:#8a633b}
+.nearby-places nav a{display:flex;justify-content:space-between;gap:10px;padding:9px 0;color:#66472f;text-decoration:none;border-bottom:1px solid #c4a47c55}
+.nearby-places nav a:hover,.nearby-places nav a:focus-visible{color:#8c3d25;background:#e4cc9b44}
+.nearby-places .exhibition-direction{margin-top:5px;color:#51705a;border-bottom:0}
+.nav-link.active-parent{background:#c4a47b22;box-shadow:inset 3px 0 #a88656;color:#63492e}
+.player-card .avatar{padding:0;border:0;cursor:pointer;background:transparent;flex-shrink:0}
+.room-navigation{display:flex;align-items:center;border:1px solid #ba966c;border-radius:6px;background:#efdfc1;box-shadow:0 2px 5px #5f402512;flex:none;overflow:hidden}
+.room-navigation a{padding:7px 13px;color:#795b40;font-size:12px;text-decoration:none;white-space:nowrap}
+.room-navigation a[aria-current]{background:#6f513e;color:#fff1d7;box-shadow:inset 0 1px #ffffff22}
+.room-navigation a:hover:not([aria-current]){background:#e5cc9c}
+.room-heading-actions{display:flex;align-items:center;gap:16px}
+.room-wardrobe-tag{position:absolute;left:50%;top:100%;transform:translateX(-50%);white-space:nowrap;background:#f4dfb5;color:#63432d;font:12px Georgia,serif;border:1px solid #9a794f;border-radius:3px;padding:5px 12px;box-shadow:0 3px 8px #3a241f55;pointer-events:none}
+.room-wardrobe-link:hover .room-wardrobe-tag,.room-wardrobe-link:focus-visible .room-wardrobe-tag{background:#ffe8b4;box-shadow:0 0 15px #ffd08066}
+.exhibition-return{display:inline-flex;align-items:center;gap:6px;margin:12px 0;color:#55715b;font-size:13px}
+.editor-keyboard-note{font-size:11px;color:#80684e;margin:7px 0}
+.workspace #main{animation:arrive-home .2s ease-out}
+@keyframes arrive-home{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:none}}
+.reduce-motion .workspace #main{animation:none}
+@media(prefers-reduced-motion:reduce){.workspace #main{animation:none}}
+@media(max-width:1000px){.place-navigation{gap:8px}.breadcrumb>a,.breadcrumb>span{display:none}.room-heading-actions{gap:8px}.room-heading-actions>.text-button{font-size:10px}}
+@media(max-width:760px){.place-navigation .breadcrumb{display:none}.topbar{justify-content:space-between}.nearby-places summary{font-size:11px;padding:6px 9px}.room-navigation a{padding:7px 9px;font-size:11px}.workspace[data-route="room"] .life-heading h1{font-size:17px}.room-heading-actions>.text-button{display:none}.wardrobe-root .court-heading{flex-wrap:wrap}.room-wardrobe-tag{font-size:10px;padding:4px 8px}}
+@media(max-width:600px){.topbar .top-stats{width:auto;min-width:0;flex:1;justify-content:flex-end}.topbar .icon-button{width:28px;height:28px}.topbar .stat-pill{font-size:9px;gap:3px;padding:4px}.topbar .xp-pill>span{display:none}}
+@media(max-width:420px){.topbar .top-stats>.stat-pill:first-child{display:none}}

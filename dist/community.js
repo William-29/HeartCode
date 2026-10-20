@@ -1,3 +1,5 @@
+import { setBusyControls, editorIndent } from './editor-controls.js';
+import { roomNavigation } from './navigation.js';
 import { icon, sprite } from './art.js';
 import { characterPortrait, characterSprite } from './characters.js';
 import { buildings, buildingById, restorationProjects, restorationById } from './restoration-content.js';
@@ -34,12 +36,12 @@ export function renderCourtyard(state,companion={id:'pip',name:'Pip'}){
       <span class="court-lamplight" aria-hidden="true"></span>
       <button class="court-square-sign" data-community="exhibition">${icon('spark')} The makers’ exhibition <small>${shown.length} creations on display</small></button>
     </div></div>
-    <div class="court-bottom"><p>Visit a doorway to hear its story. Your finished tools belong on the square.</p><div><a class="button outline" href="#shared">${icon('leaf')} The morning round</a>${control('journal',`${icon('book')} The neighbours’ notebook`)}${control('exhibition',`${icon('code')} Arrange the exhibition`)}<a class="button outline" href="#wardrobe">${icon('paw')} Your wardrobe</a></div></div>
+    <div class="court-bottom"><p>Visit a doorway to hear its story. Your finished tools belong on the square.</p><div><a class="button outline" href="#shared">${icon('leaf')} The morning round</a>${control('journal',`${icon('book')} The neighbours’ notebook`)}${control('exhibition',`${icon('code')} Arrange the exhibition`)}<a class="button outline" href="#village">${icon('home')} Back to the lane</a></div></div>
     <p class="community-status sr-only" role="status" aria-live="polite"></p></section>`;
 }
 export function renderWardrobe(state){
   const owned=wardrobeItems.filter(i=>i.slot===wardrobeSlot),chosen=state.wardrobe[wardrobeSlot];
-  return `<section class="community-root wardrobe-root"><header class="court-heading"><div><p class="eyebrow">MADE FOR YOU, GIVEN WITH CARE</p><h1>Your wardrobe</h1><p>Every new piece has a story. Nothing here costs coins.</p></div><a href="#room" class="button outline">${icon('home')} Back to your room</a></header>
+  return `<section class="community-root wardrobe-root"><header class="court-heading"><div><p class="eyebrow">UPSTAIRS AT THE HEARTH & HONEY</p><h1>Your wardrobe</h1><p>Your own quiet corner to get ready. New pieces arrive through friendships and adventures.</p></div>${roomNavigation('wardrobe')}</header>
     <div class="wardrobe-room"><div class="tailor-mirror"><div class="mirror-arch"><div class="mirror-reflection">${characterSprite('traveler','wardrobe-person',state.wardrobe)}</div><span class="mirror-glint"></span></div><div class="mirror-shelf"></div><p>${esc(state.name)}<small>${wardrobeCount(state)} of ${wardrobeItems.length} choices earned</small></p></div>
     <div class="wardrobe-rail"><nav class="wardrobe-tabs" aria-label="Clothing categories">${Object.entries(wardrobeSlots).map(([slot,label])=>`<button data-community="wardrobe-slot" data-id="${slot}" aria-pressed="${wardrobeSlot===slot}">${label}</button>`).join('')}</nav><p class="tailor-note">“A good fit should feel like coming home.”<span>— A note tucked inside the wardrobe door</span></p><div class="wardrobe-choices">${owned.map(item=>{
       const unlocked=itemUnlocked(state,item),equipped=item.id===chosen;
@@ -57,7 +59,7 @@ function buildingMarkup(state,id){
 }
 function projectMarkup(state,item){
   const code=state.restoration.drafts[item.id]??state.restoration.code[item.id]??item.starter,b=buildingById(item.building);
-  return `${dialogTop(`${b.name} · part ${item.stage} of 3`)}<h2>${item.title}</h2><p>${item.lesson}</p><div class="community-task">${item.task}</div><label for="community-code">Your Python</label><textarea id="community-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(code)}</textarea><div class="community-actions">${control('run-project','Run & check',item.id,false,'primary')}${control('stop','Stop','',true)}${control('reset-code','Restore starter',item.id)}${control('building','Back to the story',item.building)}</div><details><summary>A gentle hint</summary><p>${item.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(item.solution)}</pre><p>Try another input and explain each step before moving on.</p></details><pre id="community-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here. The first Python run may take a moment to load.</pre>`;
+  return `${dialogTop(`${b.name} · part ${item.stage} of 3`)}<h2>${item.title}</h2><p>${item.lesson}</p><div class="community-task">${item.task}</div><label for="community-code">Your Python</label><textarea id="community-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(code)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p><div class="community-actions">${control('run-project','Run & check',item.id,false,'primary')}${control('stop','Stop','',true)}${control('reset-code','Restore starter',item.id)}${control('building','Back to the story',item.building)}</div><details><summary>A gentle hint</summary><p>${item.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(item.solution)}</pre><p>Try another input and explain each step before moving on.</p></details><pre id="community-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here. The first Python run may take a moment to load.</pre>`;
 }
 function exhibitionMarkup(state){
   const catalog=exhibitCatalog(state),shown=displayedExhibits(state);
@@ -67,7 +69,7 @@ function exhibitionMarkup(state){
 }
 function demoMarkup(item){
   return `${dialogTop(item.kind==='restoration'?'A TOOL THE VILLAGE USES':'FROM YOUR EXHIBITION')}<h2>${esc(item.title)}</h2><p>${esc(item.demoNote||'Change the inputs and run the Python you saved. Repeated visits do not award additional coins or XP.')}</p>
-    <div class="exhibit-inputs">${item.demo.map(f=>`<label for="exhibit-${f.name}">${esc(f.label)}${f.type==='json'?`<textarea id="exhibit-${f.name}" data-exhibit-field="${f.name}" spellcheck="false" maxlength="5000">${esc(f.value)}</textarea>`:`<input id="exhibit-${f.name}" data-exhibit-field="${f.name}" type="${f.type==='number'?'number':'text'}" ${f.type==='number'?`step="${f.integer?1:'any'}" min="${f.min??-100000}" max="${f.max??100000}"`:''} maxlength="5000" value="${esc(f.value)}">`}</label>`).join('')}</div>
+    <div class="exhibit-inputs">${item.demo.map(f=>`<label for="exhibit-${f.name}">${esc(f.label)}${f.type==='json'?`<textarea id="exhibit-${f.name}" data-exhibit-field="${f.name}" spellcheck="false" maxlength="5000">${esc(f.value)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p>`:`<input id="exhibit-${f.name}" data-exhibit-field="${f.name}" type="${f.type==='number'?'number':'text'}" ${f.type==='number'?`step="${f.integer?1:'any'}" min="${f.min??-100000}" max="${f.max??100000}"`:''} maxlength="5000" value="${esc(f.value)}">`}</label>`).join('')}</div>
     ${item.demo.some(f=>f.type==='json')?'<small>Lists use [ ], dictionaries use { }. Use double quotes for text and null for missing readings.</small>':''}<div class="community-actions">${control('run-demo','Run my saved Python',item.id,false,'primary')}${control('stop','Stop','',true)}${item.id==='greenhouse-model'?control('evaluate-model','Check held-out examples',item.id):''}${control('exhibition','Back to the exhibition')}</div>
     <details><summary>Revisit the Python you wrote</summary><pre>${esc(item.source)}</pre></details><pre id="community-output" class="adventure-output" role="status" aria-live="polite">Your creation is ready to try.</pre>`;
 }
@@ -82,7 +84,7 @@ function openingMarkup(state,id){
   return `${dialogTop('A DOOR OPENS · A STORY CONTINUES')}<div class="opening-scene">${courtyardArt(state, 'opening')}</div><div class="opening-cast">${characterPortrait(b.neighbour,'community-portrait')}${characterPortrait('traveler','community-portrait',state.wardrobe)}</div><h2>Welcome back to ${b.name}.</h2><blockquote class="neighbour-memory">${b.memories[3]}</blockquote><div class="opening-keepsake"><span>${wardrobeSwatch(gift.slot,gift.id)}</span><div><h3>${gift.name}</h3><p>${gift.description}</p><a class="button outline" href="#wardrobe">Try it on in your wardrobe</a></div></div><div class="community-actions">${control('building','See the place at work',id,false,'primary')}${control('close','Stay a while in the square')}</div>`;
 }
 
-export function mountCommunity({state,view='court',companion,onSave,onReward,onOriginalDemo,runPython,cancelRun,root=document.querySelector('.community-root'),dialog=document.querySelector('#community-dialog')}){
+export function mountCommunity({state,view='court',companion,onSave,onReward,onOriginalDemo,onNeighbourDemo=()=>{},runPython,cancelRun,root=document.querySelector('.community-root'),dialog=document.querySelector('#community-dialog')}){
   let alive=true,token=0,busy=false,activeProject=null,activeDemo=null,lastDoor=null;
   function status(text){const el=dialog.open?dialog.querySelector('#community-message'):root.querySelector('.community-status');if(el)el.textContent=text;}
   function repaint(){
@@ -91,9 +93,10 @@ export function mountCommunity({state,view='court',companion,onSave,onReward,onO
     if(focus)[...root.querySelectorAll('[data-community]')].find(el=>el.dataset.community===focus.community&&el.dataset.id===focus.id)?.focus({preventScroll:true});
   }
   function save(){onSave();}
+  const disabledBeforeRun = new Map();
   function setBusy(value){
     busy=value;
-    for(const el of dialog.querySelectorAll('[data-community]'))el.disabled=el.dataset.community==='stop'?!value:['close','building','exhibition'].includes(el.dataset.community)?false:value;
+    setBusyControls(dialog,'[data-community]',value,disabledBeforeRun,'community',['close','building','exhibition']);
     for(const el of dialog.querySelectorAll('textarea,input'))el.readOnly=value;
   }
   function stop(){token++;if(busy)cancelRun();setBusy(false);}
@@ -121,6 +124,7 @@ export function mountCommunity({state,view='court',companion,onSave,onReward,onO
   function showExhibit(id){
     const item=exhibitCatalog(state).find(p=>p.id===id);if(!item){status('Finish and save this creation first.');return;}
     if(item.kind==='village'){close();onOriginalDemo(id);return;}
+    if(item.kind==='neighbour'){close();onNeighbourDemo(item);return;}
     show(demoMarkup(item));activeDemo=item;
   }
   function click(event){
@@ -174,10 +178,10 @@ export function mountCommunity({state,view='court',companion,onSave,onReward,onO
   function input(event){if(event.target.id==='community-code'&&activeProject){state.restoration.drafts[activeProject.id]=event.target.value.slice(0,30000);save();}}
   function keydown(event){
     if(event.target.id!=='community-code'||busy)return;
-    if(event.key==='Tab'){event.preventDefault();const field=event.target;field.setRangeText('    ',field.selectionStart,field.selectionEnd,'end');input(event);}
+    editorIndent(event,input);
     if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();dialog.querySelector('[data-community="run-project"]')?.click();}
   }
-  const onClose=()=>{stop();activeProject=null;activeDemo=null;};
+  const onClose=event=>{if(event.type==='close'&&dialog.open)return;stop();activeProject=null;activeDemo=null;};
   root.addEventListener('click',click);dialog.addEventListener('click',click);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('cancel',onClose);dialog.addEventListener('close',onClose);
-  return {dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',click);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',onClose);dialog.removeEventListener('close',onClose);}};
+  return {openExhibition(){lastDoor=null;show(exhibitionMarkup(state));},dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',click);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',onClose);dialog.removeEventListener('close',onClose);}};
 }

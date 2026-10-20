@@ -2,6 +2,10 @@
 
 A cozy browser learning game with **60 progressive quests in 15 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **14 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
 
+## Finding your way around
+
+Your wardrobe is upstairs in **Your room**, with room/wardrobe tabs, a **Change your look** label on your character, and a sidebar portrait shortcut. It is available from the start; individual clothing rewards still follow their stories. The **Nearby** signpost connects related places without expanding the main navigation. The makers' exhibition now includes saved clock repairs, lake tools, shared village projects, and companion discoveries, with a route back from each working creation. See [the connection and bug-fix notes](docs/journey-polish.md) for the 151-test verification and preview limits.
+
 ## Learning together, shared projects, and Willowmere
 
 **New: Mira's clockmaker workshop and pet-led discoveries.** Visit the clockmaker in the village to inspect and repair four remembered keepsakes with Python, including a music box you can choose to hear. Follow your companion's clues on village paths to find three small stories for Mira, Rowan, and Elio. Every pet can find every clue. Seven additional coding projects have one-time rewards, saved drafts, and progressively deeper lessons. See [the feature and artwork guide](docs/clockwork-and-discoveries.md).

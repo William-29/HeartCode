@@ -8,7 +8,9 @@ export function cancelRun() {
 }
 export function runPython(code, checks = '', onPhase = () => {}) {
   cancelRun();
-  worker = new Worker(new URL('./python-worker.js', import.meta.url));
+  const unavailable = () => ({ passed: false, runtimeError: true, output: '', error: 'The Python workbench could not start in this browser. Reload and try again. Your draft is saved.' });
+  try { worker = new Worker(new URL('./python-worker.js', import.meta.url)); }
+  catch { return Promise.resolve(unavailable()); }
   return new Promise(resolve => {
     const id = ++sequence;
     const finish = result => { if (active?.id !== id) return; clearTimeout(active.timer); active = null; worker?.terminate(); worker = null; resolve(result); };
@@ -24,6 +26,7 @@ export function runPython(code, checks = '', onPhase = () => {}) {
       finish(data);
     };
     worker.onerror = () => finish({ passed: false, runtimeError: true, output: '', error: 'The Python worker could not start. Check your connection and reload this page. Your code is saved.' });
-    worker.postMessage({ id, code, checks });
+    try { worker.postMessage({ id, code, checks }); }
+    catch { finish(unavailable()); }
   });
 }

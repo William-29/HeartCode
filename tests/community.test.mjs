@@ -1,3 +1,5 @@
+import { clockProjects } from '../dist/clockwork-content.js';
+import { completeNeighbour, inspectMechanism } from '../dist/neighbour-model.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -175,7 +177,7 @@ test('courtyard and wardrobe inherit the existing optional weather and sound con
 });
 
 function harness(state=progressed(),view='court'){
-  let pending,rewards=[],saves=0,cancels=0,originalDemos=[];
+  let pending,rewards=[],saves=0,cancels=0,originalDemos=[],neighbourDemos=[];
   const previousDocument=globalThis.document,decode=s=>s.replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#39;',"'").replaceAll('&amp;','&');
   class Element extends EventTarget{
     constructor(dataset={}){super();this.dataset=dataset;this.open=false;this.value='';this.textContent='';this.disabled=false;this.fields=new Map();this.buttons=[];this.scrollTop=0;}
@@ -202,16 +204,28 @@ function harness(state=progressed(),view='court'){
   }
   const root=new Element(),dialog=new Element();root.innerHTML=view==='court'?renderCourtyard(state):renderWardrobe(state);
   globalThis.document={activeElement:null,querySelector:s=>s==='.community-root'?root:dialog};
-  const session=mountCommunity({state,view,root,dialog,onSave(){saves++;},onReward(r){rewards.push(r);},onOriginalDemo(id){originalDemos.push(id);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
+  const session=mountCommunity({state,view,root,dialog,onSave(){saves++;},onReward(r){rewards.push(r);},onNeighbourDemo(item){neighbourDemos.push(item);},onOriginalDemo(id){originalDemos.push(id);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(where,action,id,slot)=>{
     const button=new Element({community:action,...(id===undefined?{}:{id}),...(slot===undefined?{}:{slot})});where.buttons.push(button);
     const event=new Event('click');Object.defineProperty(event,'target',{value:button});where.dispatchEvent(event);
   };
   return {state,root,dialog,click:(action,id,slot)=>click(root,action,id,slot),work:(action,id,slot)=>click(dialog,action,id,slot),
-    pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,originalDemos,
+    pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,originalDemos,neighbourDemos,
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=previousDocument;},session};
 }
+
+test('the exhibition forwards newer creations to their working place and closes its own dialog',()=>{
+  const s=freshState(),p=clockProjects[0];inspectMechanism(s,p.id,p.answer);completeNeighbour(s,p.id,p.solution);
+  const ui=harness(s);
+  try{
+    ui.session.openExhibition();assert.match(ui.dialog.innerHTML,/Mira/);
+    ui.work('exhibit',p.id);
+    assert.equal(ui.dialog.open,false);
+    assert.equal(ui.neighbourDemos.length,1);assert.equal(ui.neighbourDemos[0].place,'clockwork');
+    assert.equal(ui.neighbourDemos[0].source,p.solution);
+  }finally{ui.dispose();}
+});
 test('restoration UI carries a building from its first memory through checked repairs to reopening and a wearable gift',async()=>{
   const ui=harness();
   try{

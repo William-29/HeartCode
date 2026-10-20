@@ -1,3 +1,4 @@
+import { setBusyControls, editorIndent } from './editor-controls.js';
 import { icon, sprite } from './art.js';
 import { characterSprite, characterPortrait } from './characters.js';
 import { courtyardArt } from './community.js';
@@ -58,7 +59,7 @@ function projectMarkup(state,p){
   if(!available)return `${top('A PROMISE FOR LATER')}<h2>${p.title}</h2><p>${p.story||p.lesson}</p><p class="neighbour-lock">${icon('lock')} ${esc(lockReason(state,p))}</p><div class="community-actions"><a class="button outline" href="#quests">Visit the learning trail</a><a class="button outline" href="#courtyard">Visit the restoration</a></div>`;
   return `${top(p.kind==='teaching'?'LEARNING BY HELPING':p.kind==='shared'?'THE SHARED WORK LEDGER':p.kind==='clock'?'MIRA’S REPAIR BENCH':p.kind==='discovery'?'THINGS WE FOUND TOGETHER':'THE LAKE JOURNAL')}<h2>${p.title}</h2><p>${p.lesson||p.story}</p>${p.kind==='teaching'?teachingSteps(state,p):p.inspection?inspectionMarkup(state,p):''}
     ${p.tools?`<details class="borrowed-tools"><summary>The working tools you are connecting</summary><p>These are your saved restoration functions. They are loaded for this project; you can call them directly.</p>${p.tools.map(id=>`<h4>${esc(id.replaceAll('-',' '))}</h4><pre>${esc(state.restoration.code[id])}</pre>`).join('')}</details>`:''}
-    <h3>${p.kind==='teaching'?'3. Mend the code together':'Make the next small connection'}</h3><p>${p.task}</p><label for="neighbour-code">Your Python</label><textarea id="neighbour-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(state.neighbours.drafts[p.id]??state.neighbours.code[p.id]??p.starter)}</textarea>
+    <h3>${p.kind==='teaching'?'3. Mend the code together':'Make the next small connection'}</h3><p>${p.task}</p><label for="neighbour-code">Your Python</label><textarea id="neighbour-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(state.neighbours.drafts[p.id]??state.neighbours.code[p.id]??p.starter)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p>
     <div class="community-actions">${button('run','Run & check',p.id)}${button('stop','Stop','',true)}${button('reset','Restore starter',p.id)}${done&&p.kind!=='teaching'?button('use','Use my saved tool',p.id):''}</div>
     <details><summary>A gentle hint</summary><p>${p.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(p.solution)}</pre></details>
     <p class="neighbour-note">${done?'First-completion rewards already earned. You can revise and run this as often as you like.':`${p.xp} XP · ${p.coins} coins when you first finish. ${p.kind==='teaching'?'Explain and choose a test before completing the repair.':''}`}</p>
@@ -87,7 +88,12 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
   let alive=true,busy=false,token=0,active=null;
   let music=null,melody=null;
   const output=text=>{const el=dialog.querySelector('#neighbour-output');if(el)el.textContent=text;};
-  function busyState(value){busy=value;for(const el of dialog.querySelectorAll('[data-neighbour]'))el.disabled=el.dataset.neighbour==='stop'?!value:el.dataset.neighbour==='close'?false:value;for(const el of dialog.querySelectorAll('textarea'))el.readOnly=value;}
+  const disabledBeforeRun = new Map();
+  function busyState(value){
+    busy=value;
+    setBusyControls(dialog,'[data-neighbour]',value,disabledBeforeRun,'neighbour',['close']);
+    for(const el of dialog.querySelectorAll('textarea,input'))el.readOnly=value;
+  }
   function stop(){token++;if(busy)cancelRun();music?.stop();busyState(false);}
   function show(html){stop();active=null;dialog.innerHTML=html;if(!dialog.open)dialog.showModal();dialog.scrollTop=0;dialog.querySelector('button')?.focus();}
   function close(){stop();active=null;if(dialog.open)dialog.close();root.querySelector('[data-neighbour]')?.focus({preventScroll:true});}
@@ -109,9 +115,9 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
       done(result);
     }catch(error){if(alive&&mine===token){busyState(false);output(error.message||'Something went wrong. Your draft is saved.');}}
   }
-  function useTool(p){
+  function useTool(p,fromExhibition=false){
     if(!p||!state.neighbours.completed.includes(p.id)||p.kind==='teaching')return;
-    show(`${top('YOUR WORK IN THE WORLD')}<h2>${p.title}</h2><p>${p.story}</p><p>Run the saved Python on ${p.kind==='lake'?'your current observations':p.kind==='clock'?'the repaired mechanism':p.kind==='discovery'?'the note you found together':'the village’s sample morning'}. You can revise the code whenever you like.</p><div class="community-actions">${button('run-use','Run my saved tool',p.id)}${button('stop','Stop','',true)}${button('project','Revisit the code',p.id)}</div><pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Ready when you are.</pre><div id="neighbour-result"></div>`);
+    show(`${top('YOUR WORK IN THE WORLD')}<h2>${p.title}</h2><p>${p.story}</p><p>Run the saved Python on ${p.kind==='lake'?'your current observations':p.kind==='clock'?'the repaired mechanism':p.kind==='discovery'?'the note you found together':'the village’s sample morning'}. You can revise the code whenever you like.</p><div class="community-actions">${button('run-use','Run my saved tool',p.id)}${button('stop','Stop','',true)}${button('project','Revisit the code',p.id)}</div><pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Ready when you are.</pre><div id="neighbour-result"></div>${fromExhibition?'<a class="exhibition-return" href="#courtyard/exhibition">Back to the makers’ exhibition</a>':''}`);
     melody=null;
     active=p;
   }
@@ -158,7 +164,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
         onSave();repaint();
         output(`${result.output||''}\n${reward.replay?'Your revised Python passed. First-completion rewards already earned.':`Made together. +${reward.xp} XP · +${reward.coins} coins`}\n\n${p.outcome||apprentices.find(a=>a.id===p.npc).voices[confidence(state,p.npc)]}`);
         const area=dialog.querySelector('#neighbour-result');
-        if(area)area.innerHTML=p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):button('use','See your work in the world',p.id);
+        if(area)area.innerHTML=p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):`${button('use','See your work in the world',p.id)} <a class="exhibition-return" href="#courtyard/exhibition">Give it a place at the exhibition</a>`;
         if(!reward.replay)onReward(reward);
       });return;
     }
@@ -180,11 +186,11 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
   function input(event){if(event.target.id==='neighbour-code'&&active){state.neighbours.drafts[active.id]=event.target.value.slice(0,30000);onSave();}}
   function keydown(event){
     if(event.target.id!=='neighbour-code'||busy)return;
-    if(event.key==='Tab'){event.preventDefault();event.target.setRangeText('    ',event.target.selectionStart,event.target.selectionEnd,'end');input(event);}
+    editorIndent(event,input);
     if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();dialog.querySelector('[data-neighbour="run"]')?.click();}
   }
-  const cancelled=()=>{stop();active=null;};
+  const cancelled=event=>{if(event.type==='close'&&dialog.open)return;stop();active=null;};
   root.addEventListener('click',click);root.addEventListener('change',change);
   dialog.addEventListener('click',click);dialog.addEventListener('change',change);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('cancel',cancelled);dialog.addEventListener('close',cancelled);
-  return {dispose(){alive=false;close();music?.dispose();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};
+  return {openDemo(id,fromExhibition=false){const p=neighbourProject(id);if(p&&({shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries'}[p.kind]===view))useTool(p,fromExhibition);},dispose(){alive=false;close();music?.dispose();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};
 }

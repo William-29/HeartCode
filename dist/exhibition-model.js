@@ -1,3 +1,4 @@
+import { neighbourProjects } from './neighbour-content.js';
 import { projects } from './projects.js';
 import { adventures } from './adventure-content.js';
 import { restorationProjects, buildingById } from './restoration-content.js';
@@ -19,7 +20,8 @@ export function exhibitCatalog(state){
   return [
     ...projects.filter(p=>state.projects.includes(p.id)&&state.projectCode[p.id]).map(p=>({...p,kind:'village',caption:`Made with ${p.npc}`,source:state.projectCode[p.id],symbol:p.id.includes('game')?'spark':'code'})),
     ...adventures.filter(p=>state.adventure.completed.includes(p.id)&&state.adventure.code[p.id]).map(p=>({...p,...adventureDemos[p.id],kind:'adventure',caption:'From High Street',source:state.adventure.code[p.id],symbol:p.area==='garden'?'leaf':'code'})),
-    ...restorationProjects.filter(p=>state.restoration.completed.includes(p.id)&&state.restoration.code[p.id]).map(p=>({...p,kind:'restoration',caption:`Restoring ${buildingById(p.building).short.toLowerCase()}`,source:state.restoration.code[p.id],symbol:buildingById(p.building).icon}))
+    ...restorationProjects.filter(p=>state.restoration.completed.includes(p.id)&&state.restoration.code[p.id]).map(p=>({...p,kind:'restoration',caption:`Restoring ${buildingById(p.building).short.toLowerCase()}`,source:state.restoration.code[p.id],symbol:buildingById(p.building).icon})),
+    ...neighbourProjects.filter(p=>p.kind!=='teaching'&&state.neighbours?.completed.includes(p.id)&&state.neighbours.code[p.id]).map(p=>({...p,kind:'neighbour',place:{shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries'}[p.kind],caption:{shared:'Made for the morning round',lake:'From your lake journal',clock:'From Mira’s repair bench',discovery:'Found with your companion'}[p.kind],source:state.neighbours.code[p.id],symbol:p.kind==='clock'?'clock':p.kind==='discovery'?'paw':'leaf'}))
   ];
 }
 export function displayedExhibits(state){
