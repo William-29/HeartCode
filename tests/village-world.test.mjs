@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { destinations, VILLAGE_START, isWalkable, normalizePosition, findRoute, segmentWalkable, moveBy, advanceRoute, nearbyDestination } from '../dist/village-model.js';
 import { renderVillage, mountVillage } from '../dist/village.js';
+import { scheduledPlaces } from '../dist/village-life-model.js';
 
 test('every village destination is reachable without crossing a building or the lake', () => {
   for (const from of [VILLAGE_START, ...destinations]) {
@@ -58,8 +59,8 @@ test('route travel consumes distance continuously and arrives exactly once at th
 test('the village includes direct accessible visits, safe names, and project-specific improvements', () => {
   const state = { projects: [], metVillagers: [], villagePosition: VILLAGE_START };
   const html = renderVillage(state, { id: 'pip', name: '<script>cat</script>' });
-  assert.equal((html.match(/data-village-walk=/g) || []).length, 6);
-  assert.equal((html.match(/data-village-visit=/g) || []).length, 6);
+  assert.equal((html.match(/data-village-walk=/g) || []).length, destinations.length);
+  assert.equal((html.match(/data-village-visit=/g) || []).length, destinations.length);
   assert.ok(html.includes('aria-describedby="village-instructions"'));
   assert.ok(html.includes('&lt;script&gt;cat&lt;/script&gt;')); assert.ok(!html.includes('<script>cat'));
   assert.ok(!html.includes('class="village-improvement"'));
@@ -83,6 +84,7 @@ function villageHarness(run) {
   }
   const root = new Element(), viewport = new Element(), scene = new Element(), actor = new Element(), marker = new Element(), status = new Element(), interact = new Element(), media = new Element(), doc = new Element(), win = new Element();
   const fields = new Map([['.village-viewport', viewport], ['.village-scene', scene], ['.village-actor', actor], ['.village-walk-marker', marker], ['.village-status', status], ['[data-village-interact]', interact]]);
+  for (const id of ['rowan', 'mira', 'elio']) fields.set(`[data-village-walk="${id}"]`, new Element());
   let dialogOpen = false, next = 0, time = 0; const frames = new Map();
   root.querySelector = selector => fields.get(selector); root.querySelectorAll = () => []; root.contains = element => fields.has(element);
   doc.querySelector = selector => selector === '.village-shell' ? root : selector === 'dialog[open]' ? dialogOpen : null;
@@ -102,7 +104,7 @@ function villageHarness(run) {
 }
 
 test('walking to a villager calls visit after arrival and disposes every listener and frame', () => villageHarness(h => {
-  const visits = [], moves = [], session = mountVillage({ state: { villagePosition: VILLAGE_START }, onVisit: id => visits.push(id), onMove: point => moves.push(point) });
+  const visits = [], moves = [], session = mountVillage({ state: { villagePosition: VILLAGE_START, villageTime: 'evening' }, onVisit: id => visits.push(id), onMove: point => moves.push(point) });
   h.clickPlace('rowan'); assert.equal(visits.length, 0); assert.equal(h.frames.size, 1);
   let ticks = 0; while (h.frames.size && ticks++ < 300) h.step();
   assert.ok(ticks < 300); assert.deepEqual(visits, ['rowan']);
@@ -111,7 +113,7 @@ test('walking to a villager calls visit after arrival and disposes every listene
 }));
 
 test('keyboard walking pauses for dialogs, blur, and hidden tabs without opening a destination', () => villageHarness(h => {
-  const visits = [], moves = [], session = mountVillage({ state: {}, onVisit: id => visits.push(id), onMove: point => moves.push(point) });
+  const visits = [], moves = [], session = mountVillage({ state: { villageTime: 'evening' }, onVisit: id => visits.push(id), onMove: point => moves.push(point) });
   h.root.emit('keydown', { target: h.viewport, key: 'd' }); h.step(); h.step();
   assert.ok(parseFloat(h.actor.style.left) > 50);
   h.win.emit('blur'); assert.equal(h.frames.size, 0); assert.equal(moves.length, 1);
@@ -121,11 +123,46 @@ test('keyboard walking pauses for dialogs, blur, and hidden tabs without opening
 }));
 
 test('direct visits need no movement and reduced motion remains reactive', () => villageHarness(h => {
-  const visits = [], session = mountVillage({ state: {}, onVisit: id => visits.push(id) });
+  const visits = [], session = mountVillage({ state: { villageTime: 'evening' }, onVisit: id => visits.push(id) });
   h.directVisit('companions'); assert.deepEqual(visits, ['companions']); assert.equal(h.frames.size, 0);
   h.media.matches = true; h.media.emit('change'); assert.ok(h.root.classes.has('village-still'));
   h.media.matches = false; h.media.emit('change'); assert.ok(!h.root.classes.has('village-still'));
   session.dispose();
-  const manual = mountVillage({ state: {}, reducedMotion: true }); assert.ok(h.root.classes.has('village-still'));
+  const manual = mountVillage({ state: { villageTime: 'evening' }, reducedMotion: true }); assert.ok(h.root.classes.has('village-still'));
   manual.dispose();
+}));
+
+test('routine changes walk villagers along safe paths and clicking a moving villager holds them for a visit', () => villageHarness(h => {
+  const visits = [], previousPlaces = scheduledPlaces(destinations, 'morning');
+  const session = mountVillage({ state: { villageTime: 'afternoon' }, previousPlaces, onVisit: id => visits.push(id) });
+  assert.ok(h.frames.size > 0);
+  h.step(); h.step();
+  const stopped = session.places().find(place => place.id === 'rowan');
+  h.clickPlace('rowan');
+  let ticks = 0;
+  while (h.frames.size && ticks++ < 500) {
+    h.step();
+    for (const place of session.places()) assert.ok(isWalkable(place), place.id);
+    const rowan = session.places().find(place => place.id === 'rowan');
+    assert.equal(rowan.x, stopped.x); assert.equal(rowan.y, stopped.y);
+  }
+  assert.ok(ticks < 500); assert.deepEqual(visits, ['rowan']);
+  for (const id of ['mira', 'elio']) {
+    const final = session.places().find(place => place.id === id), target = scheduledPlaces(destinations, 'afternoon').find(place => place.id === id);
+    assert.equal(final.x, target.x); assert.equal(final.y, target.y);
+  }
+  session.dispose(); assert.equal(h.frames.size, 0); assert.equal(h.listenerCount(), 0);
+}));
+
+test('routine travel finishes immediately for reduced motion and all transient frames stop on disposal', () => villageHarness(h => {
+  const previousPlaces = scheduledPlaces(destinations, 'morning');
+  const reduced = mountVillage({ state: { villageTime: 'evening' }, previousPlaces, reducedMotion: true });
+  assert.equal(h.frames.size, 0);
+  assert.deepEqual(reduced.places(), scheduledPlaces(destinations, 'evening'));
+  reduced.dispose();
+  const moving = mountVillage({ state: { villageTime: 'afternoon' }, previousPlaces });
+  assert.ok(h.frames.size > 0); h.step(); h.step();
+  h.media.matches = true; h.media.emit('change');
+  assert.equal(h.frames.size, 0); assert.deepEqual(moving.places(), scheduledPlaces(destinations, 'afternoon'));
+  moving.dispose(); assert.equal(h.listenerCount(), 0);
 }));

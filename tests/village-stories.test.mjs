@@ -8,6 +8,8 @@ import * as stateApi from '../dist/state.js';
 import { projects, villagers, projectUnlocked } from '../dist/projects.js';
 import { renderVillager, renderProjectDemo, demoSource, projectRequirement } from '../dist/village-stories.js';
 import { characterPortrait } from '../dist/characters.js';
+import { renderRoom, renderFestival, renderCafe } from '../dist/village-life.js';
+import { furnishRoom, removeFurnishing, celebrateFestival, periods } from '../dist/village-life-model.js';
 
 const byId = id => projects.find(project => project.id === `project-${id}`);
 const defaults = project => Object.fromEntries(project.demo.fields.map(field => [field.name, String(field.value)]));
@@ -169,6 +171,8 @@ function appHarness() {
   };
   const scope = {
     ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
+    renderRoom, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
+    mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
     localStorage: { getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value) },
     setTimeout: () => 1, clearTimeout() {}, matchMedia: () => ({ matches: false }),
@@ -188,14 +192,20 @@ function appHarness() {
     flushClose: () => { while (closeEvents.length) closeEvents.shift()(); },
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
-    pendingRuns, stored
+    pendingRuns, stored,
+    click: (action, id) => {
+      const button = { dataset: { action, id }, disabled: false };
+      const event = new Event('click');
+      Object.defineProperty(event, 'target', { value: { closest: () => button } });
+      document.dispatchEvent(event);
+    }
   };
 }
 
 test('village UI flow meets Rowan, completes and tries a saved creation, and keeps campaign progress intact', async () => {
   const app = appHarness(), project = byId('tavern-bill');
   assert.equal(app.mounted.length, 1);
-  assert.equal((app.node('app').innerHTML.match(/class="nav-link/g) || []).length, 6);
+  assert.equal((app.node('app').innerHTML.match(/class="nav-link/g) || []).length, 8);
   app.call('openVillager', 'rowan');
   assert.equal(app.node('village-dialog').open, true);
   assert.ok(app.state().metVillagers.includes('rowan'));
@@ -270,4 +280,56 @@ test('the festival game hides its secret, uses the saved Python for clues, and s
   assert.equal(app.evaluate('activeGame.won'), false);
   assert.ok(app.evaluate('activeGame.secret >= 1 && activeGame.secret <= 100'));
   assert.equal(app.node('project-demo-run').disabled, false);
+});
+
+test('room purchase and clear buttons save the layout without charging for owned furnishings', () => {
+  const app = appHarness();
+  app.state().coins = 100;
+  app.evaluate("route = 'room'; render()");
+  assert.ok(app.node('app').innerHTML.includes('A room of your own'));
+  app.click('room-furnish', 'plant-fern');
+  assert.equal(app.state().coins, 55); assert.equal(app.state().home.placed.plant, 'plant-fern');
+  app.click('room-remove', 'plant');
+  assert.equal(app.state().home.placed.plant, null);
+  app.click('room-furnish', 'plant-fern');
+  assert.equal(app.state().coins, 55);
+  const restored = stateApi.normalizeState(JSON.parse(app.stored.get(stateApi.SAVE_KEY)));
+  assert.equal(restored.home.placed.plant, 'plant-fern'); assert.equal(restored.coins, 55);
+  assert.deepEqual([...restored.completed], []);
+});
+
+test('festival opens once, launches the real saved creation, and returns from its dialog', async () => {
+  const app = appHarness();
+  for (const quest of content.quests.slice(0, 20)) stateApi.completeQuest(app.state(), quest.id);
+  for (const project of projects) stateApi.completeProject(app.state(), project.id, project.solution);
+  app.evaluate("route = 'festival'; render()");
+  const before = { xp: app.state().xp, coins: app.state().coins };
+  app.click('festival-celebrate');
+  assert.equal(app.state().festivalCelebrated, true);
+  assert.equal(app.state().xp, before.xp + 200); assert.equal(app.state().coins, before.coins + 150);
+  app.click('festival-celebrate');
+  assert.equal(app.state().xp, before.xp + 200); assert.equal(app.state().coins, before.coins + 150);
+  assert.ok(app.node('app').innerHTML.includes('Welcome, neighbor.'));
+  app.click('project-demo', 'project-tavern-bill');
+  assert.ok(app.node('village-dialog').open);
+  assert.ok(app.node('village-dialog').innerHTML.includes('Return to the festival'));
+  const form = app.node('project-demo-form'); form.values = defaults(byId('tavern-bill'));
+  const execution = app.call('executeProjectDemo', { target: form, preventDefault() {} });
+  assert.ok(app.pendingRuns.at(-1).code.startsWith(app.state().projectCode['project-tavern-bill']));
+  app.finish({ passed: true, output: 'Festival bill: 21.6' }); await execution;
+  app.click('festival-return'); app.flushClose();
+  assert.equal(app.node('village-dialog').open, false); assert.equal(app.evaluate('route'), 'festival');
+  assert.equal(app.state().coins, before.coins + 150);
+  assert.equal(stateApi.normalizeState(JSON.parse(app.stored.get(stateApi.SAVE_KEY))).festivalCelebrated, true);
+});
+
+test('sitting at the café pauses movement, opens a pet scene, and never awards coins or XP', () => {
+  const app = appHarness(), before = { xp: app.state().xp, coins: app.state().coins };
+  app.call('visitVillage', 'cafe');
+  assert.equal(app.node('village-dialog').open, true);
+  assert.ok(app.node('village-dialog').innerHTML.includes('The next thing can wait.'));
+  assert.ok(app.node('village-dialog').innerHTML.includes('Pip'));
+  app.call('closeVillage'); app.flushClose();
+  assert.equal(app.node('village-dialog').open, false);
+  assert.deepEqual({ xp: app.state().xp, coins: app.state().coins }, before);
 });

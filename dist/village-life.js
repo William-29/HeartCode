@@ -1,0 +1,79 @@
+import { icon, sprite } from './art.js';
+import { characterSprite, characterPortrait } from './characters.js';
+import { projects, projectUnlocked } from './projects.js';
+import { achievements } from './content.js';
+import { roomItems, roomSlots, normalizeHome, festivalProgress, festivalStalls, periods, villagePeriod, schedules } from './village-life-model.js';
+
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const title = word => word[0].toUpperCase() + word.slice(1);
+
+export function routineControls(state) {
+  const period = villagePeriod(state.villageTime);
+  return `<div class="village-routine-bar"><label>${icon('clock')} Time in Hearthwick <select id="village-time" aria-label="Village time of day"><option value="auto" ${!periods.includes(state.villageTime) ? 'selected' : ''}>Follow my clock</option>${periods.map(time => `<option value="${time}" ${state.villageTime === time ? 'selected' : ''}>${title(time)}</option>`).join('')}</select></label><span>${period === 'morning' ? 'Bread in the oven. Dew in the garden.' : period === 'afternoon' ? 'Workshop doors open. Time for a cup of tea.' : 'Lanterns on. The kettle is still warm.'}</span></div>`;
+}
+export function routineNotes(state) {
+  const schedule = schedules[villagePeriod(state.villageTime)];
+  return `<details class="village-daybook"><summary>${icon('book')} Around the village today</summary><div>${Object.entries(schedule).map(([id, routine]) => `<p>${characterPortrait(id, 'routine-face')}<span><strong>${title(id)} · ${esc(routine.place)}</strong>${esc(routine.activity)}</span></p>`).join('')}</div><small>Morning 06:00–12:00 · Afternoon 12:00–17:00 · Evening 17:00–06:00. All activities stay available at every hour.</small></details>`;
+}
+export function mountVillageClock(state, onChange, now = () => new Date()) {
+  let last = villagePeriod(state.villageTime, now());
+  const update = () => {
+    if (document.hidden || document.querySelector('dialog[open]')) return;
+    const next = villagePeriod(state.villageTime, now());
+    if (next !== last) { last = next; onChange(); }
+  };
+  const timer = setInterval(update, 30000);
+  document.addEventListener('visibilitychange', update);
+  return { dispose() { clearInterval(timer); document.removeEventListener('visibilitychange', update); } };
+}
+
+const furnitureShapes = {
+  chair: '<ellipse cx="91" cy="135" rx="65" ry="12" fill="#3f3027" opacity=".2"/><path d="M44 107 38 141m99-34 8 34" stroke="#654333" stroke-width="9"/><path d="M40 39Q43 20 64 20h56q21 0 24 19l-7 76H47Z" fill="var(--upholstery,#ad6147)" stroke="#724636" stroke-width="3"/><path d="M57 35q34-11 69 0l-3 49H59Z" fill="var(--cushion,#c1825c)"/><path d="M48 89h91v32H48Z" fill="var(--cushion,#c1825c)" stroke="#724636" stroke-width="3"/><path d="M32 76q0-10 10-10t11 10v46H33Zm101 0q0-10 10-10t11 10v46h-21Z" fill="var(--upholstery,#ad6147)" stroke="#724636" stroke-width="3"/><path d="M64 91h63m-67 28h68" stroke="#e2b487" stroke-width="2" opacity=".5"/><path d="M63 36v44m57-44v44" stroke="#deb38a" opacity=".4"/>',
+  lamp: '<ellipse cx="91" cy="140" rx="38" ry="9" fill="#3f3027" opacity=".2"/><path d="M91 65v66m-26 8q26-17 52 0Z" stroke="#9b743b" fill="#af8e4c" stroke-width="6"/><path d="M59 32h64l20 47H39Z" fill="var(--shade,#e5bc76)" stroke="#836137" stroke-width="3"/><path d="M68 35 57 75m25-40-4 40m24-40 4 40m12-40 11 40" stroke="var(--shade-seam,#d4a362)" stroke-width="4"/><ellipse cx="91" cy="80" rx="49" ry="5" fill="#ffe4a5"/><path d="M80 19h22l4 11H76Z" fill="#9b743b"/>',
+  plant: '<ellipse cx="91" cy="140" rx="45" ry="8" fill="#3f3027" opacity=".15"/><path d="M62 102h61l-9 37H72Z" fill="var(--pot,#ae6c4c)" stroke="#80523c" stroke-width="2"/><path d="M58 99h69v10H58Z" fill="var(--pot-rim,#c48e65)"/><path d="M92 105V31m0 47L56 49m36 45 35-34" stroke="#66774d" stroke-width="4"/><g fill="var(--leaves,#66855d)"><path d="M90 72Q49 75 40 35q41-3 50 37Zm6-11q-4-39 30-44 10 34-30 44Zm-3 34q14-39 48-25-5 33-48 25ZM83 45Q59 30 76 10q23 9 7 35ZM78 99Q39 102 29 73q32-10 49 26Z"/></g>',
+  rug: '<ellipse cx="91" cy="92" rx="84" ry="44" fill="#44352a" opacity=".15"/><ellipse cx="91" cy="84" rx="84" ry="44" fill="var(--rug,#b2875c)" stroke="#795944" stroke-width="3"/><ellipse cx="91" cy="84" rx="72" ry="34" fill="none" stroke="#ddc69a" stroke-width="5"/><ellipse cx="91" cy="84" rx="59" ry="26" fill="none" stroke="var(--rug-inner,#8b7151)" stroke-width="7"/><ellipse cx="91" cy="84" rx="42" ry="18" fill="none" stroke="#d6ac7a" stroke-width="4"/>',
+  wall: '<path d="M29 109h124v13H29Z" fill="#79533b"/><path d="M37 123v17m108-17v17" stroke="#67452f" stroke-width="6"/><g stroke="#4d5145" stroke-width="2"><path d="M40 43h18v65H40Z" fill="#6c8675"/><path d="M61 53h15v55H61Z" fill="#b97655"/><path d="M81 33h19v75H81Z" fill="#c29c57"/><path d="m109 50 15-4 16 60-15 4Z" fill="#7b727f"/></g><path d="M45 54h8m-8 39h8m12-29h7m-7 31h7m14-48h9m-9 49h9" stroke="#e4c99b" stroke-width="3"/>'
+};
+export function furnishingArt(id, className = '') {
+  const item = roomItems.find(item => item.id === id);
+  if (!item) return '';
+  let art = furnitureShapes[item.slot];
+  if (id === 'plant-flowers') art += '<g fill="#f4dfab" stroke="#c99a64"><circle cx="53" cy="45" r="12"/><circle cx="119" cy="27" r="13"/><circle cx="136" cy="67" r="12"/></g><g fill="#d59b51"><circle cx="53" cy="45" r="4"/><circle cx="119" cy="27" r="4"/><circle cx="136" cy="67" r="4"/></g>';
+  if (id === 'wall-stars') art = '<path d="M36 15h112v118H36Z" fill="#976c46" stroke="#654631" stroke-width="4"/><path d="M43 22h98v104H43Z" fill="#e3ce9f"/><path d="M49 29h86v90H49Z" fill="#496768"/><g fill="#ead59a"><circle cx="69" cy="49" r="2"/><circle cx="114" cy="42" r="3"/><circle cx="90" cy="69" r="2"/><circle cx="65" cy="96" r="3"/><circle cx="118" cy="99" r="2"/></g><path d="m69 49 21 20 24-27m-24 27-25 27 53 3-28-30" stroke="#d9c18b" stroke-width="1" fill="none"/>';
+  return `<svg class="furnishing-art item-${item.id} ${className}" viewBox="0 0 182 155" ${item.slot === 'rug' ? 'preserveAspectRatio="none"' : ''} aria-hidden="true">${art}</svg>`;
+}
+
+export function renderRoom(state, companion) {
+  const home = normalizeHome(state.home);
+  const trophies = achievements.filter(item => state.achievements.includes(item.id));
+  const festival = festivalProgress(state);
+  return `<div class="page-heading life-heading"><div><p class="eyebrow">ABOVE THE HEARTH & HONEY</p><h1>A room of your own<span class="gold">.</span></h1><p>Leave your boots by the door. There’s nowhere else you need to be.</p></div><button class="text-button" data-action="navigate" data-route="village">Down to the village ${icon('arrow')}</button></div>
+  <section class="home-scene" role="img" aria-label="Your cozy room, furnished with ${esc(Object.values(home.placed).filter(Boolean).map(id => roomItems.find(item => item.id === id)?.name).join(', '))}. ${esc(companion.name)} is here. ${trophies.length} achievement trophies${festival.celebrated ? ' and your festival keepsake' : ''} on display."><div class="home-wallpaper"></div><div class="home-floor"></div><div class="home-window"><i></i><span></span></div><div class="home-curtain curtain-left"></div><div class="home-curtain curtain-right"></div><div class="home-light-beam"></div><div class="home-skirt"></div><div class="home-desk"><i></i><span></span><b></b></div><div class="home-door"></div>
+    ${Object.entries(home.placed).map(([slot, id]) => id ? `<div class="home-object home-${slot}">${furnishingArt(id)}${slot === 'lamp' ? '<span class="home-lamp-glow"></span>' : ''}</div>` : '').join('')}
+    <div class="home-trophy-shelf">${trophies.slice(-4).map(trophy => `<span class="home-trophy" title="${esc(trophy.name)}">${icon('trophy')}</span>`).join('')}${festival.celebrated ? `<span class="home-festival-pennant">${icon('spark')}</span>` : ''}</div><div class="home-pet">${sprite(companion.id)}</div><div class="home-traveler">${characterSprite('traveler')}</div><span class="home-room-name">${esc(state.name)}’s little corner</span></section>
+  <div class="room-after-scene"><p>${icon('trophy')} ${trophies.length ? `${trophies.length} achievement${trophies.length === 1 ? '' : 's'} earned · ${trophies.slice(-4).map(trophy => esc(trophy.name)).join(', ')}` : 'Your first achievement will find a home on this shelf.'}${festival.celebrated ? ' · Lantern Festival keepsake unlocked' : ''}</p><p>${icon('coin')} ${state.coins} coins · Furnishings are yours to keep. Rearranging is free.</p></div>
+  <section class="room-shop" aria-labelledby="room-shop-title"><div class="section-heading"><h2 id="room-shop-title">Little things for your room</h2><span class="eyebrow">THE VILLAGE SECONDHAND SHOP</span></div>${Object.entries(roomSlots).map(([slot, label]) => `<div class="room-shop-row"><div class="room-slot-heading"><h3>${label}</h3>${home.placed[slot] ? `<button class="text-button" data-action="room-remove" data-id="${slot}" aria-label="Clear ${label.toLowerCase()}">Clear this spot</button>` : '<span>Room to make it yours</span>'}</div><div class="room-options">${roomItems.filter(item => item.slot === slot).map(item => {
+    const owned = home.owned.includes(item.id), placed = home.placed[slot] === item.id;
+    return `<article class="room-shop-item ${placed ? 'is-placed' : ''}"><div class="room-item-picture">${furnishingArt(item.id)}</div><div><h4>${item.name}</h4><p>${item.description}</p><button class="button ${placed ? 'subtle' : 'outline'}" data-action="room-furnish" data-id="${item.id}" ${placed || (!owned && state.coins < item.cost) ? 'disabled' : ''}>${placed ? `${icon('check')} In your room` : owned ? 'Place in room' : `${icon('coin')} ${item.cost} coins · Buy & place`}</button>${!owned && state.coins < item.cost ? `<small>${item.cost - state.coins} more coins needed</small>` : ''}</div></article>`;
+  }).join('')}</div></div>`).join('')}</section>`;
+}
+
+export function festivalDecor() {
+  return `<div class="festival-strings" aria-hidden="true">${Array.from({ length: 11 }, (_, index) => `<i style="--i:${index};--drop:${38 + (5 - Math.abs(5 - index)) * 4}px"></i>`).join('')}</div>`;
+}
+export function renderFestival(state) {
+  const progress = festivalProgress(state), current = progress.acts[progress.current];
+  return `<div class="page-heading life-heading"><div><p class="eyebrow">A STORY MADE WITH YOUR NEIGHBORS</p><h1>The lantern festival<span class="gold">.</span></h1><p>Six little creations. A whole village brought together.</p></div><button class="text-button" data-action="navigate" data-route="village">Back to the lane ${icon('arrow')}</button></div>
+  <section class="festival-green ${progress.celebrated ? 'festival-open' : ''}">${festivalDecor()}<div class="festival-sign"><span>HEARTHWICK</span><h2>${progress.celebrated ? 'Welcome, neighbor.' : progress.ready ? 'It’s almost time.' : 'Good things take a little making.'}</h2><p>${progress.celebrated ? 'The lights are on, the games are ready, and your Python is part of it all. Pop into any stall to try what you made.' : `${progress.done} of 6 preparations made together`}</p></div><div class="festival-cast" aria-hidden="true">${['rowan', 'mira', 'elio'].map(id => characterSprite(id)).join('')}</div><div class="festival-path"></div></section>
+  ${progress.celebrated ? `<div class="festival-letter"><p class="eyebrow">A NOTE LEFT AT YOUR DOOR</p><p>“We used to say somebody ought to put on a festival. Then you came along and started with one small thing. Every bill, game, score, plant, and lantern carries a little of what you learned. Thank you for making this place feel like home.”</p><span>— Rowan, Mira & Elio</span><p class="festival-keepsake">${icon('spark')} Lantern Festival keepsake on your room shelf · 200 XP & 150 coins collected</p></div>` : `<div class="festival-letter"><p class="eyebrow">${progress.ready ? 'THE LAST INVITATION' : `CHAPTER ${progress.current + 1} OF 3 · ${current.title.toUpperCase()}`}</p><p>${esc(progress.ready ? 'Rowan puts the kettle down. Mira checks the games one last time. Elio cups a lantern in his hands. “Everything is ready. Shall we light the village together?”' : current.letter)}</p>${progress.ready ? `<button class="button primary" data-action="festival-celebrate">${icon('flame')} Light the lanterns · 200 XP & 150 coins</button>` : '<span>No deadline. Every completed village project counts, including ones you made earlier.</span>'}</div>`}
+  <section class="festival-story" aria-label="Festival preparations">${progress.acts.map((act, index) => `<div class="festival-act"><div class="festival-act-title"><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${act.title}</h2><p>${act.done}/2 preparations complete${act.done === 2 ? ' · Made with care' : ''}</p></div></div><div class="festival-stalls">${act.projects.map(id => {
+    const project = projects.find(project => project.id === id), stall = festivalStalls[id], done = state.projects.includes(id), unlocked = projectUnlocked(state, id), runnable = done && !!state.projectCode[id];
+    const previous = projects.find(item => item.id === project.previous);
+    return `<article class="festival-stall ${done ? 'stall-ready' : ''}"><div class="stall-awning"></div><span class="stall-symbol">${icon(stall.icon)}</span><p class="eyebrow">${done ? 'YOUR CREATION IS HERE' : `MADE WITH ${project.npc.toUpperCase()}`}</p><h3>${stall.name}</h3><p>${done ? stall.use : esc(project.storyBefore)}</p>${runnable ? `<button class="button primary" data-action="project-demo" data-id="${id}">Visit & try your Python ${icon('play')}</button>` : unlocked ? `<button class="button outline" data-action="project" data-id="${id}">${done ? 'Restore your creation' : 'Help prepare this stall'} ${icon('code')}</button>` : `<p class="festival-prerequisite">${icon('lock')} ${state.completed.length < project.requires ? `Complete ${project.requires} trail quests (${state.completed.length}/${project.requires}).` : `First make “${esc(previous?.title)}”.`}<button class="text-button" data-action="navigate" data-route="quests">Visit the learning trail ${icon('arrow')}</button></p>`}${runnable ? `<button class="text-button" data-action="project" data-id="${id}">Revisit the code</button>` : ''}</article>`;
+  }).join('')}</div></div>`).join('')}</section><p class="festival-footnote">Trying a stall is free. Project and festival rewards are earned once; the festival stays open for return visits.</p>`;
+}
+
+export function renderCafe(state, companion) {
+  const period = villagePeriod(state.villageTime);
+  return `<div class="dialog-top"><span class="eyebrow">THE CAFÉ TERRACE · ${period.toUpperCase()}</span><button class="icon-button" data-action="close-village" aria-label="Leave the café table">${icon('close')}</button></div><div class="cafe-break"><p class="eyebrow">A MOMENT WITH ${esc(companion.name).toUpperCase()}</p><h2>The next thing can wait.</h2><div class="cafe-vignette" aria-hidden="true"><div class="cafe-window"></div><div class="cafe-visitor">${characterSprite('traveler')}</div><div class="cafe-pet">${sprite(companion.id)}</div><div class="cafe-table"><span class="cafe-cup"></span><i class="cafe-steam"></i></div><div class="cafe-flower">${furnishingArt('plant-flowers')}</div></div><p>${period === 'morning' ? 'A little steam rises from your cup. Somewhere inside, Rowan is taking bread out of the oven.' : period === 'afternoon' ? 'A spoon clinks against a cup. Mira waves from the courtyard; the sun finds a gap between the awnings.' : 'Lamplight pools on the cobblestones. The workshop closes softly, and the village settles around you.'}</p><p class="cafe-pet-note">${esc(companion.name)} settles beside you. “${esc(companion.quote || 'A very good place to pause.')}”</p><button class="button outline" data-action="close-village">Back to our little adventure ${icon('arrow')}</button></div>`;
+}

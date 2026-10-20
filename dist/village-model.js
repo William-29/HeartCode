@@ -9,7 +9,10 @@ export const destinations = Object.freeze([
   { id: 'elio', name: 'Elio', place: 'Willowmere Lake', hint: 'Curious little AI experiments', x: 350, y: 500, icon: 'leaf', color: 'blue' },
   { id: 'workbench', name: 'Your workbench', place: 'The open-air workshop', hint: 'Practice & build freely', x: 782, y: 340, icon: 'code', color: 'gold' },
   { id: 'companions', name: 'Companion garden', place: 'A place for little friends', hint: 'Meet & choose your pet', x: 800, y: 510, icon: 'paw', color: 'green' },
-  { id: 'trail', name: 'The learning trail', place: 'Beyond the village', hint: 'Continue your 60-quest journey', x: 500, y: 100, icon: 'map', color: 'green' }
+  { id: 'trail', name: 'The learning trail', place: 'Beyond the village', hint: 'Continue your 60-quest journey', x: 500, y: 100, icon: 'map', color: 'green' },
+  { id: 'room', name: 'Your room', place: 'Above the tavern', hint: 'Decorate & display your keepsakes', x: 170, y: 310, icon: 'home', color: 'coral' },
+  { id: 'cafe', name: 'A quiet table', place: 'The café terrace', hint: 'Take a little break with your pet', x: 385, y: 390, icon: 'clock', color: 'gold' },
+  { id: 'festival', name: 'The lantern festival', place: 'The village green', hint: 'Help prepare & try your creations', x: 590, y: 555, icon: 'spark', color: 'gold' }
 ]);
 
 const solidRects = [
@@ -127,6 +130,6 @@ export function advanceRoute(position, route, distanceToWalk) {
   return { position: current, route: remaining, arrived: remaining.length === 0 };
 }
 
-export function nearbyDestination(position, radius = 65) {
-  return destinations.filter(place => distance(position, place) <= radius).sort((a, b) => distance(position, a) - distance(position, b))[0] || null;
+export function nearbyDestination(position, radius = 65, places = destinations) {
+  return places.filter(place => distance(position, place) <= radius).sort((a, b) => distance(position, a) - distance(position, b))[0] || null;
 }

@@ -32,7 +32,19 @@ The traveler and all three villagers now share illustrated character art that ma
 
 `dist/characters.js` and `dist/characters.css` render the shared atlas, `dist/assets/hearthwick-neighbors.png` (1774 x 887, transparent PNG). The original is preserved; the built-in ImageGen prompt, transparency checks, and source crop coordinates are recorded in [docs/character-art.md](docs/character-art.md).
 
-The 55 automated tests cover campaign and project progression, real Python solutions, save compatibility, village paths, dialog handoffs, and motion cleanup. Artwork was inspected directly. No connected browser was available for visual layout or animation QA.
+The 68 automated tests cover campaign and project progression, real Python solutions, save compatibility, village paths, dialog handoffs, and motion cleanup. Artwork was inspected directly. No connected browser was available for visual layout or animation QA.
+
+## Everyday life, your room, and the lantern festival
+
+Choose **Follow my clock**, Morning, Afternoon, or Evening above the village. The automatic clock uses the player's device time: morning 06:00-12:00, afternoon 12:00-17:00, evening otherwise. Rowan, Mira, and Elio have different locations and routines throughout the day. When the period changes while the village is open, they follow walkable paths to their next spot; selecting a moving villager lets them stop for a visit. Lighting shifts with the period. Activities remain available at every hour, and both reduced-motion settings skip routine travel. The daybook and conversations describe what each villager is doing. **A quiet table** opens a peaceful cafe break with the equipped pet, without a timer or reward.
+
+Visit **Your room** above the tavern or use its navigation link. A furnished room is available immediately: chair, lamp, rug, shelf, and a place for your pet. The secondhand shop offers ten furnishings across five fixed spots. Four starter pieces are free; optional purchases cost 45-140 earned coins. Buying places the item; owned pieces can be switched or cleared for free and are never charged twice. The shelf displays the latest four earned achievement trophies and a festival keepsake after its celebration. This is a choice of furnishings for fixed positions, rather than a drag-and-drop room editor.
+
+**Festival** follows three chapters across the six existing village Python projects: the cafe and guessing game, pantry and scoreboard, then plant care and learned lantern brightness. Earlier completed projects count. Trail prerequisites and the previous project for each villager still apply. Every finished stall opens the actual saved Python creation with editable inputs, and its code can be revisited. After all six preparations, light the lanterns to receive **200 XP, 150 coins, and a permanent room keepsake once**. The festival stays open for repeat visits. Missing imported source code can be restored by replaying that project.
+
+Room ownership and placement, the clock preference, and festival celebration join the existing local save and JSON backup. Old saves receive free starter furniture. Invalid room slots and unknown furnishings are rejected, and imported celebration status requires all six projects. Browser visual QA was unavailable; 68 automated checks cover these state rules, clock cleanup, village routes and moving-NPC interactions, room buttons, festival demo handoffs, and the existing real Python curriculum.
+
+`dist/village-life-model.js` owns routines, furnishings, and festival progress; `dist/village-life.js` renders the room, cafe, daybook, and festival; `dist/village-life.css` provides responsive scenery and motion. The new furniture is code-native SVG and CSS, and the scenes reuse the established character atlas.
 
 ## Run locally
 
@@ -87,7 +99,7 @@ Completing a campaign quest for the first time returns you to the map. Your coat
 
 Progress is saved **before** travel begins. Skip walk, navigating away, or reloading cannot undo a reward or award it twice. The game's Reduce motion setting and the operating system's reduced-motion preference both skip the walk and disable ambient motion. Existing saves remain compatible. Fireflies, chimney smoke, drifting clouds, water glints, and walking sprites are decorative effects.
 
-The test suite has 55 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
+The test suite has 68 tests, including curved route continuity, reward/travel consistency, old-save migration, advanced achievement thresholds, saved positions, reduced motion, skip behavior, advanced and final arrivals, and animation cleanup. Every coding solution is checked, along with empty submissions and 27 deliberately incorrect implementations (including data leakage, incorrect denominators, unstable sigmoid, and reversed gradients). A lightweight DOM adapter verifies animation lifecycle; it does not replace visual browser QA. No connected browser was available in the implementation session.
 
 ## Runtime and privacy
 

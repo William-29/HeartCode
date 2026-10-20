@@ -10,6 +10,8 @@ import { renderVillage, mountVillage } from './village.js';
 import { projects, villagers, projectUnlocked } from './projects.js';
 import { renderVillager, renderProjectDemo, demoSource } from './village-stories.js';
 import { characterPortrait } from './characters.js';
+import { renderRoom, renderFestival, renderCafe, mountVillageClock } from './village-life.js';
+import { furnishRoom, removeFurnishing, celebrateFestival, periods } from './village-life-model.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -21,6 +23,7 @@ let route = location.hash.slice(1) || 'village';
 let mapSelection = null;
 let worldSession = null;
 let villageSession = null;
+let villageClock = null;
 let activeDemo = null;
 let activeGame = null;
 let pendingTravel = null;
@@ -31,7 +34,7 @@ let solved = false;
 let saveTimer;
 let audioContext;
 let celebration = null;
-const routes = { village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'] };
+const routes = { village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
 const questDialog = $('#quest-dialog');
 const settingsDialog = $('#settings-dialog');
 const villageDialog = $('#village-dialog');
@@ -72,12 +75,15 @@ function navigate(next) { if (!routes[next]) next = 'tavern'; if (route === next
 window.addEventListener('hashchange', () => { cancelRun(); route = location.hash.slice(1); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 function render() {
+  const previousPlaces = villageSession?.places?.();
   celebration?.dispose();
   celebration = null;
   worldSession?.dispose();
   worldSession = null;
   villageSession?.dispose();
   villageSession = null;
+  villageClock?.dispose();
+  villageClock = null;
   if (!routes[route]) route = 'tavern';
   document.documentElement.classList.toggle('reduce-motion', state.reducedMotion);
   const level = levelInfo(state.xp);
@@ -95,12 +101,13 @@ function render() {
       </div>
     </aside>
     <div class="workspace">
-      <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
-      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements })[route]()}</main>
+      <header class="topbar"><div class="breadcrumb">The learning tavern <span>/</span> <strong>${routes[route][0]}</strong></div><div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
+      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet()), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
   if (route === 'practice') bindEditor($('#practice-code'), 'practice');
-  if (route === 'village') villageSession = mountVillage({ state, reducedMotion: state.reducedMotion, onVisit: visitVillage, onMove: position => { state.villagePosition = position; clearTimeout(saveTimer); saveTimer = setTimeout(save, 350); } });
+  if (route === 'village') villageSession = mountVillage({ state, previousPlaces, reducedMotion: state.reducedMotion, onVisit: visitVillage, onMove: position => { state.villagePosition = position; clearTimeout(saveTimer); saveTimer = setTimeout(save, 350); } });
+  if (route === 'village') villageClock = mountVillageClock(state, render);
   if (route === 'quests') {
     const travel = pendingTravel;
     pendingTravel = null;
@@ -142,9 +149,23 @@ function renderQuests() {
 
 function visitVillage(id) {
   villageSession?.pause();
+  if (id === 'cafe') { openCafe(); return; }
   if (villagers.some(v => v.id === id)) { openVillager(id); return; }
-  const destination = { workbench: 'practice', companions: 'companions', trail: 'quests' }[id];
+  const destination = { workbench: 'practice', companions: 'companions', trail: 'quests', room: 'room', festival: 'festival' }[id];
   if (destination) navigate(destination);
+}
+function openCafe() {
+  cancelRun(); activeDemo = null; villageSession?.pause();
+  if (questDialog.open) closeQuest();
+  villageDialog.innerHTML = renderCafe(state, pet());
+  if (!villageDialog.open) villageDialog.showModal();
+  $('.dialog-top button', villageDialog)?.focus();
+}
+function refreshRoom(slot) {
+  const scroll = window.scrollY || 0;
+  save(); render();
+  $(`[data-action="room-remove"][data-id="${slot}"]`)?.focus({ preventScroll: true });
+  window.scrollTo(0, scroll);
 }
 function openVillager(id) {
   if (!villagers.some(v => v.id === id)) return;
@@ -156,7 +177,7 @@ function openVillager(id) {
   if (!villageDialog.open) villageDialog.showModal();
   $('.dialog-top button', villageDialog)?.focus();
 }
-function closeVillage() { cancelRun(); activeDemo = null; villageDialog.close(); $('.village-viewport')?.focus({ preventScroll: true }); }
+function closeVillage() { cancelRun(); activeDemo = null; villageDialog.close(); ($('.village-viewport') || $('#main'))?.focus({ preventScroll: true }); }
 villageDialog.addEventListener('cancel', () => { cancelRun(); activeDemo = null; });
 villageDialog.addEventListener('close', () => { if (!villageDialog.open) activeDemo = null; });
 function openProject(id) {
@@ -172,7 +193,7 @@ function openProjectDemo(id) {
   if (questDialog.open) closeQuest();
   cancelRun(); villageSession?.pause(); activeDemo = project;
   activeGame = project.id === 'project-guessing-game' ? { secret: 1 + Math.floor(Math.random() * 100), attempts: [], won: false } : null;
-  villageDialog.innerHTML = renderProjectDemo(project);
+  villageDialog.innerHTML = renderProjectDemo(project) + (route === 'festival' ? '<div class="festival-demo-return"><button class="text-button" data-action="festival-return">Return to the festival</button></div>' : '');
   if (!villageDialog.open) villageDialog.showModal();
   $('#project-demo-form').addEventListener('submit', executeProjectDemo);
 }
@@ -287,7 +308,7 @@ function completeActive(output = '', submittedCode = '') {
 function renderProjectSuccess(project, result, output, leveled) {
   render(); notifyAchievements(result.achievements);
   const villager = villagers.find(v => v.id === project.npc);
-  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${result.replay ? 'A FRESH POLISH' : 'MADE WITH A FRIEND'}</span><button class="icon-button" data-action="close-quest" aria-label="Close project">${icon('close')}</button></div><div class="success-screen"><div class="success-illustration">${rewardChest()}</div><p class="eyebrow">VILLAGE PROJECT COMPLETE</p><h2>${esc(project.title)}</h2><p>${esc(project.storyAfter)}</p><p>${esc(project.takeaway)}</p>${output.trim() ? `<pre class="success-output">${esc(output.slice(0, 2000))}</pre>` : ''}<div class="success-rewards">${result.replay ? '<span>Updated creation saved · Rewards already earned.</span>' : rewardLine(result.xp, result.coins)}</div><p class="friendship-success">♥ ${esc(villager.name)} · ${result.friendship.count}/2 projects together · ${esc(result.friendship.label)}</p>${leveled ? `<div class="level-up">${icon('spark')} You reached level ${levelInfo(state.xp).level}.</div>` : ''}<div class="success-actions"><button class="button outline" data-action="villager" data-id="${project.npc}">Talk to ${esc(villager.name)}</button>${project.demo ? `<button class="button primary" data-action="project-demo" data-id="${project.id}">Try your creation ${icon('play')}</button>` : ''}<button class="text-button" data-action="project-download" data-id="${project.id}">${icon('download')} Keep the Python file</button></div></div>`;
+  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${result.replay ? 'A FRESH POLISH' : 'MADE WITH A FRIEND'}</span><button class="icon-button" data-action="close-quest" aria-label="Close project">${icon('close')}</button></div><div class="success-screen"><div class="success-illustration">${rewardChest()}</div><p class="eyebrow">VILLAGE PROJECT COMPLETE</p><h2>${esc(project.title)}</h2><p>${esc(project.storyAfter)}</p><p>${esc(project.takeaway)}</p>${output.trim() ? `<pre class="success-output">${esc(output.slice(0, 2000))}</pre>` : ''}<div class="success-rewards">${result.replay ? '<span>Updated creation saved · Rewards already earned.</span>' : rewardLine(result.xp, result.coins)}</div><p class="friendship-success">♥ ${esc(villager.name)} · ${result.friendship.count}/2 projects together · ${esc(result.friendship.label)}</p>${leveled ? `<div class="level-up">${icon('spark')} You reached level ${levelInfo(state.xp).level}.</div>` : ''}<div class="success-actions"><button class="button outline" data-action="festival-return">See the festival ${icon('spark')}</button><button class="button outline" data-action="villager" data-id="${project.npc}">Talk to ${esc(villager.name)}</button>${project.demo ? `<button class="button primary" data-action="project-demo" data-id="${project.id}">Try your creation ${icon('play')}</button>` : ''}<button class="text-button" data-action="project-download" data-id="${project.id}">${icon('download')} Keep the Python file</button></div></div>`;
   $('.success-actions button', questDialog)?.focus();
   if (!result.replay) celebrate({ xp: result.xp, coins: result.coins, level: leveled ? levelInfo(state.xp).level : null, achievements: result.achievements }, questDialog);
 }
@@ -333,7 +354,7 @@ function setRunning(prefix, value) { const run = $(`#${prefix}-run`), stop = $(`
 function openSettings() {
   cancelRun();
   villageSession?.pause();
-  settingsDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">MAKE YOURSELF AT HOME</span><button class="icon-button" data-action="close-settings" aria-label="Close settings">${icon('close')}</button></div><div class="settings-body"><h2>Your adventure, your way.</h2><form id="settings-form"><label class="field-label" for="adventurer-name">Adventurer name</label><input id="adventurer-name" name="name" maxlength="24" value="${esc(state.name)}" required><label class="toggle-row"><span><strong>Reward sounds</strong><small>A gentle chime when you complete a quest.</small></span><input type="checkbox" name="sound" ${state.sound ? 'checked' : ''}></label><label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep companions, lamplight, and effects still.</small></span><input type="checkbox" name="motion" ${state.reducedMotion ? 'checked' : ''}></label><button class="button primary full" type="submit">Save preferences ${icon('check')}</button></form><div class="settings-divider"></div><h3>Keep your story safe</h3><p>Progress is saved on this browser and device. Export a backup to carry your adventure to another browser. Import replaces the progress currently saved here.</p><div class="backup-actions"><button class="button outline" data-action="export">${icon('download')} Export save</button><label class="button outline file-label">Import save<input type="file" id="import-save" accept="application/json,.json" aria-label="Import a Hearthcode save"></label></div><div class="settings-divider"></div><details class="reset-details"><summary>Start a new adventure</summary><p>This clears your quests, coins, XP, and companions in this browser. Export a backup first if you want to keep them.</p><button class="button danger" data-action="reset-progress">Reset my progress</button></details><p class="settings-footnote">Made for learning at your pace. No accounts, ads, or paid upgrades.</p></div>`;
+  settingsDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">MAKE YOURSELF AT HOME</span><button class="icon-button" data-action="close-settings" aria-label="Close settings">${icon('close')}</button></div><div class="settings-body"><h2>Your adventure, your way.</h2><form id="settings-form"><label class="field-label" for="adventurer-name">Adventurer name</label><input id="adventurer-name" name="name" maxlength="24" value="${esc(state.name)}" required><label class="toggle-row"><span><strong>Reward sounds</strong><small>A gentle chime when you complete a quest.</small></span><input type="checkbox" name="sound" ${state.sound ? 'checked' : ''}></label><label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep companions, lamplight, and effects still.</small></span><input type="checkbox" name="motion" ${state.reducedMotion ? 'checked' : ''}></label><button class="button primary full" type="submit">Save preferences ${icon('check')}</button></form><div class="settings-divider"></div><h3>Keep your story safe</h3><p>Progress is saved on this browser and device. Export a backup to carry your adventure to another browser. Import replaces the progress currently saved here.</p><div class="backup-actions"><button class="button outline" data-action="export">${icon('download')} Export save</button><label class="button outline file-label">Import save<input type="file" id="import-save" accept="application/json,.json" aria-label="Import a Hearthcode save"></label></div><div class="settings-divider"></div><details class="reset-details"><summary>Start a new adventure</summary><p>This clears your quests, coins, XP, companions, room furnishings, and festival progress in this browser. Export a backup first if you want to keep them.</p><button class="button danger" data-action="reset-progress">Reset my progress</button></details><p class="settings-footnote">Made for learning at your pace. No accounts, ads, or paid upgrades.</p></div>`;
   settingsDialog.showModal();
   $('#settings-form').addEventListener('submit', event => { event.preventDefault(); state.name = $('#adventurer-name').value.trim() || 'Adventurer'; state.sound = event.target.sound.checked; state.reducedMotion = event.target.motion.checked; save(); settingsDialog.close(); render(); toast('Your corner of the tavern feels a little more like you.', 'check'); });
   $('#import-save').addEventListener('change', importSave);
@@ -358,6 +379,10 @@ document.addEventListener('click', event => {
   const button = event.target.closest('[data-action]'); if (!button || button.disabled) return;
   const { action, id } = button.dataset;
   switch (action) {
+    case 'room-furnish': { const result = furnishRoom(state, id); if (!result.ok) { toast(result.reason, 'coin'); break; } refreshRoom(result.item.slot); if (result.purchased) chime(); toast(`${result.item.name} is in your room.`, 'home'); break; }
+    case 'room-remove': { const result = removeFurnishing(state, id); if (result.ok) { refreshRoom(id); toast('A little space to try something new. Your furnishing is still yours.', 'home'); } break; }
+    case 'festival-return': if (questDialog.open) closeQuest(); if (villageDialog.open) closeVillage(); navigate('festival'); break;
+    case 'festival-celebrate': { const result = celebrateFestival(state); if (!result.ok) { toast(result.reason, 'help'); break; } save(); render(); if (!result.replay) { chime(); celebrate({ xp: result.xp, coins: result.coins, achievements: [] }); toast('The lantern festival is open. A keepsake is waiting on your room shelf.', 'spark', 6500); } break; }
     case 'villager': openVillager(id); break;
     case 'project': openProject(id); break;
     case 'project-demo': openProjectDemo(id); break;
@@ -386,6 +411,7 @@ document.addEventListener('click', event => {
   }
 });
 document.addEventListener('change', event => {
+  if (event.target.id === 'village-time') { state.villageTime = periods.includes(event.target.value) ? event.target.value : 'auto'; save(); render(); $('#village-time')?.focus({ preventScroll: true }); }
   if (event.target.id === 'sample-select' && practiceSamples[event.target.value]) { cancelRun(); state.drafts.practice = practiceSamples[event.target.value]; save(); render(); }
 });
 document.addEventListener('keydown', event => {
