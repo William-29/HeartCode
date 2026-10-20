@@ -21,11 +21,14 @@ main{flex:1;min-height:0;width:100%;overflow:auto;overscroll-behavior:contain;pa
 .village-heading .eyebrow,.life-heading .eyebrow,.world-heading .eyebrow{margin:0 0 4px}
 .village-heading p:not(.eyebrow){font-size:12px}
 .village-routine-bar{padding:0;flex:none}
-.village-frame{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;max-width:none;margin:0;background:#674d39}
-.village-topline{flex:none;min-height:30px;padding:6px 13px}
+.village-stage{flex:1;min-height:0;width:100%;container-type:size;display:grid;place-items:center;--village-chrome:80px}
+/* 32px title + 46px controls + 2px border surround a 1000:650 scene.
+   Size the frame itself, so fitting the scene cannot leave side panels. */
+.village-frame{flex:none;min-height:0;display:flex;flex-direction:column;width:min(100cqw,calc((100cqh - var(--village-chrome)) * 1.5384615385 + 2px));height:min(100cqh,calc((100cqw - 2px) * .65 + var(--village-chrome)));max-width:none;margin:0;background:#674d39;container-type:inline-size}
+.village-topline{flex:0 0 32px;height:32px;min-height:0;padding:6px 13px}
 .village-viewport{flex:1;min-height:0;overflow:hidden;background:radial-gradient(ellipse,#9a7850,#483c30);touch-action:manipulation}
 .village-scene{position:absolute;left:50%;top:50%;width:1000px;height:650px;min-width:0;transform-origin:center}
-.village-bottomline{flex:none;min-height:42px;padding:5px 12px;flex-wrap:nowrap}
+.village-bottomline{flex:0 0 46px;height:46px;min-height:0;padding:5px 12px;flex-wrap:nowrap}
 .village-status{margin:0;min-height:14px;font-size:11px;line-height:1.3}
 .village-direct{flex:none;justify-content:flex-start;margin:0;padding:0;gap:8px;font-size:11px;padding-right:200px;flex-wrap:nowrap;min-height:34px}
 .village-direct label{white-space:nowrap}
@@ -37,10 +40,14 @@ main{flex:1;min-height:0;width:100%;overflow:auto;overscroll-behavior:contain;pa
 .village-daybook[open]>div{grid-template-columns:1fr;gap:12px;margin:14px 0}
 .village-daybook small{font-size:10px}
 .village-growth-note{display:none}
+@container(max-width:600px){
+  .village-topline>span:last-child,.village-bottomline>p{display:none}
+  .village-bottomline{justify-content:center}
+}
 
 /* A real illustrated room with furnishings composited onto the floor and walls. */
-.home-stage{position:relative;flex:1;min-height:0;container-type:size;display:grid;place-items:center;background:radial-gradient(ellipse,#b17e4e,#6b4934);border:1px solid #ad8255;border-radius:7px;box-shadow:inset 0 0 60px #3a281d4d}
-.home-scene{width:min(100cqw,150cqh);height:min(100cqh,66.6667cqw);aspect-ratio:1.5;max-height:none;border:0;border-radius:3px;background:#8e5b33;container-type:size}
+.home-stage{position:relative;flex:1;min-height:0;container-type:size;display:grid;place-items:center}
+.home-scene{width:min(100cqw,150cqh);height:min(100cqh,66.6667cqw);aspect-ratio:1.5;max-height:none;border:0;border-radius:6px;background:#8e5b33;container-type:size;box-shadow:0 0 0 1px #ad8255,0 8px 20px #71513824}
 .home-backdrop{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .home-firelight{position:absolute;left:5%;top:24%;width:44%;height:58%;background:radial-gradient(ellipse,#ffb94f30,transparent 68%);mix-blend-mode:screen;animation:hearth-firelight 4.7s ease-in-out infinite;pointer-events:none}
 .home-chair{left:23%;top:49%;width:23%;height:34%;z-index:3}
@@ -173,6 +180,7 @@ main{flex:1;min-height:0;width:100%;overflow:auto;overscroll-behavior:contain;pa
   .journey-receipt{width:calc(100% - 24px)}
 }
 @media(max-height:530px){
+  .village-stage{--village-chrome:48px}
   .workspace:is([data-route="village"],[data-route="room"],[data-route="quests"]) .page-heading,.village-heading,.village-topline,.room-after-scene{display:none}
   .room-slot-heading,.room-item-picture,.destination-meta,.world-topline{display:none}
   .room-shop-row{padding-top:4px}
