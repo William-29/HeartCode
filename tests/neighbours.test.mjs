@@ -13,6 +13,10 @@ import { ambientLevels } from '../dist/ambience.js';
 import { clockProjects, discoveryProjects, discoveries } from '../dist/clockwork-content.js';
 import { inspectMechanism, moveMechanism, mechanismOrder, mechanismReady, noticeDiscoveries } from '../dist/neighbour-model.js';
 import { createMusicPlayer } from '../dist/clockwork-ui.js';
+import { shelterProjects, observatoryProjects, shelterAnimals, shelterHomes } from '../dist/haven-content.js';
+import { observeSky, splitSky, arrangeIntroduction, normalizeHaven } from '../dist/haven-model.js';
+import { havenBook, havenReport } from '../dist/haven-ui.js';
+import { exhibitCatalog } from '../dist/exhibition-model.js';
 
 function progressed(n=60){
   const s=freshState();s.completed=quests.slice(0,n).map(q=>q.id);return s;
@@ -350,4 +354,95 @@ test('music is opt-in, uses only bounded valid notes, and stops on blur, hiding,
   assert.equal(player.play(Array(33).fill('C')),false);
   player.play(['A']);doc.hidden=true;doc.dispatchEvent(new Event('visibilitychange'));assert.equal(contexts[1].closed,true);
   player.play(['G']);player.dispose();assert.equal(contexts[2].closed,true);player.dispose();
+});
+
+function finishHaven(s){
+  for(const p of shelterProjects){if(p.inspection)inspectMechanism(s,p.id,p.answer);assert.equal(completeNeighbour(s,p.id,p.solution).ok,true);}
+  completeNeighbour(s,observatoryProjects[0].id,observatoryProjects[0].solution);
+  for(let i=0;i<30;i++){s.neighbours.sky=['clear','hazy','cloudy'][i%3];observeSky(s,()=>.5);}
+  for(const p of observatoryProjects.slice(1))assert.equal(completeNeighbour(s,p.id,p.solution).ok,true);
+  return s;
+}
+test('haven stories begin immediately, then require lessons, earlier tools and observations; rewards only happen once',()=>{
+  const s=freshState();
+  assert.deepEqual([...shelterProjects,...observatoryProjects].filter(p=>neighbourUnlocked(s,p)).map(p=>p.id),['shelter-pantry','sky-focus']);
+  assert.equal(observeSky(s),null);
+  completeNeighbour(s,'sky-focus',observatoryProjects[0].solution);
+  for(let i=0;i<6;i++)observeSky(s,()=>.5);
+  assert.equal(neighbourUnlocked(s,observatoryProjects[1]),false);
+  s.completed=quests.slice(0,6).map(q=>q.id);assert.equal(neighbourUnlocked(s,observatoryProjects[1]),true);
+  s.completed=quests.map(q=>q.id);finishHaven(s);
+  const [xp,coins]=[s.xp,s.coins];
+  for(const p of [...shelterProjects,...observatoryProjects])assert.equal(completeNeighbour(s,p.id,p.solution).replay,true);
+  assert.deepEqual([s.xp,s.coins],[xp,coins]);assert.equal(s.completed.length,60);
+});
+test('recommendations run saved Python; suitable meetings need an explicit choice and never change owned pets or rewards',()=>{
+  const s=finishHaven(progressed()),p=shelterProjects[2],before=[s.xp,s.coins,...s.owned];
+  const result=python([{code:workingSource(s,p)}])[0];assert.equal(result.passed,true,result.error);
+  const report=workingResult(result.output);assert.deepEqual(report,{moss:['nell','elio'],bramble:['rowan'],clover:['elio']});
+  assert.deepEqual(s.neighbours.introductions,{});
+  assert.equal(arrangeIntroduction(s,'clover','nell'),false);assert.equal(arrangeIntroduction(s,'moss','rowan'),false);
+  assert.equal(arrangeIntroduction(s,'moss','nell'),true);assert.equal(arrangeIntroduction(s,'moss','nell'),true);
+  assert.deepEqual([s.xp,s.coins,...s.owned],before);
+  assert.match(havenReport(p,report),/Review together/);
+  assert.doesNotMatch(havenReport(p,{moss:['<img src=x onerror=alert(1)>','rowan']}),/onerror|data-home="rowan"/);
+  s.neighbours.code[p.id]='def recommend(animal, homes):\n    return []';
+  assert.deepEqual(workingResult(python([{code:workingSource(s,p)}])[0].output),{moss:[],bramble:[],clover:[]});
+});
+test('sky observations preserve noise, split chronologically by stable visit id, stay bounded and award no coins',()=>{
+  const s=freshState();completeNeighbour(s,'sky-focus',observatoryProjects[0].solution);const before=[s.xp,s.coins];
+  for(let i=0;i<130;i++)observeSky(s,()=>.5);
+  assert.equal(s.neighbours.skyObservations.length,120);assert.equal(s.neighbours.skyVisits,130);
+  const rows=s.neighbours.skyObservations;assert.equal(rows.find(r=>r.id===14).brightness,115);
+  const {train,test}=splitSky(rows);assert.equal(train.length,96);assert.equal(test.length,24);assert.ok(test.every(r=>r.id%5===0));assert.ok(train.every(r=>!test.includes(r)));
+  assert.deepEqual([s.xp,s.coins],before);
+});
+test('sky tools use personal data and actual saved predictions; test brightness never enters training',()=>{
+  const s=finishHaven(progressed());
+  const reports=python(observatoryProjects.slice(1).map(p=>({code:workingSource(s,p)}))).map(r=>{assert.equal(r.passed,true,r.error);return workingResult(r.output);});
+  assert.deepEqual(reports[0],{clear:10,hazy:10,cloudy:10});assert.ok(reports[1].mean>reports[1].median);
+  const p=observatoryProjects[3],src=workingSource(s,p),report=reports[2];assert.equal(report.training,24);assert.equal(report.testing,6);assert.ok(Number.isFinite(report.mae));assert.ok(src.indexOf('_guesses=')<src.indexOf('_truth='));
+  const changed=structuredClone(s);for(const row of changed.neighbours.skyObservations)if(row.id%5===0)row.brightness=1;
+  const changedReport=workingResult(python([{code:workingSource(changed,p)}])[0].output);assert.deepEqual(changedReport.predictions,report.predictions);assert.notEqual(changedReport.mae,report.mae);
+  s.neighbours.code[p.id]='def predict_brightness(rows, sky):\n    return 0';
+  const zeros=workingResult(python([{code:workingSource(s,p)}])[0].output);assert.ok(zeros.predictions.every(v=>v===0));assert.equal(zeros.next,0);
+});
+test('haven saves round-trip, migrate old saves, sanitize observations and block unearned introductions and exhibits',()=>{
+  const s=finishHaven(progressed());arrangeIntroduction(s,'moss','nell');s.neighbours.drafts['sky-noise']='my draft';
+  assert.deepEqual(normalizeState(s).neighbours,s.neighbours);
+  const catalog=exhibitCatalog(s);for(const p of [...shelterProjects,...observatoryProjects]){const item=catalog.find(x=>x.id===p.id);assert.equal(item.place,p.kind);assert.equal(item.source,s.neighbours.code[p.id]);}
+  const old=freshState();for(const k of ['sky','skyVisits','skyObservations','introductions'])delete old.neighbours[k];assert.deepEqual(normalizeState(old).neighbours,freshNeighbours());
+  const bad=freshState();Object.assign(bad.neighbours,{skyVisits:4,skyObservations:[{id:1,sky:'clear',brightness:80}],introductions:{moss:'nell'},completed:['sky-predict'],code:{'sky-predict':'pass'}});
+  assert.deepEqual(normalizeState(bad).neighbours.skyObservations,[]);assert.deepEqual(normalizeState(bad).neighbours.introductions,{});assert.equal(exhibitCatalog(normalizeState(bad)).length,0);
+  const clean=normalizeHaven({sky:'<x>',skyVisits:Infinity,skyObservations:[{id:1,sky:'clear',brightness:80},{id:1,sky:'clear',brightness:90},{id:2,sky:'cloudy',brightness:NaN},{id:3,sky:'alien',brightness:10}],introductions:{clover:'nell',moss:'nell'}});
+  assert.equal(clean.sky,'clear');assert.equal(clean.skyObservations.length,1);assert.deepEqual(clean.introductions,{moss:'nell'});
+});
+test('shelter controller completes three projects, reviews recommendations, and confirms a meeting only after a player choice',async()=>{
+  const ui=harness(progressed(),'shelter');
+  try{
+    ui.click('shelter-book');assert.match(ui.dialog.innerHTML,/Rowan/);
+    for(const p of shelterProjects){
+      ui.work('project',p.id);ui.dialog.querySelector('#neighbour-code').value=p.solution;
+      if(p.inspection){ui.work('run');assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/needs/);ui.work('inspect',p.id,{index:String(p.answer)});}
+      ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Made together/);
+    }
+    assert.equal(ui.rewards().length,3);ui.work('use','shelter-match');ui.work('run-use');await ui.finish(python([{code:ui.pending().code}])[0]);
+    assert.deepEqual(ui.state.neighbours.introductions,{});ui.work('review-introduction','moss',{home:'nell'});assert.match(ui.dialog.innerHTML,/Arrange a gentle first visit/);assert.deepEqual(ui.state.neighbours.introductions,{});
+    ui.work('animal','moss');assert.deepEqual(ui.state.neighbours.introductions,{});
+    ui.work('review-introduction','moss',{home:'nell'});ui.work('confirm-introduction','moss',{home:'nell'});assert.equal(ui.state.neighbours.introductions.moss,'nell');assert.match(ui.dialog.innerHTML,/has arranged/);assert.equal(ui.rewards().length,3);
+  }finally{ui.dispose();}
+});
+test('observatory controller uncovers the telescope, records selected skies, displays chart and reopens saved exhibits',async()=>{
+  const ui=harness(progressed(),'observatory');
+  try{
+    ui.click('observe-sky');assert.equal(ui.state.neighbours.skyVisits,0);
+    ui.click('project','sky-focus');ui.dialog.querySelector('#neighbour-code').value=observatoryProjects[0].solution;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+    assert.match(ui.root.innerHTML,/haven-telescope restored/);
+    ui.change(ui.root,'haven-sky','cloudy');ui.click('observe-sky');assert.equal(ui.state.neighbours.skyObservations[0].sky,'cloudy');
+    for(let i=0;i<20;i++)ui.click('observe-sky');ui.click('sky-journal');assert.match(ui.dialog.innerHTML,/Hollow circles/);
+    for(const p of observatoryProjects.slice(1)){
+      ui.work('project',p.id);ui.dialog.querySelector('#neighbour-code').value=p.solution;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+    }
+    ui.session.openDemo('sky-predict',true);assert.match(ui.dialog.innerHTML,/makers/);ui.work('run-use');await ui.finish(python([{code:ui.pending().code}])[0]);assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Average absolute error/);assert.equal(ui.rewards().length,4);
+  }finally{ui.dispose();}
 });

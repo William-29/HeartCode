@@ -1,3 +1,4 @@
+import { freshHaven, normalizeHaven, havenExpression, skyPredictionSource } from './haven-model.js';
 import { neighbourProjects, neighbourProject, teachingProjects } from './neighbour-content.js';
 import { restorationById } from './restoration-content.js';
 import { discoveries } from './clockwork-content.js';
@@ -5,7 +6,7 @@ import { discoveries } from './clockwork-content.js';
 export const weathers=['sun','cloud','rain'];
 export const shores=['reeds','jetty'];
 export const fishNames=['Minnow','Perch','Tench','No catch'];
-export const freshNeighbours=()=>({completed:[],code:{},drafts:{},explained:[],examples:[],observations:[],casts:0,weather:'sun',shore:'jetty',found:[],inspected:[],orders:{}});
+export const freshNeighbours=()=>({completed:[],code:{},drafts:{},explained:[],examples:[],observations:[],casts:0,weather:'sun',shore:'jetty',found:[],inspected:[],orders:{},...freshHaven()});
 const copyCode=(value,id)=>typeof value?.[id]==='string'?value[id].slice(0,30000):'';
 export function neighbourUnlocked(state,p){
   if(!p||state.completed.length<p.requires)return false;
@@ -18,6 +19,7 @@ export function neighbourUnlocked(state,p){
   }
   if(p.buildings?.some(id=>!state.restoration.opened.includes(id)))return false;
   if(p.tools?.some(id=>!state.restoration.completed.includes(id)||!state.restoration.code[id]?.trim()))return false;
+  if(p.skyRows && n.skyObservations.length<p.skyRows)return false;
   return !p.observations||n.observations.length>=p.observations;
 }
 export function lockReason(state,p){
@@ -28,6 +30,7 @@ export function lockReason(state,p){
   if(p.buildings?.some(id=>!state.restoration.opened.includes(id)))return `Reopen the ${p.buildings.join(', ')} in Founders’ Court first.`;
   if(p.tools?.some(id=>!state.restoration.code[id]?.trim()))return 'Revisit the restoration and save the working tools first.';
   if(p.observations&&state.neighbours.observations.length<p.observations)return `Record ${p.observations} casts (${state.neighbours.observations.length} so far).`;
+  if(p.skyRows&&state.neighbours.skyObservations.length<p.skyRows)return `Record ${p.skyRows} sky observations (${state.neighbours.skyObservations.length} so far).`;
   return '';
 }
 export function answerTeaching(state,id,step,index){
@@ -93,6 +96,7 @@ export function splitObservations(rows){
 }
 export function normalizeNeighbours(value,state){
   const n=freshNeighbours(),v=value&&typeof value==='object'?value:{},s={...state,neighbours:n};
+  Object.assign(n,normalizeHaven(v));
   n.found=discoveries.filter(d=>Array.isArray(v.found)&&v.found.includes(d.id)).map(d=>d.id);
   n.weather=weathers.includes(v.weather)?v.weather:'sun';n.shore=shores.includes(v.shore)?v.shore:'jetty';
   const seen=new Set();
@@ -112,6 +116,8 @@ export function normalizeNeighbours(value,state){
       n.completed.push(p.id);n.code[p.id]=code;
     }
   }
+  if(!n.completed.includes('sky-focus')){n.skyObservations=[];n.skyVisits=0;}
+  if(!n.completed.includes('shelter-match'))n.introductions={};
   return n;
 }
 // Each restored tool receives its own namespace, like a tiny Python module.
@@ -135,7 +141,8 @@ const payload=value=>`__import__("json").loads(${JSON.stringify(JSON.stringify(v
 export function workingSource(state,p){
   const source=state.neighbours.code[p.id];
   if(!source)throw new Error('Finish this project first.');
-  let expression=p.demo;
+  if(p.id==='sky-predict')return skyPredictionSource(state,source);
+  let expression=havenExpression(state,p);
   const rows=state.neighbours.observations;
   if(p.id==='lake-tally')expression=`tally(${payload(rows.map(r=>r.catch))})`;
   if(p.id==='lake-frequency')expression=`{fish: frequency(${payload(rows.map(r=>r.catch))}, fish) for fish in ${JSON.stringify(fishNames)}}`;

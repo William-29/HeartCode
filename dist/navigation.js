@@ -1,13 +1,14 @@
 // Places share a home, even when their activities use separate screens.
-export const placeParents = { wardrobe:'room', adventures:'village', courtyard:'village', shared:'village', lake:'village', clockwork:'village', apprentices:'tavern', discoveries:'companions' };
+export const placeParents = { shelter:'companions', observatory:'village', wardrobe:'room', adventures:'village', courtyard:'village', shared:'village', lake:'village', clockwork:'village', apprentices:'tavern', discoveries:'companions' };
 const nearby = {
-  village:['adventures','courtyard','clockwork','lake','room'],
+  shelter:['companions','apprentices','village'], observatory:['lake','adventures','village'],
+  village:['shelter','observatory','adventures','courtyard','clockwork','lake','room'],
   tavern:['apprentices','practice','quests','festival'],
   quests:['practice','tavern','village'], practice:['quests','apprentices','clockwork'],
   room:['wardrobe','companions','achievements','village'], wardrobe:['room','companions','courtyard'],
-  companions:['discoveries','lake','room'], discoveries:['companions','village','clockwork'],
+  companions:['shelter','discoveries','lake','room'], discoveries:['companions','village','clockwork'],
   courtyard:['shared','adventures','village'], shared:['courtyard','apprentices','village'],
-  apprentices:['tavern','practice','shared'], lake:['companions','adventures','village'],
+  apprentices:['tavern','practice','shared'], lake:['observatory','companions','adventures','village'],
   clockwork:['discoveries','practice','village'], adventures:['courtyard','lake','village'],
   festival:['tavern','courtyard','room'], achievements:['room','quests','wardrobe']
 };

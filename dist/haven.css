@@ -1,0 +1,23 @@
+.workspace:is([data-route="shelter"],[data-route="observatory"]) main{display:flex;flex-direction:column;overflow:hidden;padding:14px 24px}
+.haven-world{gap:10px}.haven-world .court-heading{flex:none;margin:0;gap:12px}.haven-world .court-heading h1{font-size:clamp(21px,2.4vw,32px)}
+.haven-stage{flex:1;min-height:0;position:relative;display:flex;width:100%}
+.haven-scene{width:100%;height:100%;position:relative;overflow:hidden;container-type:size;border:1px solid #94724c;border-radius:8px;box-shadow:0 5px 18px #68432725;background:#6f4c36}
+.haven-scene .neighbour-backdrop{object-position:center 60%}.haven-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 15% 65%,#ffc47126,transparent 35%);pointer-events:none;animation:haven-glow 5s ease-in-out infinite alternate}
+.haven-resident{position:absolute;bottom:20%;left:24%;width:min(18cqw,30cqh);max-width:230px;padding:0;border:0;background:transparent;cursor:pointer;color:#654a33;filter:drop-shadow(2px 5px 3px #2e211b66)}
+.haven-resident.resident-1{left:43%;bottom:17%}.haven-resident.resident-2{left:63%;bottom:22%}
+.haven-animal-art{display:block;width:100%;height:auto;overflow:visible}.haven-animal-head{transform-origin:60px 95px;animation:haven-breathe 6s ease-in-out infinite}.resident-1 .haven-animal-head{animation-delay:-2s}.resident-2 .haven-animal-head{animation-delay:-4s}
+.haven-resident>span,.telescope-object>span{display:block;background:#fae9cfeF;border:1px solid #aa895a;border-radius:3px;padding:6px 8px;font:clamp(11px,1.2cqw,16px) Georgia,serif;box-shadow:0 2px 5px #32241944}
+.haven-resident:hover,.haven-resident:focus-visible{filter:drop-shadow(0 0 9px #ffd894)}
+.haven-host{position:absolute;left:7%;bottom:13%;filter:drop-shadow(4px 5px 3px #251f2166);pointer-events:none}.haven-host>.hearth-character{--character-height:32cqh}.haven-host .court-pet{left:85%;bottom:0}
+.observatory-scene .haven-host{left:29%;bottom:15%}.telescope-object{position:absolute;left:52%;bottom:14%;width:42cqh;max-width:30cqw;border:0;background:none;cursor:pointer;color:#63482e;padding:0;filter:drop-shadow(5px 8px 4px #241b2244)}
+.haven-telescope{width:100%;display:block}.telescope-object:hover .restored{filter:drop-shadow(0 0 9px #e3c78d66)}
+.haven-scene-note{position:absolute;left:3%;right:3%;bottom:2%;padding:8px 12px;margin:0;background:#f5e6cfeF;border:1px solid #a5875f;border-radius:3px;color:#674a35;text-align:center;font:italic clamp(11px,1.3cqw,16px)/1.4 Georgia,serif;pointer-events:none}
+.haven-controls{display:flex;align-items:center;gap:12px;flex:none;flex-wrap:wrap;color:#745a40;font-size:12px}.haven-controls>span{margin-left:auto}.haven-controls .button{font-size:12px;padding:8px 12px}.haven-controls label{display:flex;align-items:center;gap:8px}.haven-controls select{padding:7px 10px;background:#fff0d6;border:1px solid #bda07b;color:#64492f;border-radius:5px;font:inherit}
+.haven-invitation{display:flex;align-items:center;gap:12px;padding:13px 18px;margin:0 0 15px;border-block:1px solid #c8ab80;color:#694b32;background:#eeddbf;text-decoration:none;font-family:Georgia,serif}.haven-invitation span{margin-left:auto;font:12px var(--sans);color:#657650}
+.haven-portraits{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.haven-animal-intro{display:flex;align-items:center;gap:20px}.haven-animal-intro>.haven-animal-art{width:140px;flex:none}.sky-plot{background:#f2e3c8;border:1px solid #c4a77b;border-radius:5px;padding:12px;margin:18px 0}.sky-plot svg{width:100%;display:block}.sky-plot text{font:12px Georgia,serif;fill:#715539}
+@keyframes haven-breathe{0%,100%{transform:rotate(-1deg) translateY(0)}50%{transform:rotate(1deg) translateY(1px)}}
+@keyframes haven-glow{from{opacity:.65}to{opacity:1}}
+.reduce-motion .haven-animal-head,.reduce-motion .haven-glow{animation:none}
+@media(prefers-reduced-motion:reduce){.haven-animal-head,.haven-glow{animation:none}}
+@media(max-width:760px){.workspace:is([data-route="shelter"],[data-route="observatory"]) main{padding:10px}.haven-world .court-heading .eyebrow{font-size:9px}.haven-world .court-heading h1{font-size:20px}.haven-world .court-heading p:not(.eyebrow){font-size:11px}.haven-controls{gap:6px}.haven-controls>span{width:100%;margin:0;font-size:10px}.haven-resident{width:min(22cqw,35cqh);left:21%}.haven-resident.resident-1{left:45%}.haven-resident.resident-2{left:69%}.haven-invitation{flex-wrap:wrap}.haven-invitation span{margin:0}.haven-animal-intro{gap:10px}.haven-animal-intro>.haven-animal-art{width:95px}}
+@media(max-height:580px){.haven-world .court-heading p:not(.eyebrow),.haven-controls>span{display:none}.haven-world{gap:5px}.haven-controls .button{padding:6px 9px}.haven-scene-note{padding:4px 8px;font-size:10px}}

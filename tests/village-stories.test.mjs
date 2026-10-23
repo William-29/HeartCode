@@ -495,3 +495,17 @@ test('the decoration drawer stays open when switching categories, buying and cle
   app.click('room-remove','plant');assert.equal(app.node('room-decor').open,true);
   app.node('room-decor').open=false;app.evaluate('render()');assert.equal(app.node('room-decor').open,false);
 });
+
+
+test('haven and observatory routes have connected entrances, eight main links and the shared activity controller',()=>{
+  const app=appHarness();
+  for(const route of ['shelter','observatory']){
+    app.evaluate(`route = '${route}'; render()`);
+    const html=app.node('app').innerHTML;
+    assert.match(html,new RegExp(`data-view="${route}"`));
+    assert.equal((html.match(/class="nav-link /g)||[]).length,8);
+    assert.match(html,/href="#courtyard\/exhibition"/);
+  }
+  app.evaluate("route = 'companions'; render()");assert.match(app.node('app').innerHTML,/href="#shelter"/);
+  app.evaluate("route = 'lake'; render()");assert.match(app.node('app').innerHTML,/href="#observatory"/);
+});
