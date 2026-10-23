@@ -1,4 +1,5 @@
 import { routeFromHash, parentPlace, placeNavigation } from '../dist/navigation.js';
+import { renderVillage as villageMarkup } from '../dist/village.js';
 import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
 import { renderAdventures } from '../dist/adventures.js';
 import { renderCourtyard, renderWardrobe } from '../dist/community.js';
@@ -207,8 +208,8 @@ function appHarness() {
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
     pendingRuns, stored, petSessions,
-    click: (action, id) => {
-      const button = { dataset: { action, id }, disabled: false };
+    click: (action, id, extra = {}) => {
+      const button = { dataset: { action, id, ...extra }, disabled: false };
       const event = new Event('click');
       Object.defineProperty(event, 'target', { value: { closest: selector => selector === '[data-action]' ? button : null } });
       document.dispatchEvent(event);
@@ -223,6 +224,34 @@ test('side activity saves update the level label without replacing the player po
   assert.equal(portrait.textContent,'painted character');
   assert.match(app.node('player-level').textContent,/Level /);
   assert.match(app.node('app').innerHTML,/aria-label="Change your look in your room"/);
+});
+
+test('Elio, Rowan and Mira offer immediate picture entrances that close the conversation and navigate directly',()=>{
+  const app=appHarness();
+  for(const [npc,destination] of [['elio','observatory'],['rowan','shelter'],['mira','clockwork']]){
+    app.call('openVillager',npc);
+    const html=app.node('village-dialog').innerHTML;
+    assert.match(html,new RegExp(`class="neighbour-outing" data-action="village-route" data-route="${destination}"`));
+    assert.ok(html.indexOf('neighbour-outing')<html.indexOf('villager-projects'));
+    app.click('village-route',undefined,{route:destination});
+    assert.equal(app.node('village-dialog').open,false);
+    assert.equal(app.evaluate('location.hash'),destination);
+  }
+});
+
+test('every place has the same flat travel directory and the village exposes six direct image entrances',()=>{
+  const app=appHarness(),routes=app.evaluate('routes');
+  for(const route of Object.keys(routes)){
+    const html=placeNavigation(route,routes);
+    assert.equal((html.match(/<details/g)||[]).length,1);
+    for(const destination of Object.keys(routes))assert.ok(html.includes(`href="#${destination}"`),`${destination} missing from ${route}`);
+    assert.match(html,/Travel directly to any place/);
+  }
+  const html=villageMarkup(app.state());
+  const strip=html.match(/<nav class="village-postcards"[\s\S]*?<\/nav>/)?.[0];
+  assert.ok(strip);
+  assert.equal((strip.match(/class="place-postcard"/g)||[]).length,6);
+  assert.match(strip,/href="#observatory"/);assert.match(strip,/href="#shelter"/);
 });
 
 test('a late practice run cannot replace output in a newly rendered editor', async () => {

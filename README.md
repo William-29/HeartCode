@@ -205,3 +205,8 @@ The additions preserve version-1 saves. New validation covers legacy migration, 
 ## The animal haven and Elio’s observatory
 
 Visit the animal haven from Companions and the observatory from Willowmere Lake (both are also in Nearby). Seven new Python projects grow from beginner dictionaries and telescope alignment to scheduling, recommendation constraints, noisy measurements and held-out prediction tests. Arrange animal introductions after a personal review, restore the telescope, record fictional skies, and run your saved tools again in the village exhibition. Warm illustrated locations, persistent progress and one-time XP/coin rewards use the existing game systems. See [the feature and verification notes](docs/haven-observatory.md). The current suite has 163 passing tests; browser visual QA was unavailable.
+
+
+## Direct village navigation
+
+Six illustrated entrances below the village open the observatory, animal haven, clockmaker, lake, restoration square and High Street directly. The Places menu is the same flat directory everywhere, including the exhibition and all learning activities. Elio, Rowan and Mira each offer a picture shortcut at the top of their conversation. Village marker labels appear on hover, keyboard focus or proximity; direct neighbour buttons remain available without walking. No saved progress changes. Navigation, conversation routing and the existing movement flows are covered by 165 passing tests. Browser layout verification was unavailable in this session.

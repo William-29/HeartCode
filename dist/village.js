@@ -1,3 +1,4 @@
+import { villagePostcards } from './navigation.js';
 import { cluePositions, neighbourNameplates } from './village-layout.js';
 import { weatherArt } from './cozy-ui.js';
 import { icon, sprite } from './art.js';
@@ -40,9 +41,10 @@ export function renderVillage(state, companion = { id: 'pip', name: 'Pip' }) {
         <span class="village-map-note" aria-hidden="true">Good company. A little curiosity. Home.</span>
       </div>
     </div>
-    <div class="village-bottomline"><p id="village-instructions">Click to wander <span>·</span> <kbd>WASD</kbd> / <kbd>↑ ↓ ← →</kbd> to walk <span>·</span> <kbd>E</kbd> to chat</p><button type="button" class="village-interact" data-village-interact disabled>Explore the village ${icon('arrow')}</button></div></div></div>
+    <div class="village-bottomline"><p id="village-instructions">Hover or approach to see names <span>&#183;</span> Click to wander <span>·</span> <kbd>WASD</kbd> / <kbd>↑ ↓ ← →</kbd> to walk <span>·</span> <kbd>E</kbd> to chat</p><button type="button" class="village-interact" data-village-interact disabled>Explore the village ${icon('arrow')}</button></div></div></div>
     <p class="village-status" role="status" aria-live="polite">The kettle is on. Your next adventure can wait a moment.</p>
-    <nav class="village-direct" aria-label="Visit a village place directly"><label for="village-destination">Pop over to</label><select id="village-destination">${places.map(place => `<option value="${place.id}">${esc(place.name)}</option>`).join('')}</select><button type="button" data-village-go>Visit ${icon('arrow')}</button></nav>
+    <nav class="village-postcards" aria-label="Explore places directly">${villagePostcards()}</nav>
+    <nav class="village-direct village-people" aria-label="Chat with a neighbour"><span>Say hello</span>${['rowan','mira','elio'].map(id=>`<button type="button" data-village-visit="${id}">${id[0].toUpperCase()+id.slice(1)}</button>`).join('')}</nav>
     ${routineNotes(state)}
     ${projects.length ? '<p class="village-growth-note">Your work is becoming part of this place. Look for the little things you’ve helped grow.</p>' : '<p class="village-growth-note">Help your neighbors build things with Python, and watch the village grow with you.</p>'}
   </section>`;
@@ -194,7 +196,6 @@ export function mountVillage({ state, previousPlaces, reducedMotion = false, onV
   listen(root, 'click', event => {
     const clue=event.target.closest('[data-village-discovery]');
     if(clue){visit(clue.dataset.villageDiscovery);return;}
-    if (event.target.closest('[data-village-go]')) { visit(root.querySelector('#village-destination').value); return; }
     const direct = event.target.closest('[data-village-visit]');
     if (direct) { visit(direct.dataset.villageVisit); return; }
     if (event.target.closest('[data-village-interact]')) { if (near) visit(near.id); return; }

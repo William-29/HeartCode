@@ -62,8 +62,9 @@ test('the village includes direct accessible visits, safe names, and project-spe
   const state = { projects: [], metVillagers: [], villagePosition: VILLAGE_START };
   const html = renderVillage(state, { id: 'pip', name: '<script>cat</script>' });
   assert.equal((html.match(/data-village-walk=/g) || []).length, destinations.length);
-  assert.ok(html.includes('id="village-destination"'));
-  for (const place of destinations) assert.ok(html.includes(`<option value="${place.id}">`));
+  assert.ok(html.includes('href="#observatory"'));
+  assert.ok(html.includes('data-village-visit="elio"'));
+  for (const place of destinations) assert.ok(html.includes(`data-village-walk="${place.id}"`));
   assert.ok(html.includes('aria-describedby="village-instructions"'));
   assert.ok(html.includes('&lt;script&gt;cat&lt;/script&gt;')); assert.ok(!html.includes('<script>cat'));
   assert.ok(!html.includes('class="village-improvement"'));
