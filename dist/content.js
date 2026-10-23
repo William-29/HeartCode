@@ -1,4 +1,5 @@
 import { advancedChapters, advancedQuests } from './advanced-content.js';
+import { frontierChapters, frontierQuests } from './frontier-content.js';
 
 export const chapters = [
   { id: 0, numeral: 'I', title: 'The first spark', topic: 'Python', label: 'PYTHON FOUNDATIONS', icon: 'flame', description: 'Meet Python. Turn your very first ideas into code.', difficulty: 'Beginner', color: 'gold' },
@@ -7,7 +8,8 @@ export const chapters = [
   { id: 3, numeral: 'IV', title: 'A mind of its own', topic: 'AI', label: 'ARTIFICIAL INTELLIGENCE', icon: 'spark', description: 'Discover what AI can do, and where care is needed.', difficulty: 'Intermediate', color: 'purple' },
   { id: 4, numeral: 'V', title: 'The pattern seekers', topic: 'ML', label: 'MACHINE LEARNING', icon: 'network', description: 'Teach a model to learn patterns from examples.', difficulty: 'Intermediate', color: 'green' },
   { id: 5, numeral: 'VI', title: 'The prediction forge', topic: 'ML', label: 'BUILD & EVALUATE', icon: 'flask', description: 'Train a tiny model and put its predictions to the test.', difficulty: 'Intermediate', color: 'rose' },
-  ...advancedChapters
+  ...advancedChapters,
+  ...frontierChapters
 ];
 
 // Lessons are deliberately small; each challenge tests the concept just introduced.
@@ -130,7 +132,8 @@ export const quests = [
     lesson: ['You can now write Python, reason about data, explain AI, and train and evaluate a small model. A practical ML workflow connects all of these skills.', 'Define the goal, collect appropriate data, split it, fit preprocessing on training data only, train, tune with validation data, and evaluate once on the held-out test set. After deployment, monitor for changing data and harmful errors.'], task: 'You tuned two models using validation data. Model A has validation MAE 3; B has MAE 8. The baseline MAE is 10. What should you do next?', options: ['Choose A, evaluate it on the untouched test set, and inspect important errors.', 'Choose B because a larger error is better.', 'Keep tuning on the test set until its error is zero.', 'Deploy A without checking anything else.'], answer: 0,
     explanations: ['Well done! A looks promising; a final independent evaluation and error review are still needed.', 'For MAE, lower is better.', 'Repeated tuning on the test set leaks information into model choices.', 'Validation is useful, but final evaluation and error review still matter.'], hint: 'Lower MAE is better. Keep the final evaluation independent of model selection.', takeaway: 'Good ML combines useful code, sound evaluation, and responsible judgment.'
   },
-  ...advancedQuests
+  ...advancedQuests,
+  ...frontierQuests
 ];
 
 export const pets = [
@@ -155,7 +158,10 @@ export const achievements = [
   { id: 'modelmaker', name: 'Careful modelmaker', description: 'Complete 48 quests through the modelmaker’s valley.', icon: 'flask', coins: 150, test: s => s.completed.length >= 48, progress: s => [Math.min(s.completed.length, 48), 48] },
   { id: 'neural-scholar', name: 'A learning mind', description: 'Train your neuron and complete the neural observatory.', icon: 'network', coins: 180, test: s => s.completed.length >= 52, progress: s => [Math.min(s.completed.length, 52), 52] },
   { id: 'archive-keeper', name: 'Keeper of evidence', description: 'Complete the archives and all 56 quests so far.', icon: 'book', coins: 180, test: s => s.completed.length >= 56, progress: s => [Math.min(s.completed.length, 56), 56] },
-  { id: 'master-scholar', name: 'Master of the Hearthlands', description: 'Finish all 60 quests, including the final prediction pipeline.', icon: 'trophy', coins: 400, test: s => s.completed.length === quests.length, progress: s => [s.completed.length, quests.length] }
+  { id: 'master-scholar', name: 'Master of the Hearthlands', description: 'Complete the original 60-quest academy journey.', icon: 'trophy', coins: 400, test: s => s.completed.length >= 60, progress: s => [s.completed.length, 60] },
+  { id: 'river-pathfinder', name: 'Beyond the academy', description: 'Reach quest 68: streams, efficient data work, and AI pathfinding.', icon: 'map', coins: 240, test: s => s.completed.length >= 68, progress: s => [s.completed.length, 68] },
+  { id: 'mist-scholar', name: 'A thoughtful forecast', description: 'Reach quest 76: trees, calibration, and uncertainty.', icon: 'leaf', coins: 300, test: s => s.completed.length >= 76, progress: s => [s.completed.length, 76] },
+  { id: 'beacon-keeper', name: 'Keeper of the beacon', description: 'Complete all 84 quests and assemble a versioned model monitor.', icon: 'trophy', coins: 500, test: s => s.completed.length >= 84, progress: s => [s.completed.length, 84] }
 ];
 
 export const dailyQuestions = [

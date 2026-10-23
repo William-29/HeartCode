@@ -1,6 +1,6 @@
 import { quests } from './content.js';
 
-export const WORLD_WIDTH = 4800;
+export const WORLD_WIDTH = 8000;
 export const WORLD_HEIGHT = 1067;
 export const regions = [
   { name: 'Hearthwood Tavern', short: 'The tavern', icon: 'home', mood: 'A warm welcome', description: 'Lanterns glow. The kettle sings. Your first Python spells begin beside the hearth.', label: [195, 715], color: 'gold' },
@@ -17,10 +17,17 @@ export const regions = [
   { name: 'Modelmaker Valley', short: 'The valley', icon: 'flask', mood: 'Build, compare, improve', description: 'Watermills turn and models take shape. Test neighbors, penalties, and fair comparisons.', label: [3100, 355], color: 'gold' },
   { name: 'The Neural Observatory', short: 'The observatory', icon: 'spark', mood: 'A new mind takes shape', description: 'Under the crystal dome, assemble a neuron, measure its loss, and teach it from examples.', label: [3370, 975], color: 'purple' },
   { name: 'The Whispering Archives', short: 'The archives', icon: 'book', mood: 'Seek evidence among the scrolls', description: 'Search the lakeside library with text vectors, similarity, and a healthy respect for trustworthy sources.', label: [3970, 390], color: 'blue' },
-  { name: 'The Master’s Summit', short: 'The summit', icon: 'trophy', mood: 'Put your learning together', description: 'The final mountain trail brings training, validation, and honest reporting into one complete project.', label: [4510, 100], color: 'gold' }
+  { name: 'The Master’s Summit', short: 'The summit', icon: 'trophy', mood: 'Put your learning together', description: 'An academy milestone brings training, validation, and honest reporting into one complete project.', label: [4510, 100], color: 'gold' },
+  { name: 'The River Workshop', short: 'The river workshop', icon: 'code', mood: 'There is more beyond the summit', description: 'Follow the mountain stream to a paper mill where data arrives a little at a time.', label: [4950, 155], color: 'green' },
+  { name: 'Pathfinder’s Crossing', short: 'The crossing', icon: 'map', mood: 'Every route has a reason', description: 'Lantern bridges connect the riverside hamlets. Learn to search for a route and account for its cost.', label: [5400, 970], color: 'gold' },
+  { name: 'The Branching Orchard', short: 'The orchard', icon: 'leaf', mood: 'Let the evidence choose a branch', description: 'Among the fruit trees, learn how models split examples and why a diverse council helps.', label: [5850, 180], color: 'green' },
+  { name: 'The Mist Garden', short: 'The mist garden', icon: 'flask', mood: 'Leave room for uncertainty', description: 'At the glasshouse, compare promises with outcomes and ask what your sample cannot tell you.', label: [6430, 115], color: 'blue' },
+  { name: 'The Lantern Conservatory', short: 'The conservatory', icon: 'spark', mood: 'Many lanterns, one thoughtful signal', description: 'Warm windows welcome you to multiclass networks, stable calculations, and attention.', label: [6990, 975], color: 'purple' },
+  { name: 'The Keeper’s Beacon', short: 'The beacon', icon: 'trophy', mood: 'Keep a careful watch', description: 'Above the harbour, connect changing data, model uncertainty, and a report your neighbours can trust.', label: [7580, 110], color: 'gold' }
 ];
 
-// Preserve the original route, then continue past the guild to the final academy.
+// Keep all original quest coordinates and the academy arrival intact. The same
+// continuous spline carries the traveler over the mountain pass into six new regions.
 export const stops = [
   [180, 825], [270, 920], [365, 860], [420, 790],
   [530, 850], [660, 930], [770, 850], [900, 875],
@@ -37,7 +44,13 @@ export const stops = [
   [3200, 830], [3380, 880], [3500, 790], [3590, 700],
   [3720, 640], [3850, 530], [3990, 510], [4130, 600],
   [4280, 560], [4430, 450], [4540, 330], [4550, 200],
-  [4640, 160]
+  [4640, 160], [4820, 280], [4960, 420], [5070, 540],
+  [5140, 690], [5290, 800], [5450, 850], [5600, 720],
+  [5670, 550], [5740, 400], [5880, 290], [6030, 380],
+  [6180, 310], [6340, 220], [6500, 300], [6600, 450],
+  [6700, 600], [6830, 750], [6980, 850], [7140, 730],
+  [7300, 640], [7430, 510], [7570, 380], [7730, 250],
+  [7870, 170]
 ].map(([x, y]) => ({ x, y }));
 
 export function regionForStop(index) { return regions[Math.floor(Math.max(0, Math.min(quests.length - 1, index)) / 4)]; }

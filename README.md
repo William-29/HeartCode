@@ -1,6 +1,12 @@
 # Hearthcode — The Learning Tavern
 
-A cozy browser learning game with **60 progressive quests in 15 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **14 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
+A cozy browser learning game with **84 progressive quests in 21 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **17 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
+
+## Beyond the academy: quests 61–84
+
+Six new regions continue directly from the original academy arrival: the river workshop, pathfinder’s crossing, branching orchard, mist garden, lantern conservatory, and keeper’s beacon. Their 18 coding challenges and six knowledge checks introduce streams, graph search, learned tree splits, calibration, bootstrap uncertainty, multiclass networks, attention, and model monitoring. Existing 60-quest saves continue at quest 61, retaining the academy achievement, coins, companions, and drafts. Three new achievements mark the extended journey.
+
+The world is now 8,000 units wide, with a painted mountain pass blending the old academy into the new landscape. Zoom, fit-world, and find-adventurer controls stay on a stationary layer outside the moving map. See the [curriculum and extension review](docs/frontier-extension.md) for the learning sequence, checks, and verification limits.
 
 ## Finding your way around
 
@@ -111,7 +117,7 @@ Curriculum references: [Python exceptions](https://docs.python.org/3/tutorial/er
 
 ## Explore the Hearthlands
 
-Open **Quest map** to wander across the world. Drag with a mouse or finger to pan. The +/− buttons zoom; the map button shows the whole world, and the paw button finds your adventurer. Use the region selector to jump between fifteen destinations; it follows the selected quest. Select any numbered stop to preview its quest, difficulty, and topic; available quests can be started from the panel beneath the map. Keyboard users can Tab through stops and controls, or focus the map and use arrow keys to pan, +/− to zoom, and Home to find their character.
+Open **Quest map** to wander across the world. Drag with a mouse or finger to pan. The +/− buttons zoom; the map button shows the whole world, and the paw button finds your adventurer. Use the region selector to jump between twenty-one destinations; it follows the selected quest. Select any numbered stop to preview its quest, difficulty, and topic; available quests can be started from the panel beneath the map. Keyboard users can Tab through stops and controls, or focus the map and use arrow keys to pan, +/− to zoom, and Home to find their character.
 
 Completing a campaign quest for the first time returns you to the map. Your coat-and-scarf traveler walks along the curved trail with the equipped companion following, while the camera tracks them. Arrival reveals the next stop, celebrates new regions, and displays rewards, achievement bonuses, and the lesson takeaway. The trail now continues beyond the original guild into a panorama three times the original world width, ending at the academy. Replays and daily challenges do not move campaign progress forward.
 

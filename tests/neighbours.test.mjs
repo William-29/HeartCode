@@ -374,7 +374,7 @@ test('haven stories begin immediately, then require lessons, earlier tools and o
   s.completed=quests.map(q=>q.id);finishHaven(s);
   const [xp,coins]=[s.xp,s.coins];
   for(const p of [...shelterProjects,...observatoryProjects])assert.equal(completeNeighbour(s,p.id,p.solution).replay,true);
-  assert.deepEqual([s.xp,s.coins],[xp,coins]);assert.equal(s.completed.length,60);
+  assert.deepEqual([s.xp,s.coins],[xp,coins]);assert.equal(s.completed.length,quests.length);
 });
 test('recommendations run saved Python; suitable meetings need an explicit choice and never change owned pets or rewards',()=>{
   const s=finishHaven(progressed()),p=shelterProjects[2],before=[s.xp,s.coins,...s.owned];

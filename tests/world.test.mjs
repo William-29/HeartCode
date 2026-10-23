@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { quests, pets } from '../dist/content.js';
 import { freshState, completeQuest, completeDaily, normalizeState } from '../dist/state.js';
 import { stops, regions, WORLD_WIDTH, WORLD_HEIGHT, pointOnLeg, legPath, positionForProgress, travelForCompletion, regionForStop } from '../dist/world-model.js';
 import { renderWorld, mountWorld } from '../dist/world.js';
 
-test('the overworld has a stop for every quest and a distinct academy destination', () => {
-  assert.equal(stops.length, quests.length + 1); assert.equal(regions.length, 15);
+test('the overworld has a stop for every quest and a distinct beacon destination', () => {
+  assert.equal(stops.length, quests.length + 1); assert.equal(regions.length, 21);
   for (const point of stops) assert.ok(point.x > 0 && point.x < WORLD_WIDTH && point.y > 0 && point.y < WORLD_HEIGHT);
   assert.equal(new Set(stops.map(p => `${p.x},${p.y}`)).size, stops.length);
   for (let i = 0; i < quests.length; i++) assert.equal(regionForStop(i), regions[quests[i].chapter]);
@@ -37,7 +38,7 @@ test('saved progress restores the destination independently of an interrupted an
   assert.deepEqual(positionForProgress(restored.completed.length), stops[9]);
   assert.deepEqual(positionForProgress(-1), stops[0]); assert.deepEqual(positionForProgress(999), stops[quests.length]);
 });
-test('the map exposes 60 named controls, locked previews, and all fifteen regions', () => {
+test('the map exposes 84 named controls, locked previews, and all twenty-one regions', () => {
   const html = renderWorld(freshState(), pets[0], null, null);
   assert.equal((html.match(/data-world="select"/g) || []).length, quests.length);
   assert.equal((html.match(/class="world-node current /g) || []).length, 1);
@@ -46,7 +47,7 @@ test('the map exposes 60 named controls, locked previews, and all fifteen region
   assert.ok(html.includes('data-world="follow"')); assert.ok(html.includes('data-world="fit"'));
   const locked = renderWorld(freshState(), pets[0], 8, null); assert.match(locked, /Path not yet open/);
 });
-test('a finished adventure shows the academy and never indexes a nonexistent quest', () => {
+test('a finished adventure shows the beacon and never indexes a nonexistent quest', () => {
   const s = freshState(); for (const q of quests) completeQuest(s, q.id);
   const html = renderWorld(s, pets[0], null, null);
   assert.match(html, /guild-finish reached/); assert.equal((html.match(/class="world-node cleared /g) || []).length, quests.length);
@@ -57,7 +58,7 @@ test('the old guild ending now opens a new region without marking the whole jour
   const result = completeQuest(state, 'guild-trial'), travel = travelForCompletion('guild-trial', result);
   assert.deepEqual(travel, { from: 23, to: 24, newRegion: true, final: false });
   const html = renderWorld(state, pets[0], null, null);
-  assert.ok(html.includes('40% explored')); assert.ok(html.includes('assets/guildlands.png')); assert.ok(!html.includes('guild-finish reached'));
+  assert.ok(html.includes(`${Math.round(24/quests.length*100)}% explored`)); assert.ok(html.includes('assets/guildlands.png')); assert.ok(!html.includes('guild-finish reached'));
   assert.ok(html.includes('A ledger of little words')); assert.equal(regionForStop(24).name, 'The Guild Workshop');
 });
 test('completion summary safely escapes Python output and shows achievement bonuses', () => {
@@ -73,6 +74,10 @@ function mapHarness(run, reduced = false) {
   class Element extends EventTarget {
     constructor() { super(); this.style = {}; this.hidden = false; this.textContent = ''; this.attributes = {}; this.classes = new Set(); this.classList = { add: x => this.classes.add(x), remove: x => this.classes.delete(x), toggle: (x, v) => v ? this.classes.add(x) : this.classes.delete(x) }; }
     setAttribute(k, v) { this.attributes[k] = v; }
+    setPointerCapture() { this.captured = true; }
+    hasPointerCapture() { return !!this.captured; }
+    releasePointerCapture() { this.captured = false; }
+    closest() { return null; }
   }
   const document = new Element(), root = new Element(), viewport = new Element(), canvas = new Element(), actor = new Element(), media = new Element();
   viewport.clientWidth = 1000; viewport.clientHeight = 600; media.matches = reduced;
@@ -83,7 +88,7 @@ function mapHarness(run, reduced = false) {
   const overrides = { document, matchMedia: () => media, requestAnimationFrame: callback => { frames.set(++number, callback); return number; }, cancelAnimationFrame: id => frames.delete(id), ResizeObserver: class { observe() {} disconnect() { disconnected = true; } } };
   const previous = new Map(Object.keys(overrides).map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   Object.assign(globalThis, overrides);
-  try { run({ actor, viewport, get, frames, disconnected: () => disconnected }); }
+  try { run({ actor, viewport, canvas, document, get, frames, disconnected: () => disconnected }); }
   finally { for (const [key, descriptor] of previous) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key]; } }
 }
 
@@ -109,15 +114,81 @@ test('leaving the map cancels animation frames and disconnects resize observers'
   session.dispose(); const last = actor.style.left; callback(performance.now() + 4000);
   assert.equal(frames.size, 0); assert.equal(actor.style.left, last); assert.ok(disconnected());
 }));
-test('advanced chapter transitions and the final academy walk reach their actual destinations', () => {
-  for (const index of [23, 27, 51, 59]) mapHarness(({ actor, frames, get }) => {
+test('advanced chapter transitions and the final beacon walk reach their actual destinations', () => {
+  for (const index of [23, 27, 51, 59, 63, 67, 71, 75, 79, 83]) mapHarness(({ actor, frames, get }) => {
     const state = freshState(); for (const q of quests.slice(0, index)) completeQuest(state, q.id);
     const result = completeQuest(state, quests[index].id), saved = JSON.stringify(state);
     const session = mountWorld({ state, travel: travelForCompletion(quests[index].id, result), selectedIndex: Math.min(index + 1, quests.length - 1), reducedMotion: false, onSelect() {} });
     const callback = [...frames.values()][0]; frames.clear(); callback(performance.now() + 4000);
     assert.equal(actor.style.left, `${stops[index + 1].x}px`); assert.equal(actor.style.top, `${stops[index + 1].y}px`);
     assert.equal(get('.arrival-quest').hidden, false); assert.equal(frames.size, 0);
-    assert.match(get('#travel-message').textContent, index === 59 ? /All 60 quests are complete/ : /New region discovered/);
+    assert.match(get('#travel-message').textContent, index === 83 ? /All 84 quests are complete/ : /New region discovered/);
     assert.equal(JSON.stringify(state), saved); session.dispose();
   });
+});
+
+test('the academy arrival becomes quest 61 and the illustrated pass covers the new join', () => {
+  assert.deepEqual(stops[59], { x: 4550, y: 200 });
+  assert.deepEqual(stops[60], { x: 4640, y: 160 });
+  const s = freshState(); for (const q of quests.slice(0, 59)) completeQuest(s, q.id);
+  const result = completeQuest(s, 'masters-pipeline');
+  assert.deepEqual(travelForCompletion('masters-pipeline', result), { from:59, to:60, newRegion:true, final:false });
+  const html = renderWorld(s, pets[0], null, null);
+  assert.ok(html.includes('The mill that never stops') && !html.includes('guild-finish reached'));
+  assert.ok(html.includes('assets/frontierlands.png') && html.includes('assets/academy-pass.png'));
+  const css = readFileSync(new URL('../dist/world-frontier.css', import.meta.url), 'utf8');
+  assert.match(css, /world-art-frontier\{left:4800px;width:3200px/);
+  assert.match(css, /world-art-academy-pass\{left:4480px;width:640px/);
+  assert.match(css, /mask-image:linear-gradient/);
+  // Adjacent Bezier legs share their first derivative: no walking kink at the join.
+  const epsilon = .00001;
+  for (const i of [59,60,61,62,63]) {
+    const a=pointOnLeg(i,1-epsilon), b=stops[i+1], c=pointOnLeg(i+1,epsilon);
+    assert.ok(Math.abs((b.x-a.x)-(c.x-b.x))<1e-6);
+    assert.ok(Math.abs((b.y-a.y)-(c.y-b.y))<1e-6);
+  }
+});
+
+test('map tools belong to the stationary stage, outside the panned and focus-scrolled viewport', () => {
+  const html=renderWorld(freshState(),pets[0],null,null), stack=[];
+  let toolsParent, viewportParent;
+  for(const match of html.matchAll(/<\/?div\b[^>]*>/g)) {
+    const tag=match[0];
+    if(tag.startsWith('</')) { stack.pop(); continue; }
+    const classes=tag.match(/class="([^"]*)"/)?.[1] || '';
+    if(classes==='world-controls') toolsParent=[...stack];
+    if(classes==='world-viewport') viewportParent=[...stack];
+    stack.push(classes);
+  }
+  assert.equal(toolsParent.at(-1),'world-map-stage');
+  assert.equal(viewportParent.at(-1),'world-map-stage');
+  assert.ok(!toolsParent.includes('world-viewport') && !toolsParent.includes('world-canvas'));
+  const css=readFileSync(new URL('../dist/world-frontier.css',import.meta.url),'utf8');
+  assert.match(css,/world-map-stage>\.world-controls\{position:absolute;left:max\(12px/);
+  assert.match(css,/bottom:max\(12px,env\(safe-area-inset-bottom\)\)/);
+});
+
+test('zoom controls still respond immediately after dragging at either end of the expanded map', () => {
+  for(const completed of [0,60,83,84]) mapHarness(({viewport,canvas,document,get})=>{
+    const state=freshState(); state.completed=quests.slice(0,completed).map(q=>q.id);
+    const session=mountWorld({state,reducedMotion:true,onSelect(){}});
+    function dispatch(target,type,properties={}) {
+      const event=new Event(type,{cancelable:true});
+      for(const [key,value] of Object.entries(properties)) Object.defineProperty(event,key,{value});
+      target.dispatchEvent(event);
+    }
+    dispatch(viewport,'pointerdown',{button:0,pointerId:1,clientX:500,clientY:200});
+    dispatch(viewport,'pointermove',{pointerId:1,clientX:200,clientY:210});
+    dispatch(viewport,'pointerup',{pointerId:1});
+    const click=action=>dispatch(document,'click',{target:{closest:()=>({dataset:{world:action}})}});
+    click('zoom-in'); assert.equal(get('#world-zoom').textContent,'103%');
+    click('zoom-out'); assert.equal(get('#world-zoom').textContent,'88%');
+    click('fit'); assert.equal(get('#world-zoom').textContent,'13%');
+    assert.match(canvas.style.transform,/scale\(0.125\)/);
+    click('follow'); assert.equal(get('#world-zoom').textContent,'88%');
+    viewport.scrollLeft=700;viewport.scrollTop=200;dispatch(viewport,'scroll');
+    assert.equal(viewport.scrollLeft,0);assert.equal(viewport.scrollTop,0);
+    assert.deepEqual(get('.world-controls').style,{});
+    session.dispose();
+  },true);
 });

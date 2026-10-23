@@ -12,6 +12,9 @@ for quest in quests:
     assert good['passed'], f"{quest['id']}: solution failed: {good['error']}"
     blank = json.loads(runtime.run_source('pass', quest['checks']))
     assert not blank['passed'], f"{quest['id']}: accepted an empty solution"
+    if quest.get('chapter', -1) >= 15:
+        starter = json.loads(runtime.run_source(quest['starter'], quest['checks']))
+        assert not starter['passed'], f"{quest['id']}: unfinished starter earned completion"
 
 by_id = {quest['id']: quest for quest in quests}
 wrong = [
@@ -46,6 +49,25 @@ mutations = [
     ('choose-with-validation', 'return min(', 'return max('),
     ('honest-report', 'sum(sums.values())/len(actual)', 'sum(sums[g]/counts[g] for g in sums)/len(sums)'),
     ('masters-pipeline', 'fit_line(train_x, train_y)', 'fit_line(test_x, test_y)'),
+    ('streaming-batches', 'for item in source:', 'for item in list(source):'),
+    ('indexed-join', 'if o["customer_id"] in names', 'if names.get(o["customer_id"])'),
+    ('rolling-window', 'total -= values[i - width]', 'total -= 0'),
+    ('breadth-first-path', 'queue.popleft()', 'queue.pop()'),
+    ('weighted-route', 'candidate < best.get(nxt, float("inf"))', 'nxt not in best'),
+    ('gini-orchard', '(n / len(labels)) ** 2', '(n / len(labels))'),
+    ('weighted-split-gain', '(len(left)*gini(left) + len(right)*gini(right)) / n', '(gini(left) + gini(right)) / 2'),
+    ('learn-tree-stump', 'score < best_score - 1e-12', 'score <= best_score + 1e-12'),
+    ('brier-weather', '(p-y)**2', '(int(p >= 0.5)-y)**2'),
+    ('reliability-bins', 'min(int(p*bins), bins-1)', 'int(p*bins)'),
+    ('bootstrap-interval', 'sample = [rng.choice(values) for _ in values]', 'sample = rng.sample(values, len(values))'),
+    ('multiclass-softmax', 'math.exp(x - peak)', 'math.exp(x)'),
+    ('multiclass-loss', ' + (peak-logits[target])', ''),
+    ('dense-layer', 'max(0, sum(x*w for x,w in zip(inputs,row)) + bias)', 'sum(x*w for x,w in zip(inputs,row)) + bias'),
+    ('attention-head', '/scale for key in keys', ' for key in keys'),
+    ('category-drift', 'before.keys() | after.keys()', 'before.keys() & after.keys()'),
+    ('selective-prediction', 'max(p, 1-p) >= minimum', 'p >= minimum'),
+    ('beacon-monitor', 'drift > drift_limit', 'drift >= drift_limit'),
+    ('beacon-monitor', 'if metrics["error"] is None:', 'if metrics["error"] == 0:'),
 ]
 for quest_id, old, new in mutations:
     solution = by_id[quest_id]['solution']
