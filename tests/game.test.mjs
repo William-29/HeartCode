@@ -66,6 +66,16 @@ test('save normalization restores valid progress and rejects incompatible files'
 test('all achievement descriptions have attainable progress targets', () => {
   for (const a of achievements) { const [value, target] = a.progress(freshState()); assert.ok(value >= 0 && target > 0); assert.ok(a.coins > 0); }
 });
+
+test('the five-companion milestone remains valid as the Haven expands the collection',()=>{
+  const collector=achievements.find(a=>a.id==='collector');
+  for(const count of [4,5,6,8]){
+    const s=freshState();s.owned=pets.slice(0,count).map(p=>p.id);
+    assert.equal(collector.test(s),count>=5);
+    assert.deepEqual(collector.progress(s),[Math.min(count,5),5]);
+  }
+  assert.match(collector.description,/any 5/);
+});
 test('an original 24-quest save resumes at the workshop with its rewards and drafts intact', () => {
   const old = freshState(); for (const q of quests.slice(0, 24)) completeQuest(old, q.id, '2026-10-18');
   old.drafts['learn-a-weight'] = 'weight = 0.0'; adoptPet(old, 'nova');

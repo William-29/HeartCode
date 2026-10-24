@@ -26,10 +26,11 @@ The revised background uses botanical fantasy portraits, scarves, dried lavender
 - The parent-place navigation marker used dark text against the wooden sidebar. It now has light text on desktop and a separate treatment at the actual 540px bottom-navigation breakpoint.
 - Neighbour dialogs returned focus to an unrelated first action. They now return to the actual opening control, including after a scene repaint.
 - The new Haven sprite wrapper initially inherited the label's cream background. That style now targets only the label; sprite animation delays and reduced-motion handling are preserved.
+- The collector achievement assumed there were exactly five companions. Its existing milestone now means any five friends, remains satisfied with six or more, and preserves previously earned rewards.
 
 ## Verification
 
-Final command: `node --test --test-reporter=tap tests/*.test.mjs` — **182 passed, 0 failed, 0 skipped**.
+Final command: `node --test --test-reporter=tap tests/*.test.mjs` — **183 passed, 0 failed, 0 skipped**.
 
 The suite includes real CPython execution of campaign and project solutions, incorrect starters, empty submissions, conceptual mistakes, edge cases, saved tools, and held-out-data checks. Browser-controller adapters exercise event handling and cancellation without simulating pixel layout.
 
