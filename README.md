@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Hearthcode — The Learning Tavern
 
 A cozy browser learning game with **84 progressive quests in 21 chapters** across Python, AI, and machine learning. Explore a living pixel-art world with taverns, fields, a country pub, magical forests, lakes, a trading town, gardens, an observatory, archives, and a mountain academy. Includes real Python coding challenges, explanations and hints, quizzes, XP levels, coins, **17 achievements**, five pixel companions, a rotating daily question, a practice room, and browser-local saves with JSON export/import.
@@ -216,3 +217,6 @@ Visit the animal haven from Companions and the observatory from Willowmere Lake 
 ## Direct village navigation
 
 Six illustrated entrances below the village open the observatory, animal haven, clockmaker, lake, restoration square and High Street directly. The Places menu is the same flat directory everywhere, including the exhibition and all learning activities. Elio, Rowan and Mira each offer a picture shortcut at the top of their conversation. Village marker labels appear on hover, keyboard focus or proximity; direct neighbour buttons remain available without walking. No saved progress changes. Navigation, conversation routing and the existing movement flows are covered by 165 passing tests. Browser layout verification was unavailable in this session.
+=======
+# HeartCode
+>>>>>>> origin/main
