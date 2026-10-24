@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { quests, chapters, pets, achievements, dailyQuestions } from '../dist/content.js';
 import { freshState, normalizeState, isUnlocked, nextQuest, levelInfo, completeQuest, completeDaily, adoptPet, visibleStreak } from '../dist/state.js';
+import { shelterProjects } from '../dist/haven-content.js';
+import { completeNeighbour, inspectMechanism } from '../dist/neighbour-model.js';
 
 test('the campaign contains 84 unique quests with four in each of twenty-one chapters', () => {
   assert.equal(quests.length, 84); assert.equal(chapters.length, 21); assert.equal(new Set(quests.map(q => q.id)).size, 84);
@@ -22,11 +24,15 @@ test('first clear grants rewards, unlocks next quest and an achievement once', (
   const before = { coins: s.coins, xp: s.xp }; const repeat = completeQuest(s, quests[0].id, '2026-10-18');
   assert.equal(repeat.replay, true); assert.equal(repeat.xp, 0); assert.equal(s.coins, before.coins); assert.equal(s.xp, before.xp); assert.equal(s.completed.length, 1);
 });
-test('the entire curriculum can be completed and all companions afforded', () => {
+test('the entire curriculum and Haven care projects make all eight companions attainable', () => {
   const s = freshState(); for (const q of quests) assert.equal(completeQuest(s, q.id, '2026-10-18').ok, true);
   assert.equal(s.completed.length, 84); assert.equal(nextQuest(s), null); assert.ok(s.achievements.includes('graduate')); assert.ok(s.achievements.includes('master-scholar'));
-  for (const pet of pets) assert.equal(adoptPet(s, pet.id).ok, true);
-  assert.equal(s.owned.length, 5); assert.ok(s.coins >= 0); assert.ok(s.achievements.includes('collector'));
+  for (const project of shelterProjects) {
+    if (project.inspection) assert.equal(inspectMechanism(s, project.id, project.answer).ok, true);
+    assert.equal(completeNeighbour(s, project.id, project.solution).ok, true);
+  }
+  for (const pet of pets) assert.equal(adoptPet(s, pet.id).ok, true, pet.id);
+  assert.equal(s.owned.length, 8); assert.ok(s.coins >= 0); assert.ok(s.achievements.includes('collector'));
 });
 test('adoption enforces quest and coin requirements; equipping is free', () => {
   const s = freshState(); s.coins = 1000; assert.equal(adoptPet(s, 'fern').ok, false);

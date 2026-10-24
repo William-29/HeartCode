@@ -182,7 +182,7 @@ main{flex:1;min-height:0;width:100%;overflow:auto;overscroll-behavior:contain;pa
 @media(max-height:530px){
   .village-stage{--village-chrome:48px}
   .workspace:is([data-route="village"],[data-route="room"],[data-route="quests"]) .page-heading,.village-heading,.village-topline,.room-after-scene{display:none}
-  .room-slot-heading,.room-item-picture,.destination-meta,.world-topline{display:none}
+  .room-slot-heading h3,.room-item-picture,.destination-meta,.world-topline{display:none}
   .room-shop-row{padding-top:4px}
   .room-shop-item{align-items:center;justify-content:center}
   .room-shop-item h4{font-size:11px;display:inline;margin-right:6px}

@@ -2,7 +2,7 @@
 export const placeParents = { shelter:'companions', observatory:'village', wardrobe:'room', adventures:'village', courtyard:'village', shared:'village', lake:'village', clockwork:'village', apprentices:'tavern', discoveries:'companions' };
 export const villagePlaces = [
   {route:'observatory',name:'Observatory',image:'willowmere-observatory.png',host:'Stargaze with Elio'},
-  {route:'shelter',name:'Animal haven',image:'animal-haven.png',host:'Care for animals with Rowan'},
+  {route:'shelter',name:'Companion haven',image:'companion-haven.png',host:'Help a woodland friend with Rowan'},
   {route:'clockwork',name:'Clockmaker',image:'clockmaker-workshop.png',host:'Repair keepsakes with Mira'},
   {route:'lake',name:'Willowmere Lake',image:'willowmere-lake.png',host:'Fish and keep observations'},
   {route:'courtyard',name:'Restoration square',image:'founders-court-restored.png',host:'Restore buildings and exhibit projects'},

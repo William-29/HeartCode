@@ -160,11 +160,12 @@ test('room dragging uses scaled coordinates, saves on release, cancels safely an
   const win = new Node(), root = new Node(), drawer = new Node(), chair = new Node({roomObject:'chair'}), status = new Node();
   root.getBoundingClientRect = () => ({ width:300,height:200 });
   root.querySelectorAll = () => [chair]; drawer.querySelector = () => status;
-  let saves = 0; const state = freshState();
+  let saves = 0; const selections = [], state = freshState();
   globals({window:win}, () => {
-    const editor = mountRoomEditor({state,root,drawer,onSave:()=>saves++});
+    const editor = mountRoomEditor({state,root,drawer,onSave:()=>saves++,onSelect:slot=>selections.push(slot)});
     const original = structuredClone(state.home.layout.chair);
     root.emit('pointerdown',{target:chair,button:0,pointerId:1,clientX:100,clientY:100});
+    assert.equal(selections.at(-1),'chair');
     root.emit('pointermove',{pointerId:1,clientX:130,clientY:120});
     assert.deepEqual(state.home.layout.chair,original); assert.equal(parseFloat(chair.style.left),33);
     root.emit('pointerup',{pointerId:1}); assert.equal(saves,1); assert.equal(state.home.layout.chair.x,33); assert.equal(state.home.layout.chair.y,59);

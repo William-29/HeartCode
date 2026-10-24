@@ -177,7 +177,7 @@ test('courtyard and wardrobe inherit the existing optional weather and sound con
 });
 
 function harness(state=progressed(),view='court'){
-  let pending,rewards=[],saves=0,cancels=0,originalDemos=[],neighbourDemos=[];
+  let pending,rewards=[],saves=0,cancels=0,originalDemos=[],neighbourDemos=[],learned=0;
   const previousDocument=globalThis.document,decode=s=>s.replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#39;',"'").replaceAll('&amp;','&');
   class Element extends EventTarget{
     constructor(dataset={}){super();this.dataset=dataset;this.open=false;this.value='';this.textContent='';this.disabled=false;this.fields=new Map();this.buttons=[];this.scrollTop=0;}
@@ -204,13 +204,13 @@ function harness(state=progressed(),view='court'){
   }
   const root=new Element(),dialog=new Element();root.innerHTML=view==='court'?renderCourtyard(state):renderWardrobe(state);
   globalThis.document={activeElement:null,querySelector:s=>s==='.community-root'?root:dialog};
-  const session=mountCommunity({state,view,root,dialog,onSave(){saves++;},onReward(r){rewards.push(r);},onNeighbourDemo(item){neighbourDemos.push(item);},onOriginalDemo(id){originalDemos.push(id);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
+  const session=mountCommunity({state,view,root,dialog,onLearn(){learned++;},onSave(){saves++;},onReward(r){rewards.push(r);},onNeighbourDemo(item){neighbourDemos.push(item);},onOriginalDemo(id){originalDemos.push(id);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(where,action,id,slot)=>{
     const button=new Element({community:action,...(id===undefined?{}:{id}),...(slot===undefined?{}:{slot})});where.buttons.push(button);
     const event=new Event('click');Object.defineProperty(event,'target',{value:button});where.dispatchEvent(event);
   };
   return {state,root,dialog,click:(action,id,slot)=>click(root,action,id,slot),work:(action,id,slot)=>click(dialog,action,id,slot),
-    pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,originalDemos,neighbourDemos,
+    pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,originalDemos,neighbourDemos,learned:()=>learned,
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=previousDocument;},session};
 }
@@ -257,6 +257,15 @@ test('exhibition UI curates projects, runs real saved tools and forwards origina
     const coins=s.coins;ui.work('run-demo');await ui.finish(python([{code:ui.pending().code}])[0]);
     assert.match(ui.dialog.querySelector('#community-output').textContent,/"bun": 2/);assert.equal(s.coins,coins);
     ui.work('exhibit',original.id);assert.deepEqual(ui.originalDemos,[original.id]);assert.equal(ui.dialog.open,false);
+  }finally{ui.dispose();}
+});
+
+test('revising a restored building counts as learning without paying another commission',async()=>{
+  const s=progressed();repair(s);const ui=harness(s),p=restorationProjects[0],before=[s.coins,s.xp];
+  try{
+    ui.click('project',p.id);ui.dialog.querySelector('#community-code').value=p.solution;
+    ui.work('run-project',p.id);await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+    assert.equal(ui.learned(),1);assert.equal(ui.rewards().length,0);assert.deepEqual([s.coins,s.xp],before);
   }finally{ui.dispose();}
 });
 test('wardrobe UI enforces locks, updates the fitted preview and saves choices without altering rewards',()=>{

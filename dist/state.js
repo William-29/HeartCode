@@ -7,6 +7,7 @@ import { freshRestoration, normalizeRestoration } from './restoration-model.js';
 import { freshWardrobe, normalizeWardrobe } from './wardrobe-model.js';
 import { exhibitCatalog } from './exhibition-model.js';
 import { freshNeighbours, normalizeNeighbours } from './neighbour-model.js';
+import { havenHelpComplete } from './haven-companions.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
   return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), restoration: freshRestoration(), wardrobe: freshWardrobe(), neighbours: freshNeighbours(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
@@ -44,6 +45,9 @@ export function normalizeState(value) {
   s.adventure = normalizeAdventure(value.adventure, s);
   s.restoration = normalizeRestoration(value.restoration, s);
   s.neighbours = normalizeNeighbours(value.neighbours, s);
+  s.owned = s.owned.filter(id => havenHelpComplete(s, pets.find(p => p.id === id)));
+  if (!s.owned.includes(s.equipped)) s.equipped = 'pip';
+  s.petCare = normalizePetCare(s.petCare, s.owned);
   if (Array.isArray(s.restoration.exhibition)) {
     const owned = new Set(exhibitCatalog(s).map(item => item.id));
     s.restoration.exhibition = s.restoration.exhibition.filter(id => owned.has(id));
@@ -116,6 +120,7 @@ export function adoptPet(state, id) {
   if (!pet) return { ok: false, reason: 'Companion not found.' };
   if (state.owned.includes(id)) { state.equipped = id; return { ok: true, equipped: true, achievements: [] }; }
   if (state.completed.length < pet.required) return { ok: false, reason: `Complete ${pet.required} quests to meet ${pet.name}.` };
+  if (!havenHelpComplete(state, pet)) return { ok: false, reason: `Help ${pet.name} with “${pet.helpTitle}” at the Companion Haven first.` };
   if (state.coins < pet.cost) return { ok: false, reason: `You need ${pet.cost - state.coins} more coins.` };
   state.coins -= pet.cost; state.owned.push(id); state.equipped = id; state.petCare = normalizePetCare(state.petCare, state.owned);
   return { ok: true, equipped: false, achievements: unlockAchievements(state) };

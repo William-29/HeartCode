@@ -10,7 +10,7 @@
 .nearby-places nav a{display:flex;justify-content:space-between;gap:10px;padding:9px 0;color:#66472f;text-decoration:none;border-bottom:1px solid #c4a47c55}
 .nearby-places nav a:hover,.nearby-places nav a:focus-visible{color:#8c3d25;background:#e4cc9b44}
 .nearby-places .exhibition-direction{margin-top:5px;color:#51705a;border-bottom:0}
-.nav-link.active-parent{background:#c4a47b22;box-shadow:inset 3px 0 #a88656;color:#63492e}
+.nav-link.active-parent{background:#c4a47b22;box-shadow:inset 3px 0 #e0bc83;color:#f6dfb6}
 .player-card .avatar{padding:0;border:0;cursor:pointer;background:transparent;flex-shrink:0}
 .room-navigation{display:flex;align-items:center;border:1px solid #ba966c;border-radius:6px;background:#efdfc1;box-shadow:0 2px 5px #5f402512;flex:none;overflow:hidden}
 .room-navigation a{padding:7px 13px;color:#795b40;font-size:12px;text-decoration:none;white-space:nowrap}
@@ -29,3 +29,5 @@
 @media(max-width:760px){.place-navigation .breadcrumb{display:none}.topbar{justify-content:space-between}.nearby-places summary{font-size:11px;padding:6px 9px}.room-navigation a{padding:7px 9px;font-size:11px}.workspace[data-route="room"] .life-heading h1{font-size:17px}.room-heading-actions>.text-button{display:none}.wardrobe-root .court-heading{flex-wrap:wrap}.room-wardrobe-tag{font-size:10px;padding:4px 8px}}
 @media(max-width:600px){.topbar .top-stats{width:auto;min-width:0;flex:1;justify-content:flex-end}.topbar .icon-button{width:28px;height:28px}.topbar .stat-pill{font-size:9px;gap:3px;padding:4px}.topbar .xp-pill>span{display:none}}
 @media(max-width:420px){.topbar .top-stats>.stat-pill:first-child{display:none}}
+
+@media(max-width:540px){.nav-link.active-parent{color:#63492e;box-shadow:inset 0 -3px #a88656}}

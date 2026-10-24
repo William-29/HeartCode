@@ -1,7 +1,7 @@
 import { roomPosition, normalizeLayout, wallpapers } from './cozy-model.js';
 import { normalizeHome, roomSlots } from './village-life-model.js';
 
-export function mountRoomEditor({ state, selectedSlot = 'chair', onSave = () => {}, root = document.querySelector('.home-scene'), drawer = document.querySelector('#room-decor') }) {
+export function mountRoomEditor({ state, selectedSlot = 'chair', onSave = () => {}, onSelect = () => {}, root = document.querySelector('.home-scene'), drawer = document.querySelector('#room-decor') }) {
   if (!root || !drawer) return { dispose() {} };
   state.home = normalizeHome(state.home);
   const buttons = [...root.querySelectorAll('[data-room-object]')];
@@ -20,7 +20,7 @@ export function mountRoomEditor({ state, selectedSlot = 'chair', onSave = () => 
     status.textContent = state.home.placed[selected] ? `${roomSlots[selected]} selected. ${Math.round(point.x)}% across, ${Math.round(point.y)}% down, rotated ${point.rotation}°. Saved.` : `${roomSlots[selected]} is empty. Place a furnishing first.`;
     drawer.querySelectorAll('[data-room-edit]').forEach(button => { button.disabled = button.dataset.roomEdit !== 'reset' && !state.home.placed[selected]; });
   };
-  const select = slot => { selected = slot; buttons.forEach(button => button.classList.toggle('furniture-selected', button.dataset.roomObject === slot)); announce(); };
+  const select = slot => { selected = slot; onSelect(slot); buttons.forEach(button => button.classList.toggle('furniture-selected', button.dataset.roomObject === slot)); announce(); };
   const cancel = () => { if (!drag) return; const previous = drag; drag = null; paint(previous.slot, previous.origin); if (previous.button.hasPointerCapture?.(previous.id)) previous.button.releasePointerCapture(previous.id); };
   const commit = (slot, value) => { state.home.layout[slot] = roomPosition(slot, value); paint(slot, state.home.layout[slot]); onSave(); announce(); };
   const toggle = () => { if (!drawer.open) cancel(); root.classList.toggle('room-editing', drawer.open); buttons.forEach(button => button.disabled = !drawer.open); };

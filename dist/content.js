@@ -1,5 +1,6 @@
 import { advancedChapters, advancedQuests } from './advanced-content.js';
 import { frontierChapters, frontierQuests } from './frontier-content.js';
+import { havenCompanions } from './haven-companions.js';
 
 export const chapters = [
   { id: 0, numeral: 'I', title: 'The first spark', topic: 'Python', label: 'PYTHON FOUNDATIONS', icon: 'flame', description: 'Meet Python. Turn your very first ideas into code.', difficulty: 'Beginner', color: 'gold' },
@@ -37,7 +38,7 @@ export const quests = [
     id: 'tavern-till', chapter: 0, title: 'Mind the tavern till', subtitle: 'Calculate your first earnings', type: 'code', minutes: 5, xp: 110, coins: 50,
     lesson: ['Python can be your calculator. Use + to add, - to subtract, * to multiply, and / to divide.', 'Combine variables with arithmetic to solve a real problem. Multiplication happens before addition, unless parentheses change the order.'], example: 'price = 3\nsold = 4\nrevenue = price * sold\nprint(revenue)  # 12',
     task: 'You sell 6 bowls of stew for 8 coins each, and spend 10 coins on ingredients. Store the remaining coins in profit, then print profit.', starter: 'bowls = 6\nprice = 8\ncost = 10\n\n# Calculate and print profit\n',
-    hint: 'Multiply bowls by price, then subtract cost. Assign that result to profit.', solution: 'bowls = 6\nprice = 8\ncost = 10\nprofit = bowls * price - cost\nprint(profit)', checks: 'assert scope.get("profit") == 38, "Store your calculation in profit. Six bowls earn 48 coins before costs."\nassert output.strip() == "38", "Print the profit variable."', takeaway: 'Variables and arithmetic turn small tasks into reusable calculations.'
+    hint: 'Multiply bowls by price, then subtract cost. Assign that result to profit.', solution: 'bowls = 6\nprice = 8\ncost = 10\nprofit = bowls * price - cost\nprint(profit)', checks: 'assert scope.get("profit") == 38, "Store your calculation in profit. Six bowls earn 48 coins before costs."\nassert output.strip() == "38", "Print the profit variable."\ncheck_rebind("bowls", [(0,"-10"),(10,"70")])\ncheck_rebind("price", [(5,"20")])\ncheck_rebind("cost", [(48,"0")])', takeaway: 'Variables and arithmetic turn small tasks into reusable calculations.'
   },
   {
     id: 'door-keeper', chapter: 1, title: 'The door keeper', subtitle: 'Choose a path with if and else', type: 'code', minutes: 6, xp: 110, coins: 45,
@@ -60,7 +61,7 @@ export const quests = [
   },
   {
     id: 'inventory-list', chapter: 2, title: 'The inventory shelf', subtitle: 'Keep things in a list', type: 'code', minutes: 6, xp: 130, coins: 55,
-    lesson: ['A list holds an ordered collection of values inside square brackets. Indexes start at 0: items[0] is the first item.', 'Use .append(value) to add one item at the end, and len(items) to count the items.'], example: 'items = ["herb", "jar"]\nitems.append("water")\nprint(items[0])  # herb\nprint(len(items))  # 3', task: 'Add "honey" to ingredients using append(), then print the number of ingredients.', starter: 'ingredients = ["mint", "water", "lemon"]\n', hint: 'Use ingredients.append("honey"), then print(len(ingredients)).', solution: 'ingredients = ["mint", "water", "lemon"]\ningredients.append("honey")\nprint(len(ingredients))', checks: 'assert scope.get("ingredients") == ["mint", "water", "lemon", "honey"], "Keep the existing ingredients and add honey at the end."\nassert output.strip() == "4", "Print the length of ingredients."', takeaway: 'Lists store ordered data that you can access and update.'
+    lesson: ['A list holds an ordered collection of values inside square brackets. Indexes start at 0: items[0] is the first item.', 'Use .append(value) to add one item at the end, and len(items) to count the items.'], example: 'items = ["herb", "jar"]\nitems.append("water")\nprint(items[0])  # herb\nprint(len(items))  # 3', task: 'Add "honey" to ingredients using append(), then print the number of ingredients.', starter: 'ingredients = ["mint", "water", "lemon"]\n', hint: 'Use ingredients.append("honey"), then print(len(ingredients)).', solution: 'ingredients = ["mint", "water", "lemon"]\ningredients.append("honey")\nprint(len(ingredients))', checks: 'assert scope.get("ingredients") == ["mint", "water", "lemon", "honey"], "Keep the existing ingredients and add honey at the end."\nassert output.strip() == "4", "Print the length of ingredients."\nassert any(isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr=="append" for n in ast.walk(tree)), "Use append() to add honey."\ncheck_rebind("ingredients", [([],"1"),(["tea"],"2")])', takeaway: 'Lists store ordered data that you can access and update.'
   },
   {
     id: 'field-notes', chapter: 2, title: 'The companion ledger', subtitle: 'Name your data with dictionaries', type: 'quiz', minutes: 4, xp: 120, coins: 50,
@@ -69,7 +70,7 @@ export const quests = [
   },
   {
     id: 'clean-the-pantry', chapter: 2, title: 'Clean the pantry', subtitle: 'Prepare trustworthy data', type: 'code', minutes: 7, xp: 150, coins: 60,
-    lesson: ['Real data is often messy. Missing values can appear as None. Before calculating, choose how to handle them. In this exercise, we remove missing readings.', 'A list comprehension builds a new list. An optional if keeps only items that meet a condition. Do not use if value to remove missing data: that would also remove valid zeros.'], example: 'readings = [2, None, 0, 5]\nclean = [x for x in readings if x is not None]\nprint(clean)  # [2, 0, 5]', task: 'Create clean by removing None from readings. Preserve valid zeros and the original order. Print clean.', starter: 'readings = [12, None, 0, 18, None, 24]\n', hint: 'Filter with x is not None. Zero is a real reading.', solution: 'readings = [12, None, 0, 18, None, 24]\nclean = [x for x in readings if x is not None]\nprint(clean)', checks: 'assert scope.get("clean") == [12, 0, 18, 24], "Remove only None. Preserve zero and the order."\nassert output.strip() == "[12, 0, 18, 24]", "Print the cleaned list."', takeaway: 'Cleaning decisions matter: missing data and zero are not the same thing.'
+    lesson: ['Real data is often messy. Missing values can appear as None. Before calculating, choose how to handle them. In this exercise, we remove missing readings.', 'A list comprehension builds a new list. An optional if keeps only items that meet a condition. Do not use if value to remove missing data: that would also remove valid zeros.'], example: 'readings = [2, None, 0, 5]\nclean = [x for x in readings if x is not None]\nprint(clean)  # [2, 0, 5]', task: 'Create clean by removing None from readings. Preserve valid zeros and the original order. Print clean.', starter: 'readings = [12, None, 0, 18, None, 24]\n', hint: 'Filter with x is not None. Zero is a real reading.', solution: 'readings = [12, None, 0, 18, None, 24]\nclean = [x for x in readings if x is not None]\nprint(clean)', checks: 'assert scope.get("clean") == [12, 0, 18, 24], "Remove only None. Preserve zero and the order."\nassert output.strip() == "[12, 0, 18, 24]", "Print the cleaned list."\ncheck_rebind("readings", [([],"[]"),([None,0,None,7],"[0, 7]"),([-2,0,3],"[-2, 0, 3]")])', takeaway: 'Cleaning decisions matter: missing data and zero are not the same thing.'
   },
   {
     id: 'average-evening', chapter: 2, title: 'An average evening', subtitle: 'Summarize a collection', type: 'code', minutes: 6, xp: 150, coins: 65,
@@ -141,7 +142,8 @@ export const pets = [
   { id: 'fern', name: 'Fern', species: 'Forest slime', color: 'green', cost: 140, required: 2, rarity: 'UNCOMMON', description: 'Bounces a little higher every time something finally clicks.', quote: 'Mistakes are just clues wearing a funny hat.' },
   { id: 'ember', name: 'Ember', species: 'Little fox', color: 'rose', cost: 280, required: 5, rarity: 'UNCOMMON', description: 'A quick thinker who sniffs out even the sneakiest bugs.', quote: 'Try one small change, then run your code again.' },
   { id: 'sage', name: 'Sage', species: 'Scholar owl', color: 'blue', cost: 450, required: 10, rarity: 'RARE', description: 'Collects little facts, big questions, and very tiny books.', quote: 'Ask what the data can tell you—and what it cannot.' },
-  { id: 'nova', name: 'Nova', species: 'Pocket dragon', color: 'purple', cost: 700, required: 18, rarity: 'EPIC', description: 'A tiny dragon with a big appetite for knowledge.', quote: 'A model’s real magic is how it handles something new.' }
+  { id: 'nova', name: 'Nova', species: 'Pocket dragon', color: 'purple', cost: 700, required: 18, rarity: 'EPIC', description: 'A tiny dragon with a big appetite for knowledge.', quote: 'A model’s real magic is how it handles something new.' },
+  ...havenCompanions
 ];
 
 export const achievements = [

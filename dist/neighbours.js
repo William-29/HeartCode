@@ -1,4 +1,7 @@
 import { renderHaven, havenBook, animalStory, introductionReview, havenReport } from './haven-ui.js';
+import { adoptPet } from './state.js';
+import { pets } from './content.js';
+import { havenCompanions } from './haven-companions.js';
 import { skyConditions, observeSky, arrangeIntroduction } from './haven-model.js';
 import { setBusyControls, editorIndent } from './editor-controls.js';
 import { icon, sprite } from './art.js';
@@ -88,19 +91,24 @@ function reportMarkup(p,r){
   if(p.id==='lake-predict')return `<div class="working-round"><h3>A fair look at your lake model</h3><p>Your guesser matched <strong>${r.correct}/${r.total}</strong> held-out catches. The overall-most-common baseline matched <strong>${r.baseline_correct}/${r.total}</strong>.</p><p>${r.training_casts} training casts; ${r.test_casts} test casts. Training labels never include the held-out answers.</p><p>Next guess in your selected weather: <strong>${esc(r.next_guess)}</strong>. It is a guess, not a promise.</p><p>${r.correct>r.baseline_correct?'Weather helped on this small sample. Test more conditions before trusting it.':'This model did not beat the simpler baseline on this sample. More features or more representative observations may help.'} Each new cast changes the notebook; run the tool again to refresh this report.</p></div>`;
   return `<div class="working-round"><h3>Your Python, on your own observations</h3><pre>${esc(JSON.stringify(r,null,2))}</pre><p>${p.id==='lake-frequency'?'These fractions describe your sample, not a known probability for every future cast.':'Every quiet cast remains in the counts.'}</p></div>`;
 }
-export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDiscovery=()=>{},runPython,cancelRun,root=document.querySelector('.neighbours-root'),dialog=document.querySelector('#neighbour-dialog')}){
+export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption=()=>{},onLearn=()=>{},onFollowDiscovery=()=>{},runPython,cancelRun,root=document.querySelector('.neighbours-root'),dialog=document.querySelector('#neighbour-dialog')}){
   let alive=true,busy=false,token=0,active=null;
   let music=null,melody=null;
   const output=text=>{const el=dialog.querySelector('#neighbour-output');if(el)el.textContent=text;};
   const disabledBeforeRun = new Map();
+  let opener=null, openerAction=null;
   function busyState(value){
     busy=value;
     setBusyControls(dialog,'[data-neighbour]',value,disabledBeforeRun,'neighbour',['close']);
     for(const el of dialog.querySelectorAll('textarea,input'))el.readOnly=value;
   }
   function stop(){token++;if(busy)cancelRun();music?.stop();busyState(false);}
-  function show(html){stop();active=null;dialog.innerHTML=html;if(!dialog.open)dialog.showModal();dialog.scrollTop=0;dialog.querySelector('button')?.focus();}
-  function close(){stop();active=null;if(dialog.open)dialog.close();root.querySelector('[data-neighbour]')?.focus({preventScroll:true});}
+  function restoreFocus(){
+    const target=opener&&root.contains(opener)?opener:openerAction?[...root.querySelectorAll('[data-neighbour]')].find(el=>el.dataset.neighbour===openerAction.neighbour&&el.dataset.id===openerAction.id):null;
+    target?.focus({preventScroll:true});opener=null;openerAction=null;
+  }
+  function show(html){stop();active=null;if(!dialog.open){opener=document.activeElement;openerAction=opener?.closest?.('[data-neighbour]')?.dataset;}dialog.innerHTML=html;if(!dialog.open)dialog.showModal();dialog.scrollTop=0;dialog.querySelector('button')?.focus();}
+  function close(){stop();active=null;if(dialog.open)dialog.close();restoreFocus();}
   function repaint(){
     const focused=root.contains(document.activeElement)?document.activeElement?.closest('[data-neighbour]')?.dataset:null;
     root.removeEventListener('click',click);root.removeEventListener('change',change);
@@ -131,6 +139,11 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
     if(action==='close'){close();return;}
     if(action==='stop'){stop();output('Stopped. Your draft is saved.');return;}
     if(busy)return;
+    if(action==='adopt-companion' && havenCompanions.some(a=>a.id===id)){
+      const result=adoptPet(state,id);
+      if(!result.ok){show(animalStory(state,id));const note=dialog.querySelector('.haven-adoption small');if(note)note.textContent=result.reason;return;}
+      companion=pets.find(p=>p.id===state.equipped);onSave();repaint();show(animalStory(state,id));onAdoption(result,companion);return;
+    }
     if(action==='shelter-book'||action==='sky-journal'){show(havenBook(state,action==='shelter-book'?'shelter':'observatory'));return;}
     if(action==='animal'){const html=animalStory(state,id);if(html)show(html);return;}
     if(action==='review-introduction'){const html=introductionReview(state,id,el.dataset.home);if(html)show(html);return;}
@@ -170,10 +183,12 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
       if(p.kind==='teaching'&&(!state.neighbours.explained.includes(p.id)||!state.neighbours.examples.includes(p.id))){output('Explain the mistake and choose a useful test together first. Your code is safe here.');return;}
       execute(projectSource(state,p,code),projectChecks(p),result=>{
         const reward=completeNeighbour(state,p.id,code);if(!reward.ok)throw new Error('Finish the earlier steps first.');
+        onLearn(reward);
         onSave();repaint();
         output(`${result.output||''}\n${reward.replay?'Your revised Python passed. First-completion rewards already earned.':`Made together. +${reward.xp} XP · +${reward.coins} coins`}\n\n${p.outcome||apprentices.find(a=>a.id===p.npc).voices[confidence(state,p.npc)]}`);
         const area=dialog.querySelector('#neighbour-result');
-        if(area)area.innerHTML=p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):`${button('use','See your work in the world',p.id)} <a class="exhibition-return" href="#courtyard/exhibition">Give it a place at the exhibition</a>`;
+        const friend=havenCompanions.find(a=>a.helpProject===p.id);
+        if(area)area.innerHTML=p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):`${friend?button('animal',`Visit ${friend.name} · ${state.owned.includes(friend.id)?'your friend':'ready to adopt'}`,friend.id):''}${button('use','See your work in the world',p.id)} <a class="exhibition-return" href="#courtyard/exhibition">Give it a place at the exhibition</a>`;
         if(!reward.replay)onReward(reward);
       });return;
     }
@@ -199,7 +214,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onFollowDi
     editorIndent(event,input);
     if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();dialog.querySelector('[data-neighbour="run"]')?.click();}
   }
-  const cancelled=event=>{if(event.type==='close'&&dialog.open)return;stop();active=null;};
+  const cancelled=event=>{if(event.type==='close'&&dialog.open)return;stop();active=null;if(event.type==='close')restoreFocus();};
   root.addEventListener('click',click);root.addEventListener('change',change);
   dialog.addEventListener('click',click);dialog.addEventListener('change',change);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('cancel',cancelled);dialog.addEventListener('close',cancelled);
   return {openDemo(id,fromExhibition=false){const p=neighbourProject(id);if(p&&({shelter:'shelter',observatory:'observatory',shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries'}[p.kind]===view))useTool(p,fromExhibition);},dispose(){alive=false;close();music?.dispose();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};

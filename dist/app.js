@@ -1,4 +1,5 @@
 import { routeFromHash, parentPlace, placeNavigation } from './navigation.js';
+import { createSaveGuard } from './save-guard.js';
 import { ambienceSettings, renderPetCorner, mountPetPlay } from './cozy-ui.js';
 import { renderAdventures, mountAdventures } from './adventures.js';
 import { renderCourtyard, renderWardrobe, mountCommunity } from './community.js';
@@ -21,15 +22,16 @@ import { renderVillage, mountVillage } from './village.js';
 import { projects, villagers, projectUnlocked } from './projects.js';
 import { renderVillager, renderProjectDemo, demoSource } from './village-stories.js';
 import { characterPortrait } from './characters.js';
-import { renderRoom, renderFestival, renderCafe, mountVillageClock } from './village-life.js';
+import { renderRoom, renderRoomShop, renderFestival, renderCafe, mountVillageClock } from './village-life.js';
 import { furnishRoom, removeFurnishing, celebrateFestival, periods } from './village-life-model.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 let state = freshState();
-let saveWarning = '';
-try { const stored = localStorage.getItem(SAVE_KEY); if (stored) state = normalizeState(JSON.parse(stored)); }
+let saveWarning = '', initialSave = null;
+try { initialSave = localStorage.getItem(SAVE_KEY) ?? null; if (initialSave) state = normalizeState(JSON.parse(initialSave)); }
 catch { saveWarning = 'Your saved adventure could not be loaded. This session starts fresh; use Settings to restore an exported save.'; }
+const saveGuard = createSaveGuard({read:()=>localStorage.getItem(SAVE_KEY),write:text=>localStorage.setItem(SAVE_KEY,text),initialRaw:initialSave,initialState:JSON.stringify(state)});
 let route = routeFromHash(location.hash);
 let mapSelection = null;
 let roomSlot = 'chair';
@@ -53,15 +55,38 @@ let solved = false;
 let saveTimer;
 let audioContext;
 let celebration = null;
-const routes = { shelter: ['Animal haven', 'paw'], observatory: ['Observatory', 'spark'], clockwork: ['Clockmaker', 'clock'], discoveries: ['Companion discoveries', 'paw'], apprentices: ['Learning together', 'book'], shared: ['The morning round', 'leaf'], lake: ['Willowmere Lake', 'leaf'], courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
+const routes = { shelter: ['Companion haven', 'paw'], observatory: ['Observatory', 'spark'], clockwork: ['Clockmaker', 'clock'], discoveries: ['Companion discoveries', 'paw'], apprentices: ['Learning together', 'book'], shared: ['The morning round', 'leaf'], lake: ['Willowmere Lake', 'leaf'], courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
 const questDialog = $('#quest-dialog');
 const settingsDialog = $('#settings-dialog');
 const villageDialog = $('#village-dialog');
 
 function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); saveWarning = ''; }
+  try {
+    const result=saveGuard.save(JSON.stringify(state));
+    if(!result.ok){warnSaveConflict();return false;}
+    saveWarning = ''; return true;
+  }
   catch { saveWarning = 'Your browser could not save progress. Export your adventure in Settings before closing.'; toast(saveWarning, 'help', 8000); }
 }
+function warnSaveConflict(){
+  const message='Another tab saved a newer adventure. This tab will not overwrite it. Export this tab’s work in Settings, then reload to continue the newer save.';
+  if(saveWarning!==message)toast(message,'help',12000);
+  saveWarning=message;
+  const current=$('#save-conflict');
+  if(!current){const notice=document.createElement('div');notice.id='save-conflict';notice.className='notice';notice.setAttribute('role','alert');notice.textContent=message;$('#main')?.prepend(notice);}
+}
+window.addEventListener('storage',event=>{
+  if(event.key!==SAVE_KEY && event.key!==null)return;
+  try{
+    const result=saveGuard.observe(JSON.stringify(state));if(!result.changed)return;
+    if(result.conflict){warnSaveConflict();return;}
+    const incoming=result.raw?normalizeState(JSON.parse(result.raw)):freshState();
+    leaveActivity();clearTimeout(saveTimer);state=incoming;
+    saveGuard.accept(result.raw,JSON.stringify(state));saveWarning='';
+    mapSelection=null;journeyReceipt=null;pendingTravel=null;render();
+    toast('Your adventure is up to date with your other tab.','check');
+  }catch{saveWarning='The other tab’s save could not be read. Export your work before reloading.';toast(saveWarning,'help',8000);}
+});
 function saveDraft(key, text) { state.drafts[key] = text.slice(0, 30000); clearTimeout(saveTimer); saveTimer = setTimeout(save, 350); }
 window.addEventListener('pagehide', () => { villageSession?.pause(); clearTimeout(saveTimer); save(); });
 function toast(message, symbol = 'spark', duration = 4200) {
@@ -89,6 +114,10 @@ function pet() { return pets.find(p => p.id === state.equipped) || pets[0]; }
 function celebrate(options, parent = document.body) {
   celebration?.dispose();
   celebration = showCelebration({ companion: pet().id, name: pet().name, ...options }, { parent, reducedMotion: state.reducedMotion });
+}
+function recordProjectPractice(result) {
+  activity(state);
+  if (result.replay) notifyAchievements(unlockAchievements(state));
 }
 function leaveActivity() {
   cancelRun();
@@ -136,13 +165,21 @@ function render() {
       </div>
     </aside>
     <div class="workspace" data-route="${route}">
-      <header class="topbar">${placeNavigation(route, routes)}<div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed quest or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
+      <header class="topbar">${placeNavigation(route, routes)}<div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed lesson, coding project, or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
       <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ shelter: () => renderNeighbours(state, 'shelter', pet()), observatory: () => renderNeighbours(state, 'observatory', pet()), clockwork: () => renderNeighbours(state, 'clockwork', pet()), discoveries: () => renderNeighbours(state, 'discoveries', pet()), apprentices: () => renderNeighbours(state, 'apprentices', pet()), shared: () => renderNeighbours(state, 'shared', pet()), lake: () => renderNeighbours(state, 'lake', pet()), courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
   ambience.update();
   if (['shelter', 'observatory', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(route)) neighbourSession = mountNeighbours({
     state, view: route, companion: pet(), runPython, cancelRun, onSave: saveAdventure,
+    onLearn: recordProjectPractice,
+    onAdoption: (result, friend) => {
+      saveAdventure(); chime();
+      const count = $('.nav-link[href="#companions"] .nav-count'); if (count) count.textContent = state.owned.length;
+      if (!result.equipped) celebrate({ adoption: true, companion: friend.id, name: friend.name, achievements: result.achievements }, $('#neighbour-dialog'));
+      else toast(`${friend.name} is ready to explore with you.`, 'paw');
+      notifyAchievements(result.achievements);
+    },
     onFollowDiscovery: id => { pendingDiscoveryWalk = id; navigate('village'); },
     onReward: result => {
       activity(state); const earned = unlockAchievements(state);
@@ -152,7 +189,7 @@ function render() {
     }
   });
   if (route === 'courtyard' || route === 'wardrobe') communitySession = mountCommunity({
-    state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun,
+    state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun, onLearn: recordProjectPractice,
     onSave: () => { saveAdventure(); const avatar = $('.avatar'); if (avatar) avatar.innerHTML = characterPortrait('traveler', 'player-portrait', state.wardrobe); },
     onOriginalDemo: openProjectDemo,
     onNeighbourDemo: item => navigate(`${item.place}/exhibit/${item.id}`),
@@ -172,7 +209,7 @@ function render() {
   if (unlockedClothes > knownWardrobeCount) toast('Something new is waiting in your wardrobe. A little piece of your story.', 'spark', 6000);
   knownWardrobeCount = unlockedClothes;
   if (route === 'adventures') adventureSession = mountAdventures({
-    state, runPython, cancelRun,
+    state, runPython, cancelRun, onLearn: recordProjectPractice,
     onSave: saveAdventure,
     onReward: result => {
       activity(state);
@@ -182,7 +219,7 @@ function render() {
       notifyAchievements(earned);
     }
   });
-  if (route === 'room') roomEditor = mountRoomEditor({ state, selectedSlot: roomSlot, onSave: save });
+  if (route === 'room') roomEditor = mountRoomEditor({ state, selectedSlot: roomSlot, onSave: save, onSelect: slot => { if(roomSlot===slot)return;roomSlot=slot;const shop=$('.room-shop');if(shop)shop.outerHTML=renderRoomShop(state,slot); } });
   if (route === 'companions') { const friendId = state.equipped; petPlay = mountPetPlay({ state, onComplete: action => { const result = careForPet(state, friendId, action, dateKey()); if (!result.ok) return; save(); render(); toast(result.unlocked.length ? `A new sleeping spot: ${result.unlocked.map(bed => bed.name).join(', ')}!` : result.learned.length ? `New trick learned: ${result.learned.join(', ')}! +${result.points} friendship.` : result.points ? `A happy moment together. +${result.points} friendship.` : "A happy moment together. Today's friendship for this activity is already earned.", 'paw'); } }); }
   if (route === 'practice') bindEditor($('#practice-code'), 'practice');
   if (route === 'village') villageSession = mountVillage({ state, previousPlaces, reducedMotion: state.reducedMotion, onVisit: visitVillage, onExplore: position => { const found = noticeDiscoveries(state, position); if (found.length) { save(); toast(pet().name + ' found a small clue. Open Companion discoveries to see its story.', 'paw', 6500); } return found; }, onMove: position => { state.villagePosition = position; clearTimeout(saveTimer); saveTimer = setTimeout(save, 350); } });
@@ -343,9 +380,9 @@ function renderPractice() {
 }
 
 function renderCompanions() {
-  return `<div class="page-heading"><div><p class="eyebrow">EVERY ADVENTURER NEEDS A LITTLE COMPANY</p><h1>Friends by the fire<span class="gold">.</span></h1><p>Earn coins, make progress, and give a curious creature a place to call home.</p></div><div class="balance-badge">${icon('coin')} <strong>${state.coins}</strong> coins to spend</div></div><div class="companion-banner">${icon('paw')}<span><strong>${state.owned.length} of ${pets.length} companions welcomed.</strong> Your active friend joins you around the tavern. Companions are cosmetic; every learner gets the same free hints.</span></div><a class="haven-invitation" href="#shelter">${icon('paw')} A little further along: visit Rowan’s animal haven <span>Help care for visiting animals →</span></a>${renderPetCorner(state, pet())}<div class="pet-shop-grid">${pets.map(p => {
-    const owned = state.owned.includes(p.id), equipped = state.equipped === p.id, questLocked = state.completed.length < p.required, affordable = state.coins >= p.cost;
-    return `<article class="pet-shop-card ${p.color} ${equipped ? 'equipped' : ''}"><div class="pet-shop-top"><span class="eyebrow">${p.rarity}</span>${equipped ? '<span class="active-badge">BY YOUR SIDE</span>' : owned ? icon('check') : icon('lock')}</div><div class="pet-habitat ${p.color}"><span class="pixel-star star-one">✦</span>${sprite(p.id, 'floating-pet')}<div class="pet-ground"></div></div><h2>${p.name}</h2><span class="pet-species">${p.species}</span><p>${p.description}</p><div class="pet-requirement">${icon(questLocked ? 'lock' : 'check')} ${p.required === 0 ? 'Your first friend, on the house' : `${p.required} quests completed · ${Math.min(state.completed.length, p.required)}/${p.required}`}</div><button class="button ${equipped ? 'subtle' : owned ? 'outline' : 'primary'} full" data-action="adopt" data-id="${p.id}" ${equipped || (!owned && (questLocked || !affordable)) ? 'disabled' : ''}>${equipped ? icon('check') + ' Adventuring together' : owned ? 'Bring along ' + icon('arrow') : questLocked ? icon('lock') + ` Unlock after ${p.required} quests` : affordable ? icon('coin') + ` Adopt for ${p.cost} coins` : icon('coin') + ` ${p.cost - state.coins} more coins needed`}</button>${!owned && questLocked ? `<span class="pet-price">Adoption: ${p.cost} coins</span>` : ''}</article>`;
+  return `<div class="page-heading"><div><p class="eyebrow">EVERY ADVENTURER NEEDS A LITTLE COMPANY</p><h1>Friends by the fire<span class="gold">.</span></h1><p>Earn coins, make progress, and give a curious creature a place to call home.</p></div><div class="balance-badge">${icon('coin')} <strong>${state.coins}</strong> coins to spend</div></div><div class="companion-banner">${icon('paw')}<span><strong>${state.owned.length} of ${pets.length} companions welcomed.</strong> Your active friend joins you around the tavern. Companions are cosmetic; every learner gets the same free hints.</span></div><a class="haven-invitation" href="#shelter">${icon('paw')} A little further along: visit Rowan’s companion haven <span>Help, then adopt a new companion →</span></a>${renderPetCorner(state, pet())}<div class="pet-shop-grid">${pets.map(p => {
+    const owned = state.owned.includes(p.id), equipped = state.equipped === p.id, questLocked = state.completed.length < p.required, helpLocked = p.helpProject && !state.neighbours.completed.includes(p.helpProject), affordable = state.coins >= p.cost;
+    return `<article class="pet-shop-card ${p.color} ${equipped ? 'equipped' : ''}"><div class="pet-shop-top"><span class="eyebrow">${p.rarity}</span>${equipped ? '<span class="active-badge">BY YOUR SIDE</span>' : owned ? icon('check') : icon('lock')}</div><div class="pet-habitat ${p.color}"><span class="pixel-star star-one">✦</span>${sprite(p.id, 'floating-pet')}<div class="pet-ground"></div></div><h2>${p.name}</h2><span class="pet-species">${p.species}</span><p>${p.description}</p><div class="pet-requirement">${icon(questLocked ? 'lock' : 'check')} ${p.helpProject ? (helpLocked ? 'Help '+p.name+' at the Companion Haven' : p.name+' is ready to join you') : p.required === 0 ? 'Your first friend, on the house' : `${p.required} quests completed · ${Math.min(state.completed.length, p.required)}/${p.required}`}</div><button class="button ${equipped ? 'subtle' : owned ? 'outline' : 'primary'} full" data-action="adopt" data-id="${p.id}" ${equipped || (!owned && (questLocked || helpLocked || !affordable)) ? 'disabled' : ''}>${equipped ? icon('check') + ' Adventuring together' : owned ? 'Bring along ' + icon('arrow') : helpLocked ? icon('lock') + ` Help ${p.name} first` : questLocked ? icon('lock') + ` Unlock after ${p.required} quests` : affordable ? icon('coin') + ` Adopt for ${p.cost} coins` : icon('coin') + ` ${p.cost - state.coins} more coins needed`}</button>${!owned && p.helpProject ? `<a class="haven-card-link" href="#shelter">Visit ${p.name} at the haven</a>` : ''}${!owned && (questLocked || helpLocked) ? `<span class="pet-price">Adoption: ${p.cost} coins</span>` : ''}</article>`;
   }).join('')}</div>`;
 }
 
@@ -470,7 +507,7 @@ async function importSave(event) {
     const backup = JSON.stringify(state);
     try { localStorage.setItem('hearthcode-before-import', backup); } catch { /* Export remains available when storage is restricted. */ }
     villageSession?.dispose(); villageSession = null;
-    state = imported; mapSelection = null; journeyReceipt = null; pendingTravel = null; save(); settingsDialog.close(); render(); toast('Welcome back. Your adventure has been restored.', 'check');
+    saveGuard.replace(JSON.stringify(imported));state = imported;saveWarning='';mapSelection = null; journeyReceipt = null; pendingTravel = null; settingsDialog.close(); render(); toast('Welcome back. Your adventure has been restored.', 'check');
   } catch (error) { toast('Could not import save: ' + error.message, 'help', 7000); event.target.value = ''; }
 }
 
@@ -511,7 +548,7 @@ document.addEventListener('click', event => {
     case 'settings': openSettings(); break;
     case 'close-settings': settingsDialog.close(); break;
     case 'export': exportSave(); break;
-    case 'reset-progress': villageSession?.dispose(); villageSession = null; state = freshState(); mapSelection = null; journeyReceipt = null; pendingTravel = null; clearTimeout(saveTimer); save(); settingsDialog.close(); navigate('village'); toast('A fresh page. A new adventure. Pip is waiting for you.', 'flame'); break;
+    case 'reset-progress': { const fresh=freshState();try{saveGuard.replace(JSON.stringify(fresh));}catch{toast('Your browser could not save the reset. Export a backup before trying again.','help');break;}villageSession?.dispose(); villageSession = null; state = fresh;saveWarning='';mapSelection = null; journeyReceipt = null; pendingTravel = null; clearTimeout(saveTimer); settingsDialog.close(); navigate('village'); toast('A fresh page. A new adventure. Pip is waiting for you.', 'flame'); break; }
   }
 });
 document.addEventListener('change', event => {

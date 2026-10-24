@@ -6,7 +6,17 @@
 .haven-resident{position:absolute;bottom:20%;left:24%;width:min(18cqw,30cqh);max-width:230px;padding:0;border:0;background:transparent;cursor:pointer;color:#654a33;filter:drop-shadow(2px 5px 3px #2e211b66)}
 .haven-resident.resident-1{left:43%;bottom:17%}.haven-resident.resident-2{left:63%;bottom:22%}
 .haven-animal-art{display:block;width:100%;height:auto;overflow:visible}.haven-animal-head{transform-origin:60px 95px;animation:haven-breathe 6s ease-in-out infinite}.resident-1 .haven-animal-head{animation-delay:-2s}.resident-2 .haven-animal-head{animation-delay:-4s}
-.haven-resident>span,.telescope-object>span{display:block;background:#fae9cfeF;border:1px solid #aa895a;border-radius:3px;padding:6px 8px;font:clamp(11px,1.2cqw,16px) Georgia,serif;box-shadow:0 2px 5px #32241944}
+.haven-companion-sprite{position:relative;filter:drop-shadow(0 5px 2px #30231955);animation:haven-breathe 5s ease-in-out infinite}
+.haven-companion-sprite>.pet-sprite{display:block;width:100%;height:auto;image-rendering:pixelated}
+.haven-resident{width:min(12cqw,23cqh);max-width:160px}
+.resident-1 .haven-companion-sprite{animation-delay:-1s}.resident-2 .haven-companion-sprite{animation-delay:-2s}
+.haven-adoption{margin:18px 0;padding:15px 0;border-block:1px solid #c3a77c;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.haven-adoption p{width:100%;margin:0}.haven-adoption small{width:100%;color:#71543c}
+.haven-adoption a,.haven-card-link{color:#516348;text-decoration:underline;text-underline-offset:3px}
+.haven-card-link{display:block;text-align:center;padding:10px 0;font-size:12px}
+.reduce-motion .haven-companion-sprite{animation:none}
+@media(prefers-reduced-motion:reduce){.haven-companion-sprite{animation:none}}
+.haven-resident>span:not(.haven-companion-sprite),.telescope-object>span{display:block;background:#fae9cfeF;border:1px solid #aa895a;border-radius:3px;padding:6px 8px;font:clamp(11px,1.2cqw,16px) Georgia,serif;box-shadow:0 2px 5px #32241944}
 .haven-resident:hover,.haven-resident:focus-visible{filter:drop-shadow(0 0 9px #ffd894)}
 .haven-host{position:absolute;left:7%;bottom:13%;filter:drop-shadow(4px 5px 3px #251f2166);pointer-events:none}.haven-host>.hearth-character{--character-height:32cqh}.haven-host .court-pet{left:85%;bottom:0}
 .observatory-scene .haven-host{left:29%;bottom:15%}.telescope-object{position:absolute;left:52%;bottom:14%;width:42cqh;max-width:30cqw;border:0;background:none;cursor:pointer;color:#63482e;padding:0;filter:drop-shadow(5px 8px 4px #241b2244)}

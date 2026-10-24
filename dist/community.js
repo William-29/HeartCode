@@ -84,7 +84,7 @@ function openingMarkup(state,id){
   return `${dialogTop('A DOOR OPENS · A STORY CONTINUES')}<div class="opening-scene">${courtyardArt(state, 'opening')}</div><div class="opening-cast">${characterPortrait(b.neighbour,'community-portrait')}${characterPortrait('traveler','community-portrait',state.wardrobe)}</div><h2>Welcome back to ${b.name}.</h2><blockquote class="neighbour-memory">${b.memories[3]}</blockquote><div class="opening-keepsake"><span>${wardrobeSwatch(gift.slot,gift.id)}</span><div><h3>${gift.name}</h3><p>${gift.description}</p><a class="button outline" href="#wardrobe">Try it on in your wardrobe</a></div></div><div class="community-actions">${control('building','See the place at work',id,false,'primary')}${control('close','Stay a while in the square')}</div>`;
 }
 
-export function mountCommunity({state,view='court',companion,onSave,onReward,onOriginalDemo,onNeighbourDemo=()=>{},runPython,cancelRun,root=document.querySelector('.community-root'),dialog=document.querySelector('#community-dialog')}){
+export function mountCommunity({state,view='court',companion,onSave,onReward,onLearn=()=>{},onOriginalDemo,onNeighbourDemo=()=>{},runPython,cancelRun,root=document.querySelector('.community-root'),dialog=document.querySelector('#community-dialog')}){
   let alive=true,token=0,busy=false,activeProject=null,activeDemo=null,lastDoor=null;
   function status(text){const el=dialog.open?dialog.querySelector('#community-message'):root.querySelector('.community-status');if(el)el.textContent=text;}
   function repaint(){
@@ -158,6 +158,7 @@ export function mountCommunity({state,view='court',companion,onSave,onReward,onO
       state.restoration.drafts[item.id]=code;save();
       execute(code,item.checks,result=>{
         const reward=completeRestoration(state,item.id,code);if(!reward.ok)throw new Error('This repair is not available yet.');
+        onLearn(reward);
         remember(state,item.building,Math.min(item.stage,2));save();repaint();
         output(`${result.output||''}\n${reward.replay?'Your revised tool passed. Rewards were already earned.':`A promise kept. +${reward.xp} XP · +${reward.coins} coins`}\n\n${item.outcome}\n\nUse “Back to the story” to see what changed.`);
         if(!reward.replay)onReward(reward);

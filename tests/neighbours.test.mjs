@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { freshState, normalizeState } from '../dist/state.js';
+import { freshState, normalizeState, adoptPet } from '../dist/state.js';
+import { havenCompanions } from '../dist/haven-companions.js';
+import { careForPet } from '../dist/cozy-model.js';
+import { renderRoom } from '../dist/village-life.js';
+import { renderVillage } from '../dist/village.js';
 import { quests, pets } from '../dist/content.js';
 import { restorationProjects } from '../dist/restoration-content.js';
 import { completeRestoration, openBuilding } from '../dist/restoration-model.js';
@@ -159,7 +163,7 @@ test('world scenes retain the existing art and character style, accessible entra
 
 function harness(state=restored(),view='apprentices'){
   const previousDocument=globalThis.document,decode=s=>s.replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#39;',"'").replaceAll('&amp;','&');
-  let pending,rewards=[],saves=0,cancels=0,followed=[];
+  let pending,rewards=[],saves=0,cancels=0,followed=[],learned=0,adoptions=[];
   class Element extends EventTarget{
     constructor(dataset={}){super();this.dataset=dataset;this.open=false;this.value='';this.textContent='';this.fields=new Map();this.buttons=[];this.classList={add(){}};}
     set innerHTML(value){
@@ -182,9 +186,9 @@ function harness(state=restored(),view='apprentices'){
   }
   const root=new Element(),dialog=new Element();root.innerHTML=renderNeighbours(state,view);
   globalThis.document={activeElement:null,querySelector:s=>s==='.neighbours-root'?root:dialog};
-  const session=mountNeighbours({state,view,companion:{id:'pip',name:'Pip'},root,dialog,onFollowDiscovery(id){followed.push(id);},onSave(){saves++;},onReward(r){rewards.push(r);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
+  const session=mountNeighbours({state,view,companion:{id:'pip',name:'Pip'},root,dialog,onLearn(){learned++;},onAdoption(result,pet){adoptions.push({result,pet});},onFollowDiscovery(id){followed.push(id);},onSave(){saves++;},onReward(r){rewards.push(r);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(where,action,id,extra={})=>{const el=new Element({neighbour:action,id,...extra});where.buttons.push(el);const event=new Event('click');Object.defineProperty(event,'target',{value:el});where.dispatchEvent(event);};
-  return {state,root,dialog,session,followed,click:(...args)=>click(root,...args),work:(...args)=>click(dialog,...args),pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
+  return {state,root,dialog,session,followed,adoptions,learned:()=>learned,click:(...args)=>click(root,...args),work:(...args)=>click(dialog,...args),pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
     change(where,id,value){const field=where.querySelector('#'+id);field.value=value;const event=new Event('change');Object.defineProperty(event,'target',{value:field});where.dispatchEvent(event);},
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=previousDocument;}};
@@ -201,7 +205,7 @@ test('teaching UI guides explanation, example and real Python, then grows confid
     ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
     assert.equal(ui.rewards().length,1);assert.equal(confidence(ui.state,'nell'),1);
     assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Made together/);
-    ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);assert.equal(ui.rewards().length,1);
+    ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);assert.equal(ui.rewards().length,1);assert.equal(ui.learned(),2);
     ui.work('meet','nell');assert.match(ui.dialog.innerHTML,/I tried another name/);
   }finally{ui.dispose();}
 });
@@ -363,6 +367,73 @@ function finishHaven(s){
   for(const p of observatoryProjects.slice(1))assert.equal(completeNeighbour(s,p.id,p.solution).ok,true);
   return s;
 }
+
+test('Haven companions require their care project, cost coins exactly once, and join normal pet activities',()=>{
+  const s=progressed();s.coins=9999;
+  for(const pet of havenCompanions){
+    assert.equal(adoptPet(s,pet.id).ok,false);assert.equal(s.coins,9999);
+    assert.ok(pets.some(p=>p===pet));
+  }
+  finishHaven(s);
+  for(const pet of havenCompanions){
+    s.coins=pet.cost-1;assert.equal(adoptPet(s,pet.id).ok,false);
+    s.coins=pet.cost;const adoption=adoptPet(s,pet.id);assert.equal(adoption.ok,true);
+    assert.equal(s.coins,adoption.achievements.reduce((sum,a)=>sum+a.coins,0));assert.equal(s.equipped,pet.id);
+    const after=s.coins;assert.equal(adoptPet(s,pet.id).ok,true);assert.equal(s.coins,after);
+    assert.equal(careForPet(s,pet.id,'pet','2026-10-24').ok,true);
+    assert.match(renderRoom(s,pet),/pet-sprite/);assert.match(renderVillage(s,pet),/pet-sprite/);
+    assert.deepEqual(normalizeState(JSON.parse(JSON.stringify(s))),s);
+  }
+  const forged=freshState();forged.owned.push('moss','clover');forged.equipped='clover';
+  const clean=normalizeState(forged);assert.deepEqual(clean.owned,['pip']);assert.equal(clean.equipped,'pip');
+});
+
+test('Haven controller guides help, adoption, free re-equipping and focus back to the visited companion',async()=>{
+  const ui=harness(freshState(),'shelter'),p=shelterProjects[0];
+  try{
+    const opener=ui.root.buttons.find(b=>b.dataset.neighbour==='animal'&&b.dataset.id==='moss');opener.focus();
+    ui.click('animal','moss');assert.match(ui.dialog.innerHTML,/Mosslight sprite/);assert.match(ui.dialog.innerHTML,/Help Moss/);
+    ui.work('adopt-companion','moss');assert.deepEqual(ui.state.owned,['pip']);assert.equal(ui.adoptions.length,0);
+    ui.work('project',p.id);ui.dialog.querySelector('#neighbour-code').value=p.solution;
+    ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+    assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Visit Moss/);
+    ui.work('animal','moss');assert.match(ui.dialog.innerHTML,/30 more coins needed/);
+    ui.work('adopt-companion','moss');assert.deepEqual(ui.state.owned,['pip']);
+    ui.state.coins=90;ui.work('animal','moss');assert.match(ui.dialog.innerHTML,/Adopt Moss for 90 coins/);
+    const before=ui.state.coins;ui.work('adopt-companion','moss');
+    assert.equal(ui.adoptions.length,1);assert.equal(ui.state.coins,before-90+ui.adoptions[0].result.achievements.reduce((sum,a)=>sum+a.coins,0));assert.equal(ui.state.equipped,'moss');
+    assert.match(ui.root.innerHTML,/Moss · your friend/);assert.match(ui.dialog.innerHTML,/home with you/);
+    const adoptedCoins=ui.state.coins;ui.work('adopt-companion','moss');assert.equal(ui.state.coins,adoptedCoins);
+    ui.work('close');assert.equal(globalThis.document.activeElement.dataset.neighbour,'animal');assert.equal(globalThis.document.activeElement.dataset.id,'moss');
+    assert.equal(ui.learned(),1);
+  }finally{ui.dispose();}
+});
+
+test('empty neighbour drafts survive reload and reopening without restoring the starter',()=>{
+  const s=freshState();s.neighbours.drafts['shelter-pantry']='';
+  const loaded=normalizeState(JSON.parse(JSON.stringify(s)));assert.equal(loaded.neighbours.drafts['shelter-pantry'],'');
+  const ui=harness(loaded,'shelter');
+  try{ui.click('project','shelter-pantry');assert.equal(ui.dialog.querySelector('#neighbour-code').value,'');}finally{ui.dispose();}
+});
+
+test('all neighbour project dialogs and place journals have balanced markup and valid artwork',()=>{
+  const s=restored();observations(s,30);s.neighbours.found=discoveries.map(d=>d.id);
+  for(const p of teachingProjects)teach(s,p);
+  for(const p of clockProjects){prepareClock(s,p);completeNeighbour(s,p.id,p.solution);}
+  for(const p of [...sharedProjects,...lakeProjects,...discoveryProjects])completeNeighbour(s,p.id,p.solution);
+  finishHaven(s);
+  const pages={},views={teaching:'apprentices',shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries',shelter:'shelter',observatory:'observatory'};
+  for(const p of neighbourProjects){
+    const ui=harness(s,views[p.kind]);
+    try{
+      ui.click('project',p.id);pages[p.id]=ui.dialog.innerHTML;
+      assert.ok(ui.dialog.querySelector('#neighbour-code'),p.id);
+    }finally{ui.dispose();}
+  }
+  for(const view of ['shelter','observatory'])pages[view+'-book']=havenBook(s,view);
+  const result=spawnSync('python',['tests/validate_markup.py'],{input:JSON.stringify(pages),encoding:'utf8',env:{...process.env,PYTHONUTF8:'1'}});
+  assert.equal(result.status,0,result.stderr);assert.deepEqual(JSON.parse(result.stdout).failures,{});
+});
 test('haven stories begin immediately, then require lessons, earlier tools and observations; rewards only happen once',()=>{
   const s=freshState();
   assert.deepEqual([...shelterProjects,...observatoryProjects].filter(p=>neighbourUnlocked(s,p)).map(p=>p.id),['shelter-pantry','sky-focus']);

@@ -1,12 +1,12 @@
-# The animal haven and Elio's observatory
+# The companion haven and Elio's observatory
 
-Two optional places extend Hearthwick without adding overlapping village signs or more main navigation buttons. Find both in the village's Nearby menu. The haven also opens from Companions; the observatory opens from Willowmere Lake. Their projects appear in the existing exhibition and use the same Python runner, drafts, hints, cancellation, and first-completion celebrations.
+Two optional places extend Hearthwick without adding overlapping village signs or more main navigation buttons. Find both through the village picture entrances or the flat Places directory. The haven also opens from Companions; the observatory opens from Willowmere Lake. Their projects appear in the existing exhibition and use the same Python runner, drafts, hints, cancellation, and first-completion celebrations.
 
-## The animal haven
+## The companion haven
 
 Rowan's spare blanket became a shared refuge in the old potting cottage. Moss, Bramble, and Clover have distinct needs and stories. Three projects unlock at 0, 8, and 18 campaign quests: aggregate a pantry dictionary, build a deduplicated care schedule, and filter/rank suitable homes. Each requires the preceding project. The final project also requires a correct explanation that essential needs outrank preferences.
 
-Saved Python runs against the actual fictional animal/home records. Recommendations offer a review with Rowan, then an explicit button to arrange a first meeting. The game independently checks the basic requirements before accepting that meeting. Suggestions never automatically adopt animals or change the player's owned companions. Introductions save and appear in each animal's story; they grant no repeat rewards. Care categories and portions are game examples, not real animal-care guidance.
+Saved Python runs against the actual fictional animal/home records. Recommendations offer a review with Rowan, then an explicit button to arrange a first meeting. The game independently checks the basic requirements before accepting that meeting. Suggestions never automatically adopt companions. Each completed care project separately unlocks its woodland friend for coin adoption: Moss (90), Bramble (240), and Clover (420). Adopted friends join the normal companion collection. Completed care projects from older saves retain this eligibility. Introductions save and appear in each animal's story; they grant no repeat rewards. Care categories and portions are game examples, not real animal-care guidance.
 
 ## The observatory
 
@@ -22,4 +22,6 @@ Version-1 saves receive empty haven fields. Imports validate and bound observati
 
 ## Artwork
 
-Generated with the built-in image-generation tool and saved in `dist/assets/animal-haven.png` and `dist/assets/willowmere-observatory.png`. Both use detailed painterly pixel-art backgrounds with honey timber, sage paint, amber lamps, period furnishings, and clear floor space. The haven is a converted cottage with woven beds, blankets and a village-facing door; the observatory has a copper dome, warm study corner and a lantern-lit lake view. Animal and brass telescope overlays are native SVG, matching the existing illustrated mechanism approach. Reduced motion disables ambient movement.
+Generated with the built-in image-generation tool and saved in `dist/assets/companion-haven.png` and `dist/assets/willowmere-observatory.png`. Both use detailed painterly pixel-art backgrounds with honey timber, sage paint, amber lamps, period furnishings, and clear floor space. The haven is a converted cottage with woven beds, blankets and a village-facing door; the observatory has a copper dome, warm study corner and a lantern-lit lake view. Haven companions now use the same pixel SVG sprites as the main collection; the brass telescope remains a native SVG mechanism. The revised cottage replaces pet portraits and leads with fantasy botanical pictures, scarves, and lavender. Reduced motion disables ambient movement.
+
+The original 163-test report above describes the first release. Current audit details and the replacement artwork prompt are in [companion-haven-audit.md](companion-haven-audit.md).

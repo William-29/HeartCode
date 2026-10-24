@@ -18,6 +18,9 @@ for quest in quests:
 
 by_id = {quest['id']: quest for quest in quests}
 wrong = [
+    ('inventory-list', 'ingredients = ["mint", "water", "lemon"]\ningredients.append("honey")\nprint(4)'),
+    ('inventory-list', 'ingredients = ["mint", "water", "lemon", "honey"]\nprint(len(ingredients))'),
+    ('clean-the-pantry', 'readings = [12, None, 0, 18, None, 24]\nclean = [12, 0, 18, 24]\nprint(clean)'),
     ('door-keeper', 'level = 2\nprint("Train")'),
     ('repeat-the-spell', 'print("1\\n2\\n3\\n4\\n5")'),
     ('clean-the-pantry', 'readings = [12, None, 0, 18, None, 24]\nclean = [x for x in readings if x]\nprint(clean)'),
@@ -83,4 +86,13 @@ failure = json.loads(runtime.run_source('print(1 / 0)'))
 assert not failure['passed'] and 'ZeroDivisionError' in failure['error']
 limited = json.loads(runtime.run_source('print("x" * 20000)'))
 assert limited['passed'] and len(limited['output']) == 12000
+profit_quest = next(q for q in quests if 'bowls * price - cost' in q['solution'])
+hardcoded_profit = json.loads(runtime.run_source('bowls = 6\nprice = 8\ncost = 10\nprofit = 38\nprint(profit)', profit_quest['checks']))
+assert not hardcoded_profit['passed']
+for prefix in ('HEARTH_RESULT:', 'EXHIBIT_RESULT:', 'NEIGHBOUR_RESULT:'):
+    verbose = json.loads(runtime.run_source('print("debug" * 10000)\nprint(' + repr(prefix + '{"value": 7}') + ')'))
+    assert verbose['passed'] and len(verbose['output']) < 2000
+    assert json.loads(verbose['output'].split(prefix)[-1]) == {'value': 7}
+    broken = json.loads(runtime.run_source('print("debug" * 10000)\nprint(' + repr(prefix + 'incomplete') + ')'))
+    assert broken['passed'] and len(broken['output']) == 12000
 print(f'All Python curriculum checks passed ({len(quests)} solutions, {len(quests)} empty submissions, {len(wrong)} misconception cases, and runtime errors).')

@@ -1,5 +1,7 @@
 import { routeFromHash, parentPlace, placeNavigation } from '../dist/navigation.js';
+import { createSaveGuard } from '../dist/save-guard.js';
 import { renderVillage as villageMarkup } from '../dist/village.js';
+import { renderWorld } from '../dist/world.js';
 import { ambienceSettings, renderPetCorner } from '../dist/cozy-ui.js';
 import { renderAdventures } from '../dist/adventures.js';
 import { renderCourtyard, renderWardrobe } from '../dist/community.js';
@@ -17,7 +19,7 @@ import * as stateApi from '../dist/state.js';
 import { projects, villagers, projectUnlocked } from '../dist/projects.js';
 import { renderVillager, renderProjectDemo, demoSource, projectRequirement } from '../dist/village-stories.js';
 import { characterPortrait } from '../dist/characters.js';
-import { renderRoom, renderFestival, renderCafe } from '../dist/village-life.js';
+import { renderRoom, renderRoomShop, renderFestival, renderCafe } from '../dist/village-life.js';
 import { furnishRoom, removeFurnishing, celebrateFestival, periods } from '../dist/village-life-model.js';
 
 const byId = id => projects.find(project => project.id === `project-${id}`);
@@ -139,8 +141,8 @@ test('quotes, backslashes and Python-looking text stay inert when demo values en
 
 // The adapter exercises the actual app functions and queued native-dialog close
 // ordering. It deliberately makes no assertions about browser layout or pixels.
-function appHarness() {
-  const closeEvents = [], nodes = new Map(), selectors = new Map(), stored = new Map(), pendingRuns = [], mounted = [], petSessions = [];
+function appHarness(stored = new Map()) {
+  const closeEvents = [], nodes = new Map(), selectors = new Map(), pendingRuns = [], mounted = [], petSessions = [], roomSessions = [];
   const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   class Element extends EventTarget {
     constructor(id = '') { super(); this.id = id; this.open = false; this.isConnected = true; this.children = []; this.nodes = new Map(); this.html = ''; this.textContent = ''; this.value = ''; this.disabled = false; this.hidden = false; this.style = {}; this.classes = new Set(); this.classList = { add: (...items) => items.forEach(item => this.classes.add(item)), remove: (...items) => items.forEach(item => this.classes.delete(item)), toggle: (item, value) => value ? this.classes.add(item) : this.classes.delete(item) }; }
@@ -161,6 +163,7 @@ function appHarness() {
     close() { if (this.open) { this.open = false; closeEvents.push(() => this.dispatchEvent(new Event('close'))); } }
     focus() {}
     append(child) { this.children.push(child); child.parent = this; }
+    prepend(child) { this.children.unshift(child); child.parent = this; }
     remove() { this.isConnected = false; }
     setAttribute() {}
     scrollIntoView() {}
@@ -180,21 +183,21 @@ function appHarness() {
     return new Promise(resolve => { currentRun = { code, checks, resolve }; pendingRuns.push(currentRun); });
   };
   const scope = {
-    routeFromHash, parentPlace, placeNavigation, ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
-    renderRoom, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
+    routeFromHash, parentPlace, placeNavigation, createSaveGuard, ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
+    renderRoom, renderRoomShop, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
     ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience, renderAdventures,
     mountAdventures: () => ({ dispose() {} }),
     renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: options => ({ dispose() {}, openExhibition() { nodes.get('community-dialog').innerHTML = 'The makers exhibition'; nodes.get('community-dialog').showModal(); }, options }),
     renderNeighbours, noticeDiscoveries, mountNeighbours: () => ({ dispose() {}, openDemo() {} }),
-    mountRoomEditor: () => ({ dispose() {} }), mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
+    mountRoomEditor: options => { roomSessions.push(options); return { dispose() {} }; }, mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
     localStorage: { getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value) },
     setTimeout: () => 1, clearTimeout() {}, matchMedia: () => ({ matches: false }),
     icon: () => '<svg></svg>', sprite: () => '<svg></svg>', bunting: () => '', teaCup: () => '', garden: () => '', rewardChest: () => '',
     showCelebration: (value, options) => ({ parent: options.parent, dispose() {} }),
-    renderVillage: () => '<div class="village-viewport">The village</div>', mountVillage: options => { mounted.push(options); return { pause() {}, dispose() {} }; },
-    renderWorld: () => 'The quest trail', mountWorld: () => ({ dispose() {} }), travelForCompletion: () => null,
+    renderVillage: villageMarkup, mountVillage: options => { mounted.push(options); return { pause() {}, dispose() {} }; },
+    renderWorld, mountWorld: () => ({ dispose() {} }), travelForCompletion: () => null,
     runPython, cancelRun, FormData: class { constructor(form) { this.entries = Object.entries(form.values || {}); } [Symbol.iterator]() { return this.entries[Symbol.iterator](); } }
   };
   const context = vm.createContext(scope);
@@ -207,7 +210,7 @@ function appHarness() {
     flushClose: () => { while (closeEvents.length) closeEvents.shift()(); },
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
-    pendingRuns, stored, petSessions,
+    pendingRuns, stored, petSessions, roomSessions,
     click: (action, id, extra = {}) => {
       const button = { dataset: { action, id, ...extra }, disabled: false };
       const event = new Event('click');
@@ -216,6 +219,72 @@ function appHarness() {
     }
   };
 }
+
+test('two app tabs never roll back newer rewards and clean tabs follow storage updates', () => {
+  const shared = new Map(), first = appHarness(shared), second = appHarness(shared);
+  first.evaluate('completeQuest(state, quests[0].id); save();');
+  const newer = shared.get(stateApi.SAVE_KEY);
+  second.evaluate('window').dispatchEvent(new Event('pagehide'));
+  assert.equal(shared.get(stateApi.SAVE_KEY), newer);
+  assert.equal(second.evaluate('saveGuard.conflicted'), true);
+  const clean = appHarness(shared);
+  first.evaluate('completeQuest(state, quests[1].id); save();');
+  const event = new Event('storage'); Object.defineProperty(event, 'key', { value: stateApi.SAVE_KEY });
+  clean.evaluate('window').dispatchEvent(event);
+  assert.equal(clean.state().completed.length, 2);
+  assert.equal(clean.evaluate('saveGuard.conflicted'), false);
+  clean.evaluate('state.drafts.practice = "my unfinished work"');
+  first.evaluate('completeQuest(state, quests[2].id); save();');
+  clean.evaluate('window').dispatchEvent(event);
+  assert.equal(clean.state().drafts.practice, 'my unfinished work');
+  assert.equal(clean.evaluate('saveGuard.conflicted'), true);
+  clean.call('save');
+  assert.equal(JSON.parse(shared.get(stateApi.SAVE_KEY)).completed.length, 3);
+});
+
+test('every route and all 84 lesson screens render balanced markup with existing artwork', () => {
+  const app=appHarness(), pages={};
+  for(const stage of ['fresh','advanced']){
+    if(stage==='advanced')app.evaluate('for(const q of quests) completeQuest(state,q.id);');
+    for(const route of app.evaluate('Object.keys(routes)')){
+      app.evaluate(`route=${JSON.stringify(route)}; render();`);
+      pages[`${stage}/${route}`]=app.node('app').innerHTML;
+      assert.match(pages[`${stage}/${route}`],/Travel directly to any place/);
+    }
+  }
+  for(const quest of content.quests){
+    app.call('openQuest',quest.id);pages[`quest/${quest.id}`]=app.node('quest-dialog').innerHTML;
+    assert.ok(pages[`quest/${quest.id}`].includes(escape(quest.title)),quest.id);
+    app.call('closeQuest');app.flushClose();
+  }
+  app.call('openSettings');pages.settings=app.node('settings-dialog').innerHTML;
+  app.call('openCafe');pages.cafe=app.node('village-dialog').innerHTML;
+  for(const villager of villagers){app.call('openVillager',villager.id);pages[`story/${villager.id}`]=app.node('village-dialog').innerHTML;}
+  for(const project of projects){app.call('openProject',project.id);pages[`project/${project.id}`]=app.node('quest-dialog').innerHTML;}
+  const result=spawnSync('python',['tests/validate_markup.py'],{input:JSON.stringify(pages),encoding:'utf8',env:{...process.env,PYTHONUTF8:'1'},maxBuffer:8*1024*1024});
+  assert.equal(result.status,0,result.stderr);
+  const report=JSON.parse(result.stdout);assert.deepEqual(report.failures,{});assert.equal(report.pages,131);
+});
+
+test('project practice on a later day updates the streak and grants its milestone once',()=>{
+  const app=appHarness(),s=app.state();
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  s.lastActivity=stateApi.dateKey(yesterday);s.streak=2;
+  app.call('recordProjectPractice',{replay:true});
+  assert.equal(s.streak,3);assert.ok(s.achievements.includes('streak'));
+  const coins=s.coins;app.call('recordProjectPractice',{replay:true});assert.equal(s.coins,coins);
+});
+
+test('selecting furniture updates its shopping and clearing controls without remounting the room',()=>{
+  const app=appHarness();app.evaluate("route='room';render()");
+  const editor=app.roomSessions.at(-1),before=app.roomSessions.length;
+  editor.onSelect('lamp');assert.equal(app.evaluate('roomSlot'),'lamp');
+  const shop=app.selector('.room-shop').outerHTML;
+  assert.match(shop,/data-action="room-remove" data-id="lamp"/);
+  assert.doesNotMatch(shop,/data-action="room-remove" data-id="chair"/);
+  assert.match(shop,/data-action="room-slot" data-id="lamp" aria-pressed="true"/);
+  assert.equal(app.roomSessions.length,before);
+});
 
 test('side activity saves update the level label without replacing the player portrait', () => {
   const app=appHarness(),portrait=app.selector('.player-card span');

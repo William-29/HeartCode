@@ -111,7 +111,7 @@ export function normalizeNeighbours(value,state){
     if(p.order&&Array.isArray(v.orders?.[p.id])&&v.orders[p.id].length===p.order.length&&new Set(v.orders[p.id]).size===p.order.length&&v.orders[p.id].every(name=>p.order.includes(name)))n.orders[p.id]=v.orders[p.id].slice();
     if(p.kind==='teaching')for(const k of ['explained','examples'])if(Array.isArray(v[k])&&v[k].includes(p.id))n[k].push(p.id);
     const code=copyCode(v.code,p.id),draft=copyCode(v.drafts,p.id);
-    if(draft)n.drafts[p.id]=draft;
+    if(typeof v.drafts?.[p.id]==='string')n.drafts[p.id]=draft;
     if(Array.isArray(v.completed)&&v.completed.includes(p.id)&&code.trim()&&(!p.inspection||n.inspected.includes(p.id))&&mechanismReady(s,p)&&(p.kind!=='teaching'||n.explained.includes(p.id)&&n.examples.includes(p.id))){
       n.completed.push(p.id);n.code[p.id]=code;
     }

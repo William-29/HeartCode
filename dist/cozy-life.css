@@ -100,7 +100,7 @@
   .room-edit-row>.text-button{margin-left:0}
 }
 @media(max-height:650px){
-  .room-decor[open] .room-slot-heading{display:none}
+  .room-decor[open] .room-slot-heading h3{display:none}
   .room-edit-controls>p{display:none}
   .room-position-status{font-size:8px;margin-top:2px}
 }

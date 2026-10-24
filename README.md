@@ -209,14 +209,21 @@ In **Your room > Decorate your room**, drag the selected chair, lamp, plant, rug
 The additions preserve version-1 saves. New validation covers legacy migration, malformed imports, rotated furniture bounds, drag/save/cancel behavior, drawer state, friendship reward deduplication, trick/bed unlocks, independent audio channels, gesture activation, and audio/timer cleanup. No connected browser was available for visual or audio playback QA; DOM adapters and local HTTP checks complement the 86 automated tests.
 
 
-## The animal haven and Elio’s observatory
+## The companion haven and Elio’s observatory
 
-Visit the animal haven from Companions and the observatory from Willowmere Lake (both are also in Nearby). Seven new Python projects grow from beginner dictionaries and telescope alignment to scheduling, recommendation constraints, noisy measurements and held-out prediction tests. Arrange animal introductions after a personal review, restore the telescope, record fictional skies, and run your saved tools again in the village exhibition. Warm illustrated locations, persistent progress and one-time XP/coin rewards use the existing game systems. See [the feature and verification notes](docs/haven-observatory.md). The current suite has 163 passing tests; browser visual QA was unavailable.
+Visit the companion haven from Companions and the observatory from Willowmere Lake (both are also in Nearby). Seven new Python projects grow from beginner dictionaries and telescope alignment to scheduling, recommendation constraints, noisy measurements and held-out prediction tests. Arrange animal introductions after a personal review, restore the telescope, record fictional skies, and run your saved tools again in the village exhibition. Warm illustrated locations, persistent progress and one-time XP/coin rewards use the existing game systems. See [the feature and verification notes](docs/haven-observatory.md). The current suite has 163 passing tests; browser visual QA was unavailable.
 
 
 ## Direct village navigation
 
-Six illustrated entrances below the village open the observatory, animal haven, clockmaker, lake, restoration square and High Street directly. The Places menu is the same flat directory everywhere, including the exhibition and all learning activities. Elio, Rowan and Mira each offer a picture shortcut at the top of their conversation. Village marker labels appear on hover, keyboard focus or proximity; direct neighbour buttons remain available without walking. No saved progress changes. Navigation, conversation routing and the existing movement flows are covered by 165 passing tests. Browser layout verification was unavailable in this session.
+Six illustrated entrances below the village open the observatory, companion haven, clockmaker, lake, restoration square and High Street directly. The Places menu is the same flat directory everywhere, including the exhibition and all learning activities. Elio, Rowan and Mira each offer a picture shortcut at the top of their conversation. Village marker labels appear on hover, keyboard focus or proximity; direct neighbour buttons remain available without walking. No saved progress changes. Navigation, conversation routing and the existing movement flows are covered by 165 passing tests. Browser layout verification was unavailable in this session.
 =======
 # HeartCode
 >>>>>>> origin/main
+
+
+## Companion Haven and full-game audit (24 October 2026)
+
+The Haven now welcomes three fantasy companions in the existing pixel-pet style: Moss the mosslight sprite, Bramble the autumn hedgehog, and Clover the moonbeam moth. Complete their care projects to unlock adoption for 90, 240, and 420 coins. Adopted friends use the normal companion, friendship, room, exploration, and save systems. Their cottage has matching botanical pictures, wool scarves, lanterns, and woodland details. Previous care-project progress is retained.
+
+This update also protects newer saves from stale tabs, preserves empty drafts, synchronizes furniture selection with the room controls, keeps clearing available on short screens, improves parent-place navigation contrast, restores dialog focus, counts project revisions as learning, preserves saved-tool results after verbose logging, and strengthens three beginner lesson checks. See [the audit and verification record](docs/companion-haven-audit.md) for exact scope and browser limitations.

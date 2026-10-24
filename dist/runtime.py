@@ -8,13 +8,27 @@ import traceback
 class LimitedOutput(io.TextIOBase):
     def __init__(self):
         self.value = ''
+        self.tail = ''
+        self.total = 0
 
     def write(self, text):
         remaining = max(0, 12000 - len(self.value))
         self.value += text[:remaining]
+        self.tail = (self.tail + text)[-128000:]
+        self.total += len(text)
         return len(text)
 
     def getvalue(self):
+        # Saved-tool demos append one structured result after executing user code.
+        # Keep that final complete record even when debug logging fills the console.
+        if self.total > 12000:
+            for line in reversed(self.tail.splitlines()):
+                if line.startswith(('HEARTH_RESULT:', 'EXHIBIT_RESULT:', 'NEIGHBOUR_RESULT:')):
+                    try:
+                        json.loads(line.split(':', 1)[1])
+                    except (ValueError, TypeError):
+                        continue
+                    return self.value[:1000] + '\n[Debug output shortened; your tool result is preserved.]\n' + line
         return self.value
 
 

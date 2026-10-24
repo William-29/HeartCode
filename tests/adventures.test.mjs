@@ -131,7 +131,7 @@ test('garden fits actual training observations, evaluates held-out beds and uses
 });
 
 function uiHarness(state=freshState()){
-  let pending, rewards=0,saves=0,cancels=0;
+  let pending, rewards=0,saves=0,cancels=0,learned=0;
   const originalDocument=globalThis.document;
   const nodes=new Map();
   class Element extends EventTarget {
@@ -161,14 +161,14 @@ function uiHarness(state=freshState()){
   }
   const root=new Element(),dialog=new Element();root.innerHTML=renderAdventures(state);
   globalThis.document={activeElement:null,querySelector:selector=>selector==='.adventure-hub'?root:dialog};
-  const session=mountAdventures({state,root,dialog,onSave(){saves++;},onReward(){rewards++;},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
+  const session=mountAdventures({state,root,dialog,onLearn(){learned++;},onSave(){saves++;},onReward(){rewards++;},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(target,key,value,id,index)=>{
     const el=new Element({[key]:value,...(id===undefined?{}:{id}),...(index===undefined?{}:{index:String(index)})});
     if(target===root)root.buttons.push(el);
     const event=new Event('click');Object.defineProperty(event,'target',{value:el});target.dispatchEvent(event);
   };
   return {state,root,dialog,click:(action,id,index)=>click(root,'adventure',action,id,index),work:action=>click(dialog,'work',action),
-    pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
+    pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,learned:()=>learned,
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=originalDocument;},session};
 }
@@ -186,7 +186,7 @@ test('activity UI guides clue investigation, persists checked repairs, and only 
     assert.equal(ui.rewards(),1);assert.ok(ui.state.adventure.completed.includes('delivery'));
     assert.match(ui.dialog.querySelector('#adventure-output').textContent,/Three tea parcels/);
     const coins=ui.state.coins;
-    ui.work('run');await ui.finish({passed:true,output:''});assert.equal(ui.rewards(),1);assert.equal(ui.state.coins,coins);
+    ui.work('run');await ui.finish({passed:true,output:''});assert.equal(ui.rewards(),1);assert.equal(ui.state.coins,coins);assert.equal(ui.learned(),2);
     ui.work('close');assert.equal(ui.dialog.open,false);
   }finally{ui.dispose();}
 });

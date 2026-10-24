@@ -77,7 +77,7 @@ function challengeMarkup(state,item) {
 }
 const buttonWork=(action,label,disabled=false)=>`<button class="button ${action==='run'?'primary':'outline'}" data-work="${action}" ${disabled?'disabled':''}>${label}</button>`;
 
-export function mountAdventures({state,onSave,onReward,runPython,cancelRun,root=document.querySelector('.adventure-hub'),dialog=document.querySelector('#adventure-dialog')}) {
+export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,cancelRun,root=document.querySelector('.adventure-hub'),dialog=document.querySelector('#adventure-dialog')}) {
   let alive=true, serial=0, current=null, busy=false;
   const save=()=>onSave();
   const message=text=>{const el=root.querySelector('#adventure-message');if(el)el.textContent=text;};
@@ -164,6 +164,7 @@ export function mountAdventures({state,onSave,onReward,runPython,cancelRun,root=
       state.adventure.drafts[item.id]=code;save();
       execute(code,item.checks,result=>{
         const reward=finishAdventure(state,item.id,code);if(!reward.ok)throw new Error('This activity is not available yet.');
+        onLearn(reward);
         save();redraw();output(`${result.output||''}\n${reward.replay?'Your revised code passed. Rewards were already collected.':`Well done! +${reward.xp} XP · +${reward.coins} coins`}\n\n${item.ending}`);
         if(!reward.replay)onReward(reward,item);
       });return;
