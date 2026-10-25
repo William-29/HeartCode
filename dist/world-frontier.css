@@ -7,5 +7,7 @@
 .world-controls button{min-height:40px;min-width:40px;touch-action:manipulation}
 .world-controls button:focus-visible{outline:2px solid #fff0be;outline-offset:-2px}
 .world-art-frontier{left:4800px;width:3200px}
+.world-art-fellowship{left:8000px;width:3200px}
+.world-art-coast-pass{left:7680px;width:640px;-webkit-mask-image:linear-gradient(to right,transparent,#0003 7%,#000a 17%,#000 27%,#000 73%,#000a 83%,#0003 93%,transparent);mask-image:linear-gradient(to right,transparent,#0003 7%,#000a 17%,#000 27%,#000 73%,#000a 83%,#0003 93%,transparent)}
 .world-art-academy-pass{left:4480px;width:640px;-webkit-mask-image:linear-gradient(to right,transparent,#0003 7%,#000a 17%,#000 27%,#000 73%,#000a 83%,#0003 93%,transparent);mask-image:linear-gradient(to right,transparent,#0003 7%,#000a 17%,#000 27%,#000 73%,#000a 83%,#0003 93%,transparent)}
 @media(max-width:540px){.world-map-stage>.world-controls{padding:3px;gap:0}.world-controls button{min-width:36px;height:40px}.world-controls #world-zoom{width:34px}}

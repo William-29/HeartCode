@@ -6,8 +6,8 @@ import { freshState, normalizeState, isUnlocked, nextQuest, levelInfo, completeQ
 import { shelterProjects } from '../dist/haven-content.js';
 import { completeNeighbour, inspectMechanism } from '../dist/neighbour-model.js';
 
-test('the campaign contains 84 unique quests with four in each of twenty-one chapters', () => {
-  assert.equal(quests.length, 84); assert.equal(chapters.length, 21); assert.equal(new Set(quests.map(q => q.id)).size, 84);
+test('the campaign contains 108 unique quests with four in each of twenty-seven chapters', () => {
+  assert.equal(quests.length, 108); assert.equal(chapters.length, 27); assert.equal(new Set(quests.map(q => q.id)).size, 108);
   for (const ch of chapters) assert.equal(quests.filter(q => q.chapter === ch.id).length, 4);
   for (const q of [...quests.filter(q => q.type === 'quiz'), ...dailyQuestions]) { assert.ok(q.answer >= 0 && q.answer < q.options.length); assert.equal(q.options.length, 4); }
 });
@@ -26,7 +26,7 @@ test('first clear grants rewards, unlocks next quest and an achievement once', (
 });
 test('the entire curriculum and Haven care projects make all eight companions attainable', () => {
   const s = freshState(); for (const q of quests) assert.equal(completeQuest(s, q.id, '2026-10-18').ok, true);
-  assert.equal(s.completed.length, 84); assert.equal(nextQuest(s), null); assert.ok(s.achievements.includes('graduate')); assert.ok(s.achievements.includes('master-scholar'));
+  assert.equal(s.completed.length, 108); assert.equal(nextQuest(s), null); assert.ok(s.achievements.includes('graduate')); assert.ok(s.achievements.includes('master-scholar'));
   for (const project of shelterProjects) {
     if (project.inspection) assert.equal(inspectMechanism(s, project.id, project.answer).ok, true);
     assert.equal(completeNeighbour(s, project.id, project.solution).ok, true);
@@ -120,7 +120,7 @@ test('a completed 60-quest academy save continues at 61 without losing or re-awa
 
 test('all 24 new quests have original tasks, explicit foundations, guidance, and feedback', () => {
   const earlier = new Set(quests.slice(0, 60).map(q => q.task.trim().toLowerCase()));
-  const added = quests.slice(60);
+  const added = quests.slice(60, 84);
   assert.equal(added.length, 24);
   assert.equal(new Set(added.map(q => q.task.trim().toLowerCase())).size, 24);
   for (const q of added) {

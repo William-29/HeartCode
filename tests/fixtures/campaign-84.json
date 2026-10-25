@@ -1,0 +1,1170 @@
+{
+  "source": "8b4db99d5ae0ddc21c6cba95f497f949a51b343e",
+  "quests": [
+    {
+      "id": "first-hello",
+      "sha256": "b49dd9c4ece68e09a29a2ff8a82bc959c2df76e8fc7c5f14ac689b5a9aa5d163"
+    },
+    {
+      "id": "pocket-variables",
+      "sha256": "a9d11931ee70515342f0673e0ce6c3378b7ddb858bd101c712eebe2aeae427b6"
+    },
+    {
+      "id": "types-of-treasure",
+      "sha256": "4818eb8552cc5476a3381974cc8606e7b651f6deb9f3524677ec50510a58e13b"
+    },
+    {
+      "id": "tavern-till",
+      "sha256": "3402abdf8c93b3707eb596e4d65e502a757148594ebddcb7457c83ab108e6066"
+    },
+    {
+      "id": "door-keeper",
+      "sha256": "ca63553ac4898f25e8d42f743359c6381cfa0c68c2c1125a3a0ff255c6188d6a"
+    },
+    {
+      "id": "repeat-the-spell",
+      "sha256": "43e7d323180d6924f5c808430af3fd74a28c7e4eb1ddecb5ae5be488d5cb1852"
+    },
+    {
+      "id": "spell-functions",
+      "sha256": "61a5ef306036fb910a19b022deb2241e42b4c30a05a23e85480de732a377ed20"
+    },
+    {
+      "id": "debug-goblin",
+      "sha256": "34aeedfed21e42e664d1780aa80ffdcea1cbb66cea29f44032f4703c9e4758b3"
+    },
+    {
+      "id": "inventory-list",
+      "sha256": "6ea546c6a680160942f831426c4fabaa770c166dfa512b44afb14b59001d04de"
+    },
+    {
+      "id": "field-notes",
+      "sha256": "a98672f48edb5dfad3681831aedfc7b9e6cffa62aa8f0662657a1bdecf3aae79"
+    },
+    {
+      "id": "clean-the-pantry",
+      "sha256": "3d1f59f0bb10a2f57cc24c51b47c5be863493ff98a65a375fefabd40fd34d0d9"
+    },
+    {
+      "id": "average-evening",
+      "sha256": "fd71cf65919d28d8b5adc7f3d01dfb44049793762cea3cbfaf2267c846b5e63e"
+    },
+    {
+      "id": "what-is-ai",
+      "sha256": "d932f119378296151aef854597efafb700ae8f15f0372feaf05284f72946b30b"
+    },
+    {
+      "id": "rules-and-learning",
+      "sha256": "c376eea424b7de4df9b2a85c57f5b65f9da82f2eaaa4017f4079e791de4cff95"
+    },
+    {
+      "id": "prompt-scroll",
+      "sha256": "d6597412855111db27e77eb5e404400bc1d95d5cc92a7bd5153555ea800ee9c5"
+    },
+    {
+      "id": "fair-tavern",
+      "sha256": "5ddf3f93ce8efd0972e3ccbc6f60286772ddb92d88d8838358368e43c015d373"
+    },
+    {
+      "id": "features-labels",
+      "sha256": "68f55fe1d067b20b08fce77badc7979bb3bdc25f58896470f51bae6f43e699c1"
+    },
+    {
+      "id": "prediction-types",
+      "sha256": "b326a992ba24272d3aaf02e8557d14d80322f063c95616cbbf096b0b40f3cd0f"
+    },
+    {
+      "id": "held-out-scroll",
+      "sha256": "79f02c7e50191ecb9eb12f04489e0fd0ac011d72d130c12042de4329fb285d64"
+    },
+    {
+      "id": "overfit-familiar",
+      "sha256": "1b53ab0904bc1caf202e55fbb145e2471c331304522534ce93a56ffde9b2156a"
+    },
+    {
+      "id": "tiny-predictor",
+      "sha256": "47139c99436268c2c3a569e5c9c477479c439b4842321c78ee835f8673009c34"
+    },
+    {
+      "id": "learn-a-weight",
+      "sha256": "b8f58d59ecd6b3d1c22ac7335d58e87afc79a94c1b7f209e3e658f191d292fb1"
+    },
+    {
+      "id": "measure-mistakes",
+      "sha256": "e168fc0162b3182e8b2364103ecbff76634406b3ebfeca80f11c065a8f374a8a"
+    },
+    {
+      "id": "guild-trial",
+      "sha256": "0928f3c606310fa53a4a29e0deea40351d88cbb484a411f58899bae1da386da2"
+    },
+    {
+      "id": "word-ledger",
+      "sha256": "1eb85740abe94ee17095c9e11bb76cd3e584d061c79d5926130ebb69dbf50c15"
+    },
+    {
+      "id": "safe-conversion",
+      "sha256": "343edc9fbd3898de167366fb2869da26593756e44fc6e429723146dbbaa9a76b"
+    },
+    {
+      "id": "shared-satchel",
+      "sha256": "34b0e518373faaf3715eb7f80b8cfe5c817b16e049c19a44f4525507e8c1e0c7"
+    },
+    {
+      "id": "function-contracts",
+      "sha256": "b8d85104969bab778276319cf515aaf8f0f0f9dc05f7ee207a0c3f98e256cb55"
+    },
+    {
+      "id": "json-records",
+      "sha256": "d19c76b610b2288717b502098888018416535b3a771eb979f9cbac4cd129515f"
+    },
+    {
+      "id": "csv-revenue",
+      "sha256": "ff8174c357220d80ac9ee83adaee88d743c279d295dfb0228224b99156286001"
+    },
+    {
+      "id": "grouped-sales",
+      "sha256": "d7ab06724f0abdb9e63b483407be2690676483baf4824199fa84aecf8ffeea11"
+    },
+    {
+      "id": "duplicate-detective",
+      "sha256": "d32706ee80ed9b5faf226d7699c8e8b5ca9c22dcd8b4630af71371226c07989b"
+    },
+    {
+      "id": "median-orchard",
+      "sha256": "dc2ce662b2d0552a32055ece80367be4d8f3e7d702027b889f98df225c316fe4"
+    },
+    {
+      "id": "variance-garden",
+      "sha256": "2c18fe178021048db9f400679a2b38199d838efcc44324148313ea01fcefd5da"
+    },
+    {
+      "id": "conditional-probability",
+      "sha256": "8eb7e4623314639db0de67644b4b3e1e1a6307d288c8297b57d5a84f63c32053"
+    },
+    {
+      "id": "correlation-caution",
+      "sha256": "599f19576fe1d08baafde51b27b6979880407c48ae39f52bee9537a936ec38e0"
+    },
+    {
+      "id": "fit-a-scaler",
+      "sha256": "5d5571e93b06e0b75fd49fd4f3eeef1dcd1c8b8ea456c8e225f82af897224faa"
+    },
+    {
+      "id": "transform-new-data",
+      "sha256": "4c051840198fdb59e428c9bda6cffd0a6f6787f6ad9fbd72d6bc6604273b9d45"
+    },
+    {
+      "id": "time-aware-split",
+      "sha256": "e39cd98eb60b1af4722946fab1abe7a3f9ab7c955d7be7fcb8ba901859f08349"
+    },
+    {
+      "id": "leaky-greenhouse",
+      "sha256": "fd21139ad35d7daa7f0ca896b5d99021465e964797b4f10ee77b2ec7eab8c7cb"
+    },
+    {
+      "id": "confusion-ledger",
+      "sha256": "24d798bf35c1774936cbfd1d5eb776ec48349af049e80fa51c58ea7a4a26a7f1"
+    },
+    {
+      "id": "precision-recall",
+      "sha256": "62f7ef04f6bb3f42f85a5a2c3e3f1102c5be4c494ad78f14adf84dde364457fd"
+    },
+    {
+      "id": "decision-threshold",
+      "sha256": "47ddea7260f10783e74d93f76a1a0d7c29efaa8620e905456a697ebf7a60bcac"
+    },
+    {
+      "id": "rare-event-trap",
+      "sha256": "28070125fa6e09903732393663187dfb65210d6d749e398c5449cf8ff699f802"
+    },
+    {
+      "id": "nearest-neighbors",
+      "sha256": "5a49fa3932ca18e85c557df74c2dd00c6fee6bc29427834bb7aac191e334a585"
+    },
+    {
+      "id": "pooled-validation",
+      "sha256": "5a5949b943bfd07fd566e25c9bb39250e3fdf92a4b6966539dc0282a86d0a699"
+    },
+    {
+      "id": "regularized-objective",
+      "sha256": "547de3e4580824783cc97f53706f7f0df618d856c25938ee41e6c71c5ef37e92"
+    },
+    {
+      "id": "group-aware-validation",
+      "sha256": "1c8b03dbd87459601d9022fb3199155be3bc5fadffbfaa41c01ca928b13d15ef"
+    },
+    {
+      "id": "sigmoid-gate",
+      "sha256": "42bf74f0b325bf04eb852517a6537888cc9a4c3d335fa29303b2fd82895b21e6"
+    },
+    {
+      "id": "one-neuron",
+      "sha256": "c365c5966733ab709c15ec25baa5441ff650dc4d13b5f86b85b8f0773b8269d6"
+    },
+    {
+      "id": "binary-log-loss",
+      "sha256": "240dc9d7e93d6ac3516e90b4c82454804e95f5ca705ff3d6c7b9b90531719918"
+    },
+    {
+      "id": "train-logistic",
+      "sha256": "d3e0fd3e61e66782fa476417d89526b7c516f5a88b25786bda923327dcae1bc1"
+    },
+    {
+      "id": "bag-of-words",
+      "sha256": "16c4d90d5f31895a9ced3ba6394ce62943cc58dad8bbb64ec9756b43093d8a00"
+    },
+    {
+      "id": "cosine-compass",
+      "sha256": "8d16a08e71434d2edc5172f30a37480bee568ca35797e64f049c751e79e65f44"
+    },
+    {
+      "id": "retrieve-scrolls",
+      "sha256": "c80d407afc86cfa40e4a45db1f479c71887780f3b19c2627f1d1d921d73e75b4"
+    },
+    {
+      "id": "untrusted-scroll",
+      "sha256": "81eb096290cd056ceff60d2521e3af265c1ce516246b9cd2e512b1b70a809bc6"
+    },
+    {
+      "id": "fit-a-line",
+      "sha256": "3ca8b44e19b129c8e5ff6301e6e7de2c11bc5b640c55d538d54384a8118adbcf"
+    },
+    {
+      "id": "choose-with-validation",
+      "sha256": "df8164cdda0bad3dd7cf24fe1bc073e996e707df59e18f450e89319303ad9dc2"
+    },
+    {
+      "id": "honest-report",
+      "sha256": "5260ba273e4991cf88eb6ac31afc47d24418ac5457f867be57b25e48b8321ca9"
+    },
+    {
+      "id": "masters-pipeline",
+      "sha256": "86c12fc9fabe6036d26ceb8e328418683466f3cd76e42d7e67ea3d6d5a7ebf3e"
+    },
+    {
+      "id": "streaming-batches",
+      "sha256": "aabcdf887979c604c9686ca3aedac2617e80a74b06c2a40586f68d16fc2c7a8e"
+    },
+    {
+      "id": "context-lantern",
+      "sha256": "d42b280db39aec9c73f25299e13ec89d128f0f5f1460b3d184fb3bf974fd1f5c"
+    },
+    {
+      "id": "indexed-join",
+      "sha256": "0e97fcae69df0a8c10f119608bc534809a5852b2a0124cf1964b47f0dd55daf8"
+    },
+    {
+      "id": "rolling-window",
+      "sha256": "006c79d8670e935d302cdfed2c8118e798f6b38b418edb5853ad2ddf1354710d"
+    },
+    {
+      "id": "breadth-first-path",
+      "sha256": "211675f3bf2e4d65a54d55272b79b139df1d768fc324e12b7330029974c7e7a2"
+    },
+    {
+      "id": "weighted-route",
+      "sha256": "dfd04196023faf335752f0ee343ec019b53948d8beae6bc8c48136685b7db80c"
+    },
+    {
+      "id": "search-complexity",
+      "sha256": "fea50e7fb326878c5c09be987e164f960f02f220b75407ce954ed61e04fdcdbb"
+    },
+    {
+      "id": "admissible-compass",
+      "sha256": "824b18552b6c739709dd5e8b0ccc4aebce0bdd61fe0685d65e9023ee783fe202"
+    },
+    {
+      "id": "gini-orchard",
+      "sha256": "d66173b8a9bb1b55ead6bf7e29d18cda8879b60eb034091ed2eb152626339156"
+    },
+    {
+      "id": "weighted-split-gain",
+      "sha256": "86ac62b6bbc958649c2cf85d1aca3e58c94c7bc70622302db9f8649e7b64fbd0"
+    },
+    {
+      "id": "learn-tree-stump",
+      "sha256": "64afea16185054c87ba6160b5112e8b51641356278ebf044d368c233a8e0ee9a"
+    },
+    {
+      "id": "forest-diversity",
+      "sha256": "c1af517626e898ecaec4ddc589308e2ed7cb6a0e7caa95cb5f7c8fbc2d7aa1e6"
+    },
+    {
+      "id": "brier-weather",
+      "sha256": "fa8cd4b6acde36d27f748c27fdbe8387eef8cbbfc72d4ce0999962aea2d77391"
+    },
+    {
+      "id": "reliability-bins",
+      "sha256": "a5d3740f8ed2a19e8b1e79c2c3d344a47bfcc5b7cee6c1a62280c27df41c99d0"
+    },
+    {
+      "id": "bootstrap-interval",
+      "sha256": "68383884b577bd6ca535dd1089687a2a9889d4ff5cc83f2c45bc3bec64745dd8"
+    },
+    {
+      "id": "interval-meaning",
+      "sha256": "a0503cbb67fc9fcf54980598a7dc2c3d2a71c6b93532d2dd2f352ebc27e5416e"
+    },
+    {
+      "id": "multiclass-softmax",
+      "sha256": "0d1b69cf51536961f3ec1333ad8cfe527b614fd57893c64ae8d42550b8aabe7c"
+    },
+    {
+      "id": "multiclass-loss",
+      "sha256": "6e8237571fc73287261cfa9af45cdc285db3dd89b07980ff994c40831cdb2b20"
+    },
+    {
+      "id": "dense-layer",
+      "sha256": "b9a9b5b777af9cc6975853a88b7a8ae06dc30145f1a5b9b4ac9a6d2b14c3320d"
+    },
+    {
+      "id": "attention-head",
+      "sha256": "b1140256e81c7dce52c7a9f5b25cde2e2f6bbf2795834990db3ad850d1bfaece"
+    },
+    {
+      "id": "category-drift",
+      "sha256": "6f2cea7343f1429534a4e65a863c37bb1e12c07c6a1e4f5d99c68f71800d4d86"
+    },
+    {
+      "id": "selective-prediction",
+      "sha256": "fbd759aa608288fd2ab27864ae4c711f2e6cbc2f6eccc05614971fbb9529e5b9"
+    },
+    {
+      "id": "shadow-launch",
+      "sha256": "22b8b0110f527ff8e286285cc42e1eda2e5ecf818241752b7fc8c0e0a8097194"
+    },
+    {
+      "id": "beacon-monitor",
+      "sha256": "0dbcdd34aa63bfbd521034ad242ea2af2ecaf90593f29f371dcfa593710fe740"
+    }
+  ],
+  "chapters": [
+    {
+      "id": 0,
+      "numeral": "I",
+      "title": "The first spark",
+      "topic": "Python",
+      "label": "PYTHON FOUNDATIONS",
+      "icon": "flame",
+      "description": "Meet Python. Turn your very first ideas into code.",
+      "difficulty": "Beginner",
+      "color": "gold"
+    },
+    {
+      "id": 1,
+      "numeral": "II",
+      "title": "A little bit of logic",
+      "topic": "Python",
+      "label": "THINK LIKE A CODER",
+      "icon": "code",
+      "description": "Make decisions, repeat tasks, and craft your own spells.",
+      "difficulty": "Beginner",
+      "color": "green"
+    },
+    {
+      "id": 2,
+      "numeral": "III",
+      "title": "The data pantry",
+      "topic": "Python",
+      "label": "WORKING WITH DATA",
+      "icon": "database",
+      "description": "Collect, clean, and make sense of the tavern’s data.",
+      "difficulty": "Intermediate",
+      "color": "blue"
+    },
+    {
+      "id": 3,
+      "numeral": "IV",
+      "title": "A mind of its own",
+      "topic": "AI",
+      "label": "ARTIFICIAL INTELLIGENCE",
+      "icon": "spark",
+      "description": "Discover what AI can do, and where care is needed.",
+      "difficulty": "Intermediate",
+      "color": "purple"
+    },
+    {
+      "id": 4,
+      "numeral": "V",
+      "title": "The pattern seekers",
+      "topic": "ML",
+      "label": "MACHINE LEARNING",
+      "icon": "network",
+      "description": "Teach a model to learn patterns from examples.",
+      "difficulty": "Intermediate",
+      "color": "green"
+    },
+    {
+      "id": 5,
+      "numeral": "VI",
+      "title": "The prediction forge",
+      "topic": "ML",
+      "label": "BUILD & EVALUATE",
+      "icon": "flask",
+      "description": "Train a tiny model and put its predictions to the test.",
+      "difficulty": "Intermediate",
+      "color": "rose"
+    },
+    {
+      "id": 6,
+      "numeral": "VII",
+      "title": "The artisan’s workshop",
+      "topic": "Python",
+      "label": "RELIABLE PYTHON",
+      "icon": "code",
+      "description": "Count, handle errors, and write functions you can trust.",
+      "difficulty": "Intermediate+",
+      "color": "gold"
+    },
+    {
+      "id": 7,
+      "numeral": "VIII",
+      "title": "The merchant’s ledgers",
+      "topic": "Python",
+      "label": "REAL DATA PIPELINES",
+      "icon": "database",
+      "description": "Read structured records and turn raw data into useful summaries.",
+      "difficulty": "Intermediate+",
+      "color": "green"
+    },
+    {
+      "id": 8,
+      "numeral": "IX",
+      "title": "The statistician’s garden",
+      "topic": "ML",
+      "label": "STATISTICAL THINKING",
+      "icon": "leaf",
+      "description": "Understand spread, probability, and the limits of an observed pattern.",
+      "difficulty": "Intermediate+",
+      "color": "green"
+    },
+    {
+      "id": 9,
+      "numeral": "X",
+      "title": "The alchemist’s greenhouse",
+      "topic": "ML",
+      "label": "PREPROCESSING & LEAKAGE",
+      "icon": "flask",
+      "description": "Prepare features without letting future answers slip into training.",
+      "difficulty": "Advanced",
+      "color": "blue"
+    },
+    {
+      "id": 10,
+      "numeral": "XI",
+      "title": "The sentinel gates",
+      "topic": "ML",
+      "label": "CLASSIFICATION & METRICS",
+      "icon": "network",
+      "description": "Count different mistakes and decide which ones matter most.",
+      "difficulty": "Advanced",
+      "color": "rose"
+    },
+    {
+      "id": 11,
+      "numeral": "XII",
+      "title": "The modelmaker’s valley",
+      "topic": "ML",
+      "label": "MODELS & VALIDATION",
+      "icon": "flask",
+      "description": "Build a classifier, compare errors, and control model complexity.",
+      "difficulty": "Advanced",
+      "color": "gold"
+    },
+    {
+      "id": 12,
+      "numeral": "XIII",
+      "title": "The neural observatory",
+      "topic": "AI",
+      "label": "NEURAL FOUNDATIONS",
+      "icon": "spark",
+      "description": "Build a probabilistic neuron and learn its parameters from data.",
+      "difficulty": "Expert",
+      "color": "purple"
+    },
+    {
+      "id": 13,
+      "numeral": "XIV",
+      "title": "The whispering archives",
+      "topic": "AI",
+      "label": "TEXT, VECTORS & RETRIEVAL",
+      "icon": "book",
+      "description": "Represent text, retrieve relevant evidence, and reason about AI trust.",
+      "difficulty": "Expert",
+      "color": "blue"
+    },
+    {
+      "id": 14,
+      "numeral": "XV",
+      "title": "The master’s summit",
+      "topic": "ML",
+      "label": "END-TO-END CAPSTONE",
+      "icon": "trophy",
+      "description": "Connect training, validation, evaluation, and honest reporting.",
+      "difficulty": "Capstone",
+      "color": "gold"
+    },
+    {
+      "id": 15,
+      "numeral": "XVI",
+      "title": "The river workshop",
+      "topic": "Python",
+      "label": "STREAMS & DATA SYSTEMS",
+      "icon": "code",
+      "description": "Work with data that arrives in pieces, safe resources, joins and rolling windows.",
+      "difficulty": "Advanced practice",
+      "color": "green"
+    },
+    {
+      "id": 16,
+      "numeral": "XVII",
+      "title": "The pathfinder’s crossing",
+      "topic": "AI",
+      "label": "SEARCH & PLANNING",
+      "icon": "map",
+      "description": "Explore graphs, shortest paths, search costs and useful heuristics.",
+      "difficulty": "Advanced practice",
+      "color": "gold"
+    },
+    {
+      "id": 17,
+      "numeral": "XVIII",
+      "title": "The branching orchard",
+      "topic": "ML",
+      "label": "TREES & ENSEMBLES",
+      "icon": "leaf",
+      "description": "Learn how a decision tree chooses a split, and why diverse trees can help.",
+      "difficulty": "Expert",
+      "color": "green"
+    },
+    {
+      "id": 18,
+      "numeral": "XIX",
+      "title": "The mist garden",
+      "topic": "ML",
+      "label": "CALIBRATION & UNCERTAINTY",
+      "icon": "flask",
+      "description": "Check probability estimates, resample evidence and interpret uncertainty carefully.",
+      "difficulty": "Expert",
+      "color": "blue"
+    },
+    {
+      "id": 19,
+      "numeral": "XX",
+      "title": "The lantern conservatory",
+      "topic": "AI",
+      "label": "MULTICLASS NETWORKS & ATTENTION",
+      "icon": "spark",
+      "description": "Build stable multiclass probabilities, a neural layer and one attention head.",
+      "difficulty": "Expert+",
+      "color": "purple"
+    },
+    {
+      "id": 20,
+      "numeral": "XXI",
+      "title": "The keeper’s beacon",
+      "topic": "ML",
+      "label": "MONITOR & REVIEW",
+      "icon": "trophy",
+      "description": "Detect changes, measure abstention and bring model monitoring together.",
+      "difficulty": "Advanced capstone",
+      "color": "gold"
+    }
+  ],
+  "stops": [
+    {
+      "x": 180,
+      "y": 825
+    },
+    {
+      "x": 270,
+      "y": 920
+    },
+    {
+      "x": 365,
+      "y": 860
+    },
+    {
+      "x": 420,
+      "y": 790
+    },
+    {
+      "x": 530,
+      "y": 850
+    },
+    {
+      "x": 660,
+      "y": 930
+    },
+    {
+      "x": 770,
+      "y": 850
+    },
+    {
+      "x": 900,
+      "y": 875
+    },
+    {
+      "x": 1045,
+      "y": 920
+    },
+    {
+      "x": 1190,
+      "y": 870
+    },
+    {
+      "x": 1380,
+      "y": 880
+    },
+    {
+      "x": 1510,
+      "y": 750
+    },
+    {
+      "x": 1470,
+      "y": 615
+    },
+    {
+      "x": 1450,
+      "y": 495
+    },
+    {
+      "x": 1370,
+      "y": 410
+    },
+    {
+      "x": 1210,
+      "y": 365
+    },
+    {
+      "x": 1040,
+      "y": 430
+    },
+    {
+      "x": 860,
+      "y": 470
+    },
+    {
+      "x": 725,
+      "y": 415
+    },
+    {
+      "x": 745,
+      "y": 330
+    },
+    {
+      "x": 700,
+      "y": 245
+    },
+    {
+      "x": 840,
+      "y": 210
+    },
+    {
+      "x": 1020,
+      "y": 210
+    },
+    {
+      "x": 1180,
+      "y": 200
+    },
+    {
+      "x": 1300,
+      "y": 170
+    },
+    {
+      "x": 1500,
+      "y": 220
+    },
+    {
+      "x": 1620,
+      "y": 310
+    },
+    {
+      "x": 1700,
+      "y": 390
+    },
+    {
+      "x": 1780,
+      "y": 520
+    },
+    {
+      "x": 1900,
+      "y": 650
+    },
+    {
+      "x": 2100,
+      "y": 760
+    },
+    {
+      "x": 2300,
+      "y": 800
+    },
+    {
+      "x": 2400,
+      "y": 650
+    },
+    {
+      "x": 2220,
+      "y": 540
+    },
+    {
+      "x": 2100,
+      "y": 380
+    },
+    {
+      "x": 2070,
+      "y": 270
+    },
+    {
+      "x": 2180,
+      "y": 240
+    },
+    {
+      "x": 2320,
+      "y": 210
+    },
+    {
+      "x": 2430,
+      "y": 240
+    },
+    {
+      "x": 2550,
+      "y": 300
+    },
+    {
+      "x": 2700,
+      "y": 240
+    },
+    {
+      "x": 2860,
+      "y": 230
+    },
+    {
+      "x": 3020,
+      "y": 220
+    },
+    {
+      "x": 3160,
+      "y": 280
+    },
+    {
+      "x": 3210,
+      "y": 410
+    },
+    {
+      "x": 3140,
+      "y": 520
+    },
+    {
+      "x": 2980,
+      "y": 610
+    },
+    {
+      "x": 3060,
+      "y": 710
+    },
+    {
+      "x": 3200,
+      "y": 830
+    },
+    {
+      "x": 3380,
+      "y": 880
+    },
+    {
+      "x": 3500,
+      "y": 790
+    },
+    {
+      "x": 3590,
+      "y": 700
+    },
+    {
+      "x": 3720,
+      "y": 640
+    },
+    {
+      "x": 3850,
+      "y": 530
+    },
+    {
+      "x": 3990,
+      "y": 510
+    },
+    {
+      "x": 4130,
+      "y": 600
+    },
+    {
+      "x": 4280,
+      "y": 560
+    },
+    {
+      "x": 4430,
+      "y": 450
+    },
+    {
+      "x": 4540,
+      "y": 330
+    },
+    {
+      "x": 4550,
+      "y": 200
+    },
+    {
+      "x": 4640,
+      "y": 160
+    },
+    {
+      "x": 4820,
+      "y": 280
+    },
+    {
+      "x": 4960,
+      "y": 420
+    },
+    {
+      "x": 5070,
+      "y": 540
+    },
+    {
+      "x": 5140,
+      "y": 690
+    },
+    {
+      "x": 5290,
+      "y": 800
+    },
+    {
+      "x": 5450,
+      "y": 850
+    },
+    {
+      "x": 5600,
+      "y": 720
+    },
+    {
+      "x": 5670,
+      "y": 550
+    },
+    {
+      "x": 5740,
+      "y": 400
+    },
+    {
+      "x": 5880,
+      "y": 290
+    },
+    {
+      "x": 6030,
+      "y": 380
+    },
+    {
+      "x": 6180,
+      "y": 310
+    },
+    {
+      "x": 6340,
+      "y": 220
+    },
+    {
+      "x": 6500,
+      "y": 300
+    },
+    {
+      "x": 6600,
+      "y": 450
+    },
+    {
+      "x": 6700,
+      "y": 600
+    },
+    {
+      "x": 6830,
+      "y": 750
+    },
+    {
+      "x": 6980,
+      "y": 850
+    },
+    {
+      "x": 7140,
+      "y": 730
+    },
+    {
+      "x": 7300,
+      "y": 640
+    },
+    {
+      "x": 7430,
+      "y": 510
+    },
+    {
+      "x": 7570,
+      "y": 380
+    },
+    {
+      "x": 7730,
+      "y": 250
+    },
+    {
+      "x": 7870,
+      "y": 170
+    }
+  ],
+  "regions": [
+    {
+      "name": "Hearthwood Tavern",
+      "short": "The tavern",
+      "icon": "home",
+      "mood": "A warm welcome",
+      "description": "Lanterns glow. The kettle sings. Your first Python spells begin beside the hearth.",
+      "label": [
+        195,
+        715
+      ],
+      "color": "gold"
+    },
+    {
+      "name": "Sunmeadow Fields",
+      "short": "The fields",
+      "icon": "leaf",
+      "mood": "Golden afternoon",
+      "description": "Follow the wildflowers through sunlit fields, learning logic with every little step.",
+      "label": [
+        690,
+        760
+      ],
+      "color": "green"
+    },
+    {
+      "name": "The Copper Fox",
+      "short": "The pub",
+      "icon": "home",
+      "mood": "Good company ahead",
+      "description": "A bustling country pub, a market full of ingredients, and a few delightfully messy datasets.",
+      "label": [
+        1285,
+        970
+      ],
+      "color": "rose"
+    },
+    {
+      "name": "Moonwater Lake",
+      "short": "The lake",
+      "icon": "spark",
+      "mood": "Ripples of possibility",
+      "description": "Cross the still water and discover what artificial intelligence can—and cannot—do.",
+      "label": [
+        1230,
+        365
+      ],
+      "color": "blue"
+    },
+    {
+      "name": "Glimmerwood Forest",
+      "short": "The forest",
+      "icon": "leaf",
+      "mood": "A little wild magic",
+      "description": "Luminous mushrooms light the way. Look closer: there are patterns hidden in the trees.",
+      "label": [
+        455,
+        390
+      ],
+      "color": "purple"
+    },
+    {
+      "name": "Starfall Peaks",
+      "short": "The peaks",
+      "icon": "trophy",
+      "mood": "Your legend awaits",
+      "description": "Past the mist and crystal stones, forge your first model and reach the adventurers’ guild.",
+      "label": [
+        1070,
+        105
+      ],
+      "color": "blue"
+    },
+    {
+      "name": "The Guild Workshop",
+      "short": "The workshop",
+      "icon": "code",
+      "mood": "The adventure grows",
+      "description": "The guild doors open onto a much wider world. Craft reliable Python before setting out again.",
+      "label": [
+        1480,
+        115
+      ],
+      "color": "gold"
+    },
+    {
+      "name": "Ledgerbrook Market",
+      "short": "The market",
+      "icon": "database",
+      "mood": "Stories in every ledger",
+      "description": "Cross the trading town with JSON records, CSV shipments, and a merchant’s messy ledger.",
+      "label": [
+        2070,
+        875
+      ],
+      "color": "green"
+    },
+    {
+      "name": "The Statistician’s Garden",
+      "short": "The garden",
+      "icon": "leaf",
+      "mood": "A thoughtful little detour",
+      "description": "Among orchards and winding garden paths, discover variation, probability, and careful conclusions.",
+      "label": [
+        1950,
+        235
+      ],
+      "color": "green"
+    },
+    {
+      "name": "The Glasshouse",
+      "short": "The glasshouse",
+      "icon": "flask",
+      "mood": "Prepare with care",
+      "description": "The alchemist’s plants thrive on well-prepared data. Keep tomorrow’s answers out of today’s training.",
+      "label": [
+        2350,
+        125
+      ],
+      "color": "blue"
+    },
+    {
+      "name": "The Sentinel Gates",
+      "short": "The gates",
+      "icon": "network",
+      "mood": "Every mistake tells a story",
+      "description": "Help the sentinels understand false alarms, missed threats, and the tradeoffs of a decision.",
+      "label": [
+        3000,
+        140
+      ],
+      "color": "rose"
+    },
+    {
+      "name": "Modelmaker Valley",
+      "short": "The valley",
+      "icon": "flask",
+      "mood": "Build, compare, improve",
+      "description": "Watermills turn and models take shape. Test neighbors, penalties, and fair comparisons.",
+      "label": [
+        3100,
+        355
+      ],
+      "color": "gold"
+    },
+    {
+      "name": "The Neural Observatory",
+      "short": "The observatory",
+      "icon": "spark",
+      "mood": "A new mind takes shape",
+      "description": "Under the crystal dome, assemble a neuron, measure its loss, and teach it from examples.",
+      "label": [
+        3370,
+        975
+      ],
+      "color": "purple"
+    },
+    {
+      "name": "The Whispering Archives",
+      "short": "The archives",
+      "icon": "book",
+      "mood": "Seek evidence among the scrolls",
+      "description": "Search the lakeside library with text vectors, similarity, and a healthy respect for trustworthy sources.",
+      "label": [
+        3970,
+        390
+      ],
+      "color": "blue"
+    },
+    {
+      "name": "The Master’s Summit",
+      "short": "The summit",
+      "icon": "trophy",
+      "mood": "Put your learning together",
+      "description": "An academy milestone brings training, validation, and honest reporting into one complete project.",
+      "label": [
+        4510,
+        100
+      ],
+      "color": "gold"
+    },
+    {
+      "name": "The River Workshop",
+      "short": "The river workshop",
+      "icon": "code",
+      "mood": "There is more beyond the summit",
+      "description": "Follow the mountain stream to a paper mill where data arrives a little at a time.",
+      "label": [
+        4950,
+        155
+      ],
+      "color": "green"
+    },
+    {
+      "name": "Pathfinder’s Crossing",
+      "short": "The crossing",
+      "icon": "map",
+      "mood": "Every route has a reason",
+      "description": "Lantern bridges connect the riverside hamlets. Learn to search for a route and account for its cost.",
+      "label": [
+        5400,
+        970
+      ],
+      "color": "gold"
+    },
+    {
+      "name": "The Branching Orchard",
+      "short": "The orchard",
+      "icon": "leaf",
+      "mood": "Let the evidence choose a branch",
+      "description": "Among the fruit trees, learn how models split examples and why a diverse council helps.",
+      "label": [
+        5850,
+        180
+      ],
+      "color": "green"
+    },
+    {
+      "name": "The Mist Garden",
+      "short": "The mist garden",
+      "icon": "flask",
+      "mood": "Leave room for uncertainty",
+      "description": "At the glasshouse, compare promises with outcomes and ask what your sample cannot tell you.",
+      "label": [
+        6430,
+        115
+      ],
+      "color": "blue"
+    },
+    {
+      "name": "The Lantern Conservatory",
+      "short": "The conservatory",
+      "icon": "spark",
+      "mood": "Many lanterns, one thoughtful signal",
+      "description": "Warm windows welcome you to multiclass networks, stable calculations, and attention.",
+      "label": [
+        6990,
+        975
+      ],
+      "color": "purple"
+    },
+    {
+      "name": "The Keeper’s Beacon",
+      "short": "The beacon",
+      "icon": "trophy",
+      "mood": "Keep a careful watch",
+      "description": "Above the harbour, connect changing data, model uncertainty, and a report your neighbours can trust.",
+      "label": [
+        7580,
+        110
+      ],
+      "color": "gold"
+    }
+  ]
+}

@@ -7,7 +7,7 @@ import { stops, regions, WORLD_WIDTH, WORLD_HEIGHT, pointOnLeg, legPath, positio
 import { renderWorld, mountWorld } from '../dist/world.js';
 
 test('the overworld has a stop for every quest and a distinct beacon destination', () => {
-  assert.equal(stops.length, quests.length + 1); assert.equal(regions.length, 21);
+  assert.equal(stops.length, quests.length + 1); assert.equal(regions.length, 27);
   for (const point of stops) assert.ok(point.x > 0 && point.x < WORLD_WIDTH && point.y > 0 && point.y < WORLD_HEIGHT);
   assert.equal(new Set(stops.map(p => `${p.x},${p.y}`)).size, stops.length);
   for (let i = 0; i < quests.length; i++) assert.equal(regionForStop(i), regions[quests[i].chapter]);
@@ -38,7 +38,7 @@ test('saved progress restores the destination independently of an interrupted an
   assert.deepEqual(positionForProgress(restored.completed.length), stops[9]);
   assert.deepEqual(positionForProgress(-1), stops[0]); assert.deepEqual(positionForProgress(999), stops[quests.length]);
 });
-test('the map exposes 84 named controls, locked previews, and all twenty-one regions', () => {
+test('the map exposes 108 named controls, locked previews, and all twenty-seven regions', () => {
   const html = renderWorld(freshState(), pets[0], null, null);
   assert.equal((html.match(/data-world="select"/g) || []).length, quests.length);
   assert.equal((html.match(/class="world-node current /g) || []).length, 1);
@@ -116,14 +116,14 @@ test('leaving the map cancels animation frames and disconnects resize observers'
   assert.equal(frames.size, 0); assert.equal(actor.style.left, last); assert.ok(disconnected());
 }));
 test('advanced chapter transitions and the final beacon walk reach their actual destinations', () => {
-  for (const index of [23, 27, 51, 59, 63, 67, 71, 75, 79, 83]) mapHarness(({ actor, frames, get }) => {
+  for (const index of [23, 27, 51, 59, 63, 67, 71, 75, 79, 83, 87, 91, 95, 99, 103, 107]) mapHarness(({ actor, frames, get }) => {
     const state = freshState(); for (const q of quests.slice(0, index)) completeQuest(state, q.id);
     const result = completeQuest(state, quests[index].id), saved = JSON.stringify(state);
     const session = mountWorld({ state, travel: travelForCompletion(quests[index].id, result), selectedIndex: Math.min(index + 1, quests.length - 1), reducedMotion: false, onSelect() {} });
     const callback = [...frames.values()][0]; frames.clear(); callback(performance.now() + 4000);
     assert.equal(actor.style.left, `${stops[index + 1].x}px`); assert.equal(actor.style.top, `${stops[index + 1].y}px`);
     assert.equal(get('.arrival-quest').hidden, false); assert.equal(frames.size, 0);
-    assert.match(get('#travel-message').textContent, index === 83 ? /All 84 quests are complete/ : /New region discovered/);
+    assert.match(get('#travel-message').textContent, index === 107 ? /All 108 quests are complete/ : /New region discovered/);
     assert.equal(JSON.stringify(state), saved); session.dispose();
   });
 });
@@ -170,7 +170,7 @@ test('map tools belong to the stationary stage, outside the panned and focus-scr
 });
 
 test('zoom controls still respond immediately after dragging at either end of the expanded map', () => {
-  for(const completed of [0,60,83,84]) mapHarness(({viewport,canvas,document,get})=>{
+  for(const completed of [0,60,83,84,100,107,108]) mapHarness(({viewport,canvas,document,get})=>{
     const state=freshState(); state.completed=quests.slice(0,completed).map(q=>q.id);
     const session=mountWorld({state,reducedMotion:true,onSelect(){}});
     function dispatch(target,type,properties={}) {
@@ -184,8 +184,8 @@ test('zoom controls still respond immediately after dragging at either end of th
     const click=action=>dispatch(document,'click',{target:{closest:()=>({dataset:{world:action}})}});
     click('zoom-in'); assert.equal(get('#world-zoom').textContent,'103%');
     click('zoom-out'); assert.equal(get('#world-zoom').textContent,'88%');
-    click('fit'); assert.equal(get('#world-zoom').textContent,'13%');
-    assert.match(canvas.style.transform,/scale\(0.125\)/);
+    click('fit'); assert.equal(get('#world-zoom').textContent,`${Math.round(100*viewport.clientWidth/WORLD_WIDTH)}%`);
+    assert.equal(camera(canvas).zoom,viewport.clientWidth/WORLD_WIDTH);
     click('follow'); assert.equal(get('#world-zoom').textContent,'88%');
     viewport.scrollLeft=700;viewport.scrollTop=200;dispatch(viewport,'scroll');
     assert.equal(viewport.scrollLeft,0);assert.equal(viewport.scrollTop,0);
@@ -236,7 +236,7 @@ test('wheel units, zoom limits, browser shortcuts and cleanup behave consistentl
     for (let i = 0; i < 30; i++) wheel(viewport, -1000);
     assert.equal(camera(canvas).zoom, 1.5);
     for (let i = 0; i < 40; i++) wheel(viewport, 1000);
-    assert.equal(camera(canvas).zoom, .125);
+    assert.equal(camera(canvas).zoom, viewport.clientWidth/WORLD_WIDTH);
     session.dispose(); const disposed = canvas.style.transform;
     assert.equal(wheel(viewport, -100).defaultPrevented, false);
     assert.equal(canvas.style.transform, disposed);

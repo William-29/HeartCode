@@ -1,6 +1,6 @@
 import { quests } from './content.js';
 
-export const WORLD_WIDTH = 8000;
+export const WORLD_WIDTH = 11200;
 export const WORLD_HEIGHT = 1067;
 export const regions = [
   { name: 'Hearthwood Tavern', short: 'The tavern', icon: 'home', mood: 'A warm welcome', description: 'Lanterns glow. The kettle sings. Your first Python spells begin beside the hearth.', label: [195, 715], color: 'gold' },
@@ -23,7 +23,13 @@ export const regions = [
   { name: 'The Branching Orchard', short: 'The orchard', icon: 'leaf', mood: 'Let the evidence choose a branch', description: 'Among the fruit trees, learn how models split examples and why a diverse council helps.', label: [5850, 180], color: 'green' },
   { name: 'The Mist Garden', short: 'The mist garden', icon: 'flask', mood: 'Leave room for uncertainty', description: 'At the glasshouse, compare promises with outcomes and ask what your sample cannot tell you.', label: [6430, 115], color: 'blue' },
   { name: 'The Lantern Conservatory', short: 'The conservatory', icon: 'spark', mood: 'Many lanterns, one thoughtful signal', description: 'Warm windows welcome you to multiclass networks, stable calculations, and attention.', label: [6990, 975], color: 'purple' },
-  { name: 'The Keeper’s Beacon', short: 'The beacon', icon: 'trophy', mood: 'Keep a careful watch', description: 'Above the harbour, connect changing data, model uncertainty, and a report your neighbours can trust.', label: [7580, 110], color: 'gold' }
+  { name: 'The Keeper’s Beacon', short: 'The beacon', icon: 'trophy', mood: 'Keep a careful watch', description: 'Above the harbour, connect changing data, model uncertainty, and a report your neighbours can trust.', label: [7580, 110], color: 'gold' },
+  { name: 'Tidemark Dispatch', short: 'The harbour post', icon: 'database', mood: 'The beacon lights another path', description: 'Cross the old coast viaduct to a post office where every arrival deserves careful handling.', label: [8280, 875], color: 'blue' },
+  { name: 'The Timekeeper’s Terraces', short: 'The terraces', icon: 'clock', mood: 'Make room for tomorrow', description: 'Water clocks and hillside gardens invite you to learn from the past without borrowing the future.', label: [8780, 130], color: 'gold' },
+  { name: 'The Pattern Meadow', short: 'The meadow', icon: 'leaf', mood: 'Patterns waiting to be questioned', description: 'Gather among the flowering trees and discover what unlabeled observations can reveal.', label: [9350, 100], color: 'green' },
+  { name: 'The Gradient Foundry', short: 'The foundry', icon: 'flask', mood: 'A steady hand makes a warmer home', description: 'Copper pipes and warm glass shelter a workshop for checking gradients and training a small network.', label: [9820, 925], color: 'rose' },
+  { name: 'The Prism Archive', short: 'The prism archive', icon: 'book', mood: 'Choose what deserves a place', description: 'Study sequences and ranked evidence beneath a glass roof beside the ponds.', label: [10410, 925], color: 'purple' },
+  { name: 'The Wayfarers’ Hall', short: 'The fellowship', icon: 'trophy', mood: 'A plan to carry home', description: 'At a welcoming ridge-top hall, bring uncertainty, resources and future consequences into one thoughtful plan.', label: [10850, 110], color: 'gold' }
 ];
 
 // Keep all original quest coordinates and the academy arrival intact. The same
@@ -50,7 +56,13 @@ export const stops = [
   [6180, 310], [6340, 220], [6500, 300], [6600, 450],
   [6700, 600], [6830, 750], [6980, 850], [7140, 730],
   [7300, 640], [7430, 510], [7570, 380], [7730, 250],
-  [7870, 170]
+  [7870, 170], [8030, 290], [8210, 400], [8380, 560],
+  [8500, 520], [8670, 390], [8790, 270], [8910, 230],
+  [9040, 300], [9210, 250], [9380, 210], [9530, 320],
+  [9650, 450], [9790, 600], [9940, 660], [10070, 550],
+  [10200, 620], [10340, 750], [10490, 800], [10610, 670],
+  [10730, 530], [10840, 410], [10920, 300], [11010, 230],
+  [11110, 160]
 ].map(([x, y]) => ({ x, y }));
 
 export function regionForStop(index) { return regions[Math.floor(Math.max(0, Math.min(quests.length - 1, index)) / 4)]; }

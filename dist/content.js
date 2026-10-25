@@ -1,5 +1,6 @@
 import { advancedChapters, advancedQuests } from './advanced-content.js';
 import { frontierChapters, frontierQuests } from './frontier-content.js';
+import { fellowshipChapters, fellowshipQuests } from './fellowship-content.js';
 import { havenCompanions } from './haven-companions.js';
 
 export const chapters = [
@@ -10,7 +11,8 @@ export const chapters = [
   { id: 4, numeral: 'V', title: 'The pattern seekers', topic: 'ML', label: 'MACHINE LEARNING', icon: 'network', description: 'Teach a model to learn patterns from examples.', difficulty: 'Intermediate', color: 'green' },
   { id: 5, numeral: 'VI', title: 'The prediction forge', topic: 'ML', label: 'BUILD & EVALUATE', icon: 'flask', description: 'Train a tiny model and put its predictions to the test.', difficulty: 'Intermediate', color: 'rose' },
   ...advancedChapters,
-  ...frontierChapters
+  ...frontierChapters,
+  ...fellowshipChapters
 ];
 
 // Lessons are deliberately small; each challenge tests the concept just introduced.
@@ -134,7 +136,8 @@ export const quests = [
     explanations: ['Well done! A looks promising; a final independent evaluation and error review are still needed.', 'For MAE, lower is better.', 'Repeated tuning on the test set leaks information into model choices.', 'Validation is useful, but final evaluation and error review still matter.'], hint: 'Lower MAE is better. Keep the final evaluation independent of model selection.', takeaway: 'Good ML combines useful code, sound evaluation, and responsible judgment.'
   },
   ...advancedQuests,
-  ...frontierQuests
+  ...frontierQuests,
+  ...fellowshipQuests
 ];
 
 export const pets = [
@@ -163,7 +166,10 @@ export const achievements = [
   { id: 'master-scholar', name: 'Master of the Hearthlands', description: 'Complete the original 60-quest academy journey.', icon: 'trophy', coins: 400, test: s => s.completed.length >= 60, progress: s => [s.completed.length, 60] },
   { id: 'river-pathfinder', name: 'Beyond the academy', description: 'Reach quest 68: streams, efficient data work, and AI pathfinding.', icon: 'map', coins: 240, test: s => s.completed.length >= 68, progress: s => [s.completed.length, 68] },
   { id: 'mist-scholar', name: 'A thoughtful forecast', description: 'Reach quest 76: trees, calibration, and uncertainty.', icon: 'leaf', coins: 300, test: s => s.completed.length >= 76, progress: s => [s.completed.length, 76] },
-  { id: 'beacon-keeper', name: 'Keeper of the beacon', description: 'Complete all 84 quests and assemble a versioned model monitor.', icon: 'trophy', coins: 500, test: s => s.completed.length >= 84, progress: s => [s.completed.length, 84] }
+  { id: 'beacon-keeper', name: 'Keeper of the beacon', description: 'Complete the 84-quest beacon trail and assemble a versioned model monitor.', icon: 'trophy', coins: 500, test: s => s.completed.length >= 84, progress: s => [s.completed.length, 84] },
+  { id: 'terrace-timekeeper', name: 'A promise for tomorrow', description: 'Reach Quest 92 and test a forecast against the past.', icon: 'clock', coins: 320, test: s => s.completed.length >= 92, progress: s => [s.completed.length, 92] },
+  { id: 'foundry-mentor', name: 'Warmth that learns', description: 'Reach Quest 100 and train the greenhouse heater network.', icon: 'flask', coins: 400, test: s => s.completed.length >= 100, progress: s => [s.completed.length, 100] },
+  { id: 'fellowship-wayfarer', name: 'Friend of the fellowship', description: 'Complete the 108-quest trail and plan a journey the village can inspect.', icon: 'trophy', coins: 650, test: s => s.completed.length >= 108, progress: s => [s.completed.length, 108] }
 ];
 
 export const dailyQuestions = [
