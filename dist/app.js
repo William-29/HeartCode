@@ -1,4 +1,7 @@
 import { routeFromHash, parentPlace, placeNavigation } from './navigation.js';
+import { mountWorkbenches } from './workbench.js';
+import { threadMarkup, pinButton } from './objective-ui.js';
+import { objective, normalizeThread } from './objective-model.js';
 import { createSaveGuard } from './save-guard.js';
 import { ambienceSettings, renderPetCorner, mountPetPlay } from './cozy-ui.js';
 import { renderAdventures, mountAdventures } from './adventures.js';
@@ -55,7 +58,7 @@ let solved = false;
 let saveTimer;
 let audioContext;
 let celebration = null;
-const routes = { shelter: ['Companion haven', 'paw'], observatory: ['Observatory', 'spark'], clockwork: ['Clockmaker', 'clock'], discoveries: ['Companion discoveries', 'paw'], apprentices: ['Learning together', 'book'], shared: ['The morning round', 'leaf'], lake: ['Willowmere Lake', 'leaf'], courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
+const routes = { stories: ['Our next chapters', 'book'], shelter: ['Companion haven', 'paw'], observatory: ['Observatory', 'spark'], clockwork: ['Clockmaker', 'clock'], discoveries: ['Companion discoveries', 'paw'], apprentices: ['Learning together', 'book'], shared: ['The morning round', 'leaf'], lake: ['Willowmere Lake', 'leaf'], courtyard: ['Founders’ Court', 'home'], wardrobe: ['Your wardrobe', 'paw'], adventures: ['High Street', 'book'], village: ['Village', 'leaf'], tavern: ['Tavern', 'home'], quests: ['Quest map', 'map'], practice: ['Practice room', 'code'], companions: ['Companions', 'paw'], achievements: ['Achievements', 'trophy'], room: ['Your room', 'home'], festival: ['Festival', 'spark'] };
 const questDialog = $('#quest-dialog');
 const settingsDialog = $('#settings-dialog');
 const villageDialog = $('#village-dialog');
@@ -64,7 +67,7 @@ function save() {
   try {
     const result=saveGuard.save(JSON.stringify(state));
     if(!result.ok){warnSaveConflict();return false;}
-    saveWarning = ''; return true;
+    saveWarning = ''; refreshThread(); return true;
   }
   catch { saveWarning = 'Your browser could not save progress. Export your adventure in Settings before closing.'; toast(saveWarning, 'help', 8000); }
 }
@@ -164,7 +167,7 @@ function render() {
     <aside class="sidebar">
       <a class="brand" href="#village" aria-label="Hearthcode village"><img src="assets/favicon.svg" alt="" width="39" height="39"><span>Hearthcode<small>THE LEARNING TAVERN</small></span></a>
       <div class="sidebar-label">YOUR ADVENTURE</div>
-      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['shelter', 'observatory', 'adventures', 'courtyard', 'wardrobe', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : parentPlace(route) === key ? 'active-parent' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
+      <nav aria-label="Main navigation">${Object.entries(routes).filter(([key]) => !['stories', 'shelter', 'observatory', 'adventures', 'courtyard', 'wardrobe', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(key)).map(([key, [label, symbol]]) => `<a href="#${key}" aria-label="${label}" class="nav-link ${route === key ? 'active' : parentPlace(route) === key ? 'active-parent' : ''}" ${route === key ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${key === 'companions' ? `<span class="nav-count">${state.owned.length}</span>` : ''}${key === 'achievements' && state.achievements.length ? `<span class="nav-count">${state.achievements.length}</span>` : ''}</a>`).join('')}</nav>
       <div class="side-note">${teaCup()}<p>There’s always time<br>for one more try.</p><span>THE KETTLE’S ON</span></div>
       <div class="sidebar-bottom">
         <button class="quiet-button settings-link" data-action="settings">${icon('settings')} Settings & saved progress</button>
@@ -174,12 +177,12 @@ function render() {
     </aside>
     <div class="workspace" data-route="${route}">
       <header class="topbar">${placeNavigation(route, routes)}<div class="top-stats"><span class="stat-pill" title="Consecutive days with a completed lesson, coding project, or daily challenge">${icon('flame')}<b>${visibleStreak(state)}</b><span>day streak</span></span><span class="stat-pill coin-pill" title="Spend coins on companions and room furnishings">${icon('coin')}<b>${state.coins.toLocaleString()}</b></span><span class="stat-pill xp-pill">${icon('spark')}<b>${state.xp.toLocaleString()}</b><span>XP</span></span><button class="icon-button" data-action="settings" aria-label="Settings and saved progress">${icon('settings')}</button><button class="icon-button sound-toggle" data-action="sound" aria-label="${state.sound ? 'Turn reward sounds off' : 'Turn reward sounds on'}" aria-pressed="${state.sound}" title="Reward sounds ${state.sound ? 'on' : 'off'}">${icon(state.sound ? 'sound' : 'mute')}</button></div></header>
-      <main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ shelter: () => renderNeighbours(state, 'shelter', pet()), observatory: () => renderNeighbours(state, 'observatory', pet()), clockwork: () => renderNeighbours(state, 'clockwork', pet()), discoveries: () => renderNeighbours(state, 'discoveries', pet()), apprentices: () => renderNeighbours(state, 'apprentices', pet()), shared: () => renderNeighbours(state, 'shared', pet()), lake: () => renderNeighbours(state, 'lake', pet()), courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
+      <section id="learning-thread" aria-label="Your chosen objective">${threadMarkup(state)}</section><main id="main" tabindex="-1">${saveWarning ? `<div class="notice">${icon('help')}${esc(saveWarning)}</div>` : ''}${({ stories: () => renderNeighbours(state, 'stories', pet()), shelter: () => renderNeighbours(state, 'shelter', pet()), observatory: () => renderNeighbours(state, 'observatory', pet()), clockwork: () => renderNeighbours(state, 'clockwork', pet()), discoveries: () => renderNeighbours(state, 'discoveries', pet()), apprentices: () => renderNeighbours(state, 'apprentices', pet()), shared: () => renderNeighbours(state, 'shared', pet()), lake: () => renderNeighbours(state, 'lake', pet()), courtyard: () => renderCourtyard(state, pet()), wardrobe: () => renderWardrobe(state), adventures: () => renderAdventures(state), village: () => renderVillage(state, pet()), tavern: renderTavern, quests: renderQuests, practice: renderPractice, companions: renderCompanions, achievements: renderAchievements, room: () => renderRoom(state, pet(), roomSlot, $('#room-decor')?.open ?? false), festival: () => renderFestival(state) })[route]()}</main>
       <footer class="footer"><span>${icon('flame')} A little learning. A little magic.</span><button class="footer-settings" data-action="settings" aria-label="Settings and saved progress">${icon('settings')} Settings & saved progress</button><span>${saveWarning ? 'Export a backup in Settings' : 'Progress saved in this browser'} <span class="save-dot"></span></span></footer>
     </div>`;
   ambience.update();
-  if (['shelter', 'observatory', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(route)) neighbourSession = mountNeighbours({
-    state, view: route, companion: pet(), runPython, cancelRun, onSave: saveAdventure,
+  if (['stories', 'shelter', 'observatory', 'apprentices', 'shared', 'lake', 'clockwork', 'discoveries'].includes(route)) neighbourSession = mountNeighbours({
+    state, view: route, companion: pet(), runPython, cancelRun, onSave: saveAdventure, onOpen: rememberActivity,
     onLearn: recordProjectPractice,
     onAdoption: (result, friend) => {
       saveAdventure(); chime();
@@ -197,7 +200,7 @@ function render() {
     }
   });
   if (route === 'courtyard' || route === 'wardrobe') communitySession = mountCommunity({
-    state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun, onLearn: recordProjectPractice,
+    state, view: route === 'wardrobe' ? 'wardrobe' : 'court', companion: pet(), runPython, cancelRun, onOpen: rememberActivity, onLearn: recordProjectPractice,
     onSave: () => { saveAdventure(); const avatar = $('.avatar'); if (avatar) avatar.innerHTML = characterPortrait('traveler', 'player-portrait', state.wardrobe); },
     onOriginalDemo: openProjectDemo,
     onNeighbourDemo: item => navigate(`${item.place}/exhibit/${item.id}`),
@@ -217,7 +220,7 @@ function render() {
   if (unlockedClothes > knownWardrobeCount) toast('Something new is waiting in your wardrobe. A little piece of your story.', 'spark', 6000);
   knownWardrobeCount = unlockedClothes;
   if (route === 'adventures') adventureSession = mountAdventures({
-    state, runPython, cancelRun, onLearn: recordProjectPractice,
+    state, runPython, cancelRun, onOpen: rememberActivity, onLearn: recordProjectPractice,
     onSave: saveAdventure,
     onReward: result => {
       activity(state);
@@ -239,6 +242,26 @@ function render() {
     worldSession = mountWorld({ state, selectedIndex: mapSelection, travel, reducedMotion: state.reducedMotion, onSelect: index => { mapSelection = index; } });
   }
   $('#main').scrollTop = retainedScroll;
+  if(destination==='quest' && route==='quests')openQuest(creation);
+  if(destination==='project'){
+    if(route==='village')openProject(creation);
+    else if(route==='courtyard')communitySession?.openProject(creation);
+    else neighbourSession?.openProject(creation);
+  }
+  if(route==='courtyard'&&destination==='building')communitySession?.openBuilding(creation);
+  if(route==='clockwork'&&destination==='bench')neighbourSession?.openBench();
+  if(route==='discoveries'&&destination==='discovery')neighbourSession?.openDiscovery(creation);
+  if(route==='adventures'&&destination==='story')adventureSession?.openStory(creation);
+}
+
+function refreshThread() {
+  const el=$('#learning-thread'); if(!el)return;
+  const html=threadMarkup(state); if(el.innerHTML===html||el.querySelector?.('details[open]'))return;
+  el.innerHTML=html;
+}
+function rememberActivity(key) {
+  const thread=normalizeThread({...state.thread,last:key});
+  if(state.thread?.last===thread.last)return;state.thread=thread;save();
 }
 
 function saveAdventure() {
@@ -329,6 +352,7 @@ function openProject(id) {
   const project = projects.find(p => p.id === id);
   if (!project || !projectUnlocked(state, id)) { toast('Follow the quest trail to learn the skills for this project.', 'lock'); return; }
   cancelRun(); villageSession?.pause(); activeDemo = null; villageDialog.close();
+  rememberActivity('project:'+id);
   activeQuest = project; selectedAnswer = null; solved = false; renderQuest();
   if (!questDialog.open) questDialog.showModal();
 }
@@ -406,6 +430,7 @@ function openQuest(id) {
   worldSession?.finishTravel();
   const q = quests.find(item => item.id === id);
   if (!q || !isUnlocked(state, id)) { toast('Finish the previous quest to unlock this one.', 'lock'); return; }
+  rememberActivity('quest:'+id);
   activeQuest = q; selectedAnswer = null; solved = false; renderQuest();
   if (!questDialog.open) questDialog.showModal();
 }
@@ -418,7 +443,7 @@ function openDaily() {
 }
 function renderQuest() {
   const q = activeQuest, ch = chapters[q.chapter];
-  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${q.kind === 'project' ? 'VILLAGE PROJECT / ' + villagers.find(v => v.id === q.npc).name.toUpperCase() : q.id === 'daily' ? 'A LITTLE PRACTICE, EVERY DAY' : `CHAPTER ${ch.numeral} · QUEST ${String(quests.indexOf(q) + 1).padStart(2, '0')} / ${quests.length}`}</span><button class="icon-button" data-action="close-quest" aria-label="Close quest">${icon('close')}</button></div><div class="quest-modal-heading"><h2>${q.title}</h2><p>${q.subtitle}</p><div class="rewards">${rewardLine(q.xp, q.coins)}${(q.kind === 'project' ? state.projects : state.completed).includes(q.id) ? '<span class="replay-label">Replay · rewards already earned</span>' : ''}</div></div><div class="quest-columns"><section class="lesson-pane"><div class="lesson-label">${icon('book')} THE LESSON</div>${ch ? `<p class="lesson-stage">${esc(ch.difficulty)} · ${esc(ch.label)}</p>` : ''}${q.buildsOn ? `<p class="lesson-prerequisites">Builds on: ${q.buildsOn.map(esc).join(' · ')}</p>` : ''}${q.lesson.map(p => `<p>${esc(p)}</p>`).join('')}${q.example ? `<pre class="example-code"><code>${esc(q.example)}</code></pre>` : ''}<div class="lesson-companion">${sprite(pet().id)}<div><strong>${pet().name} is cheering you on.</strong><span>No rush. You can try as many times as you need.</span></div></div><details class="hint"><summary>${icon('spark')} Need a little hint?</summary><p>${esc(q.hint)}</p></details>${q.solution ? `<details class="hint solution"><summary>${icon('help')} Walk me through the solution</summary><p>Read the code, then type it into the editor. Try changing a value to see what happens.</p><pre><code>${esc(q.solution)}</code></pre></details>` : ''}</section><section class="challenge-pane"><div class="lesson-label">${icon(q.type === 'code' ? 'code' : 'spark')} ${q.type === 'code' ? 'YOUR CODING CHALLENGE' : 'PUT IT INTO PRACTICE'}</div><h3>${esc(q.task)}</h3>${q.snippet ? `<pre class="example-code"><code>${esc(q.snippet)}</code></pre>` : ''}${q.type === 'code' ? `${editorMarkup(state.drafts[q.id] ?? state.projectCode[q.id] ?? q.starter, 'quest-code')}<div class="run-row"><button class="button primary" id="quest-run" data-action="run-quest">${icon('play')} Run & check</button><button class="button subtle" id="quest-stop" data-action="stop" hidden>${icon('stop')} Stop</button><button class="text-button" data-action="reset-code" title="Restore the starter code">${icon('reset')} Reset code</button></div><p class="runtime-note" id="quest-status">First run loads real Python. An internet connection is needed.</p>` : `<div class="answer-options" role="radiogroup" aria-label="Choose an answer">${q.options.map((option, i) => `<button class="answer-option" data-action="answer" data-index="${i}" role="radio" aria-checked="false"><span class="answer-letter">${String.fromCharCode(65 + i)}</span><span>${esc(option)}</span><span class="answer-indicator"></span></button>`).join('')}</div><button class="button primary" id="check-answer" data-action="check-answer" disabled>Check answer ${icon('arrow')}</button>`}<div id="quest-feedback" class="quest-feedback" aria-live="polite"></div></section></div>`;
+  questDialog.innerHTML = `<div class="dialog-top"><span class="eyebrow">${q.kind === 'project' ? 'VILLAGE PROJECT / ' + villagers.find(v => v.id === q.npc).name.toUpperCase() : q.id === 'daily' ? 'A LITTLE PRACTICE, EVERY DAY' : `CHAPTER ${ch.numeral} · QUEST ${String(quests.indexOf(q) + 1).padStart(2, '0')} / ${quests.length}`}</span><button class="icon-button" data-action="close-quest" aria-label="Close quest">${icon('close')}</button></div><div class="quest-modal-heading"><h2>${q.title}</h2><p>${q.subtitle}</p>${q.id!=='daily'?pinButton((q.kind==='project'?'project:':'quest:')+q.id):''}<div class="rewards">${rewardLine(q.xp, q.coins)}${(q.kind === 'project' ? state.projects : state.completed).includes(q.id) ? '<span class="replay-label">Replay · rewards already earned</span>' : ''}</div></div><div class="quest-columns"><section class="lesson-pane"><div class="lesson-label">${icon('book')} THE LESSON</div>${ch ? `<p class="lesson-stage">${esc(ch.difficulty)} · ${esc(ch.label)}</p>` : ''}${q.buildsOn ? `<p class="lesson-prerequisites">Builds on: ${q.buildsOn.map(esc).join(' · ')}</p>` : ''}${q.lesson.map(p => `<p>${esc(p)}</p>`).join('')}${q.example ? `<pre class="example-code"><code>${esc(q.example)}</code></pre>` : ''}<div class="lesson-companion">${sprite(pet().id)}<div><strong>${pet().name} is cheering you on.</strong><span>No rush. You can try as many times as you need.</span></div></div><details class="hint"><summary>${icon('spark')} Need a little hint?</summary><p>${esc(q.hint)}</p></details>${q.solution ? `<details class="hint solution"><summary>${icon('help')} Walk me through the solution</summary><p>Read the code, then type it into the editor. Try changing a value to see what happens.</p><pre><code>${esc(q.solution)}</code></pre></details>` : ''}</section><section class="challenge-pane"><div class="lesson-label">${icon(q.type === 'code' ? 'code' : 'spark')} ${q.type === 'code' ? 'YOUR CODING CHALLENGE' : 'PUT IT INTO PRACTICE'}</div><h3>${esc(q.task)}</h3>${q.snippet ? `<pre class="example-code"><code>${esc(q.snippet)}</code></pre>` : ''}${q.type === 'code' ? `${editorMarkup(state.drafts[q.id] ?? state.projectCode[q.id] ?? q.starter, 'quest-code')}<div class="run-row"><button class="button primary" id="quest-run" data-action="run-quest">${icon('play')} Run & check</button><button class="button subtle" id="quest-stop" data-action="stop" hidden>${icon('stop')} Stop</button><button class="text-button" data-action="reset-code" title="Restore the starter code">${icon('reset')} Reset code</button></div><p class="runtime-note" id="quest-status">First run loads real Python. An internet connection is needed.</p>` : `<div class="answer-options" role="radiogroup" aria-label="Choose an answer">${q.options.map((option, i) => `<button class="answer-option" data-action="answer" data-index="${i}" role="radio" aria-checked="false"><span class="answer-letter">${String.fromCharCode(65 + i)}</span><span>${esc(option)}</span><span class="answer-indicator"></span></button>`).join('')}</div><button class="button primary" id="check-answer" data-action="check-answer" disabled>Check answer ${icon('arrow')}</button>`}<div id="quest-feedback" class="quest-feedback" aria-live="polite"></div></section></div>`;
   if (q.type === 'code') bindEditor($('#quest-code'), q.id);
 }
 function completeActive(output = '', submittedCode = '') {
@@ -522,11 +547,21 @@ async function importSave(event) {
 
 document.addEventListener('click', event => {
   if (event.target.closest('.skip-link')) { event.preventDefault(); $('#main')?.focus(); return; }
+  // A closed activity may still be the current hash. Reopen it when its
+  // thread/story link is chosen again; browsers do not emit hashchange then.
+  const activityLink=event.target.closest('a[href^="#"]');
+  const targetHash=activityLink?.getAttribute('href');
+  if(targetHash?.includes('/')&&targetHash===location.hash&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey&&(event.button===0||event.button===undefined)){
+    event.preventDefault();navigate(targetHash.slice(1));return;
+  }
   const nearby = $('.nearby-places[open]');
   if (nearby && !event.target.closest('.nearby-places')) nearby.open = false;
   const button = event.target.closest('[data-action]'); if (!button || button.disabled) return;
   const { action, id } = button.dataset;
   switch (action) {
+    case 'choose-thread': {state.thread=normalizeThread({...state.thread,goal:$('#thread-choice')?.value});const menu=$('.thread-chooser');if(menu)menu.open=false;save();$('#learning-thread summary')?.focus();break;}
+    case 'pin-thread': {state.thread=normalizeThread({...state.thread,goal:id});save();toast('A thread to follow. Your next step is saved.','book');break;}
+    case 'follow-objective': {state.thread=normalizeThread({...state.thread,goal:id});const next=objective(state)?.next;save();if(next)navigate(next.route);break;}
     case 'pet-bed': if (choosePetBed(state, state.equipped, id)) { save(); render(); toast('Your friend has a cozy spot in your room.', 'paw'); } break;
     case 'room-slot': roomSlot = id; render(); $(`[data-action="room-slot"][data-id="${id}"]`)?.focus({ preventScroll: true }); break;
     case 'room-furnish': { const result = furnishRoom(state, id); if (!result.ok) { toast(result.reason, 'coin'); break; } refreshRoom(result.item.slot); if (result.purchased) chime(); toast(`${result.item.name} is in your room.`, 'home'); break; }
@@ -565,8 +600,9 @@ document.addEventListener('change', event => {
   if (event.target.id === 'sample-select' && practiceSamples[event.target.value]) { cancelRun(); state.drafts.practice = practiceSamples[event.target.value]; save(); render(); }
 });
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') { const menu = $('.nearby-places[open]'); if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); } }
+  if (event.key === 'Escape') { const menu = $('.nearby-places[open]') || $('.thread-chooser[open]'); if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); } }
   if (!event.target.matches('.answer-option') || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
   event.preventDefault(); const options = [...questDialog.querySelectorAll('.answer-option')]; const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1; const next = options[(options.indexOf(event.target) + direction + options.length) % options.length]; next.focus(); next.click();
 });
 render();
+mountWorkbenches({doc:document,read:()=>state.workbench,save:prefs=>{state.workbench=prefs;save();}});

@@ -14,6 +14,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
+import { mountWorkbenches } from '../dist/workbench.js';
+import { threadMarkup, pinButton } from '../dist/objective-ui.js';
+import { objective, normalizeThread } from '../dist/objective-model.js';
 import * as content from '../dist/content.js';
 import * as stateApi from '../dist/state.js';
 import { projects, villagers, projectUnlocked } from '../dist/projects.js';
@@ -145,7 +148,7 @@ test('quotes, backslashes and Python-looking text stay inert when demo values en
 // The adapter exercises the actual app functions and queued native-dialog close
 // ordering. It deliberately makes no assertions about browser layout or pixels.
 function appHarness(stored = new Map()) {
-  const closeEvents = [], nodes = new Map(), selectors = new Map(), pendingRuns = [], mounted = [], petSessions = [], roomSessions = [], villageWalks = [];
+  const closeEvents = [], nodes = new Map(), selectors = new Map(), pendingRuns = [], mounted = [], petSessions = [], roomSessions = [], villageWalks = [], opened = [];
   const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   class Element extends EventTarget {
     constructor(id = '') { super(); this.id = id; this.open = false; this.isConnected = true; this.children = []; this.nodes = new Map(); this.html = ''; this.textContent = ''; this.value = ''; this.disabled = false; this.hidden = false; this.style = {}; this.dataset = {}; this.scrollTop = 0; this.classes = new Set(); this.classList = { add: (...items) => items.forEach(item => this.classes.add(item)), remove: (...items) => items.forEach(item => this.classes.delete(item)), toggle: (item, value) => value ? this.classes.add(item) : this.classes.delete(item) }; }
@@ -191,12 +194,13 @@ function appHarness(stored = new Map()) {
     return new Promise(resolve => { currentRun = { code, checks, resolve }; pendingRuns.push(currentRun); });
   };
   const scope = {
+    mountWorkbenches, threadMarkup, pinButton, objective, normalizeThread,
     routeFromHash, parentPlace, placeNavigation, createSaveGuard, ...content, ...stateApi, projects, villagers, projectUnlocked, renderVillager, renderProjectDemo, demoSource, characterPortrait,
     renderRoom, renderRoomShop, renderFestival, renderCafe, furnishRoom, removeFurnishing, celebrateFestival, periods,
     ambienceSettings, renderPetCorner, careForPet, choosePetBed, normalizeAmbience, renderAdventures,
-    mountAdventures: () => ({ dispose() {} }),
-    renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: options => ({ dispose() {}, openExhibition() { nodes.get('community-dialog').innerHTML = 'The makers exhibition'; nodes.get('community-dialog').showModal(); }, options }),
-    renderNeighbours, noticeDiscoveries, mountNeighbours: () => ({ dispose() {}, openDemo() {} }),
+    mountAdventures: options => ({ dispose() {}, openStory(id) { opened.push(['adventure',id]); options.onOpen('adventure:'+id); } }),
+    renderCourtyard, renderWardrobe, wardrobeCount, mountCommunity: options => ({ dispose() {}, openProject(id) { opened.push(['repair',id]); options.onOpen('repair:'+id); }, openBuilding(id) { opened.push(['building',id]); options.onOpen('building:'+id); }, openExhibition() { nodes.get('community-dialog').innerHTML = 'The makers exhibition'; nodes.get('community-dialog').showModal(); }, options }),
+    renderNeighbours, noticeDiscoveries, mountNeighbours: options => ({ dispose() {}, openDemo() {}, openProject(id) { opened.push(['neighbour',id]); options.onOpen('neighbour:'+id); }, openBench() { opened.push(['bench']); }, openDiscovery(id) { opened.push(['discovery',id]); } }),
     mountRoomEditor: options => { roomSessions.push(options); return { dispose() {} }; }, mountPetPlay: options => { petSessions.push(options); return { dispose() {} }; }, createAmbience: () => ({ update() {}, dispose() {} }),
     mountVillageClock: () => ({ dispose() {} }),
     document, window: Object.assign(new EventTarget(), { scrollTo() {} }), location: { hash: '' }, history: { pushState() {} },
@@ -221,7 +225,12 @@ function appHarness(stored = new Map()) {
     flushClose: () => { while (closeEvents.length) closeEvents.shift()(); },
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
-    pendingRuns, stored, petSessions, roomSessions, villageWalks,
+    pendingRuns, stored, petSessions, roomSessions, villageWalks, opened,
+    link: href => {
+      const event=new Event('click',{cancelable:true});
+      Object.defineProperty(event,'target',{value:{closest:selector=>selector==='a[href^="#"]'?{getAttribute:()=>href}:null}});
+      document.dispatchEvent(event);return event.defaultPrevented;
+    },
     click: (action, id, extra = {}) => {
       const button = { dataset: { action, id, ...extra }, disabled: false };
       const event = new Event('click');
@@ -266,7 +275,7 @@ test('two app tabs never roll back newer rewards and clean tabs follow storage u
   assert.equal(JSON.parse(shared.get(stateApi.SAVE_KEY)).completed.length, 3);
 });
 
-test('every route and all 84 lesson screens render balanced markup with existing artwork', () => {
+test('every route and all campaign lesson screens render balanced markup with existing artwork', () => {
   const app=appHarness(), pages={};
   for(const stage of ['fresh','advanced']){
     if(stage==='advanced')app.evaluate('for(const q of quests) completeQuest(state,q.id);');
@@ -287,7 +296,39 @@ test('every route and all 84 lesson screens render balanced markup with existing
   for(const project of projects){app.call('openProject',project.id);pages[`project/${project.id}`]=app.node('quest-dialog').innerHTML;}
   const result=spawnSync('python',['tests/validate_markup.py'],{input:JSON.stringify(pages),encoding:'utf8',env:{...process.env,PYTHONUTF8:'1'},maxBuffer:8*1024*1024});
   assert.equal(result.status,0,result.stderr);
-  const report=JSON.parse(result.stdout);assert.deepEqual(report.failures,{});assert.equal(report.pages,131);
+  const report=JSON.parse(result.stdout);assert.deepEqual(report.failures,{});assert.equal(report.pages,2*app.evaluate('Object.keys(routes).length')+content.quests.length+2+villagers.length+projects.length);
+});
+
+test('pinned threads save, point at prerequisite activities and reopen them through the real route dispatcher',()=>{
+  const app=appHarness();
+  app.click('pin-thread','story:rowan');
+  assert.equal(app.state().thread.goal,'story:rowan');
+  assert.equal(JSON.parse(app.stored.get(stateApi.SAVE_KEY)).thread.goal,'story:rowan');
+  app.click('follow-objective','neighbour:rowan-tomorrow');
+  assert.equal(app.evaluate('location.hash'),'village/project/project-tavern-bill');
+  app.evaluate('window').dispatchEvent(new Event('hashchange'));
+  assert.equal(app.node('quest-dialog').open,true);
+  assert.equal(app.state().thread.last,'project:project-tavern-bill');
+  app.call('closeQuest');app.flushClose();
+  app.evaluate('location.hash="#village/project/project-tavern-bill"');
+  assert.equal(app.link('#village/project/project-tavern-bill'),true);
+  assert.equal(app.node('quest-dialog').open,true);
+  app.call('closeQuest');app.flushClose();
+  for(const [path,expected] of [
+    ['stories/project/rowan-shared-oven',['neighbour','rowan-shared-oven']],
+    ['clockwork/project/bench-baskets',['neighbour','bench-baskets']],
+    ['courtyard/project/bakery-flour',['repair','bakery-flour']],
+    ['courtyard/building/bakery',['building','bakery']],
+    ['clockwork/bench',['bench']],
+    ['discoveries/discovery/discovery-key',['discovery','discovery-key']]
+  ]){
+    app.evaluate(`location.hash=${JSON.stringify('#'+path)}`);
+    app.evaluate('window').dispatchEvent(new Event('hashchange'));
+    assert.deepEqual(app.opened.at(-1),expected);
+  }
+  app.click('pin-thread','not-a-goal');
+  assert.equal(app.state().thread.goal,null);
+  assert.match(threadMarkup(app.state()),/Your place is saved/);
 });
 
 test('project practice on a later day updates the streak and grants its milestone once',()=>{

@@ -1,5 +1,5 @@
 // Places share a home, even when their activities use separate screens.
-export const placeParents = { shelter:'companions', observatory:'village', wardrobe:'room', adventures:'village', courtyard:'village', shared:'village', lake:'village', clockwork:'village', apprentices:'tavern', discoveries:'companions' };
+export const placeParents = { stories:'village', shelter:'companions', observatory:'village', wardrobe:'room', adventures:'village', courtyard:'village', shared:'village', lake:'village', clockwork:'village', apprentices:'tavern', discoveries:'companions' };
 export const villagePlaces = [
   {route:'observatory',name:'Observatory',image:'willowmere-observatory.png',host:'Stargaze with Elio'},
   {route:'shelter',name:'Companion haven',image:'companion-haven.png',host:'Help a woodland friend with Rowan'},

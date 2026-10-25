@@ -1,3 +1,6 @@
+import { renderContinuing, continuingReport, testBenchLedger } from './continuing-ui.js';
+import { pinButton } from './objective-ui.js';
+import { neighbourPlace } from './objective-model.js';
 import { renderHaven, havenBook, animalStory, introductionReview, havenReport, havenOutcome } from './haven-ui.js';
 import { adoptPet } from './state.js';
 import { pets } from './content.js';
@@ -27,6 +30,7 @@ function progressList(state,items){
   }).join('')}</ol>`;
 }
 export function renderNeighbours(state,view='apprentices',companion={id:'pip',name:'Pip'}){
+  if(view==='stories')return renderContinuing(state);
   if(['shelter','observatory'].includes(view))return renderHaven(state,view,companion);
   if(view==='clockwork')return renderClockwork(state,companion);
   if(view==='discoveries')return renderDiscoveries(state,companion);
@@ -62,14 +66,14 @@ function teachingSteps(state,p){
 }
 function projectMarkup(state,p){
   const available=neighbourUnlocked(state,p),done=state.neighbours.completed.includes(p.id);
-  if(!available)return `${top('A PROMISE FOR LATER')}<h2>${p.title}</h2><p>${p.story||p.lesson}</p><p class="neighbour-lock">${icon('lock')} ${esc(lockReason(state,p))}</p><div class="community-actions"><a class="button outline" href="#quests">Visit the learning trail</a><a class="button outline" href="#courtyard">Visit the restoration</a></div>`;
-  return `${top(p.kind==='shelter'?'ROWAN’S CARE LEDGER':p.kind==='observatory'?'ELIO’S SKY JOURNAL':p.kind==='teaching'?'LEARNING BY HELPING':p.kind==='shared'?'THE SHARED WORK LEDGER':p.kind==='clock'?'MIRA’S REPAIR BENCH':p.kind==='discovery'?'THINGS WE FOUND TOGETHER':'THE LAKE JOURNAL')}<h2>${p.title}</h2><p>${p.lesson||p.story}</p>${p.kind==='teaching'?teachingSteps(state,p):p.inspection?inspectionMarkup(state,p):''}
+  if(!available)return `${top('A PROMISE FOR LATER')}<h2>${p.title}</h2>${pinButton('neighbour:'+p.id)}<p>${p.story||p.lesson}</p><p class="neighbour-lock">${icon('lock')} ${esc(lockReason(state,p))}</p><div class="community-actions"><button class="button outline" data-action="follow-objective" data-id="neighbour:${p.id}">Show my next step →</button><a class="button outline" href="#courtyard">Visit the restoration</a></div>`;
+  return `${top(p.kind==='testing'?'MIRA’S TEST BENCH':p.kind==='continuing'?'OUR NEXT CHAPTER':p.kind==='shelter'?'ROWAN’S CARE LEDGER':p.kind==='observatory'?'ELIO’S SKY JOURNAL':p.kind==='teaching'?'LEARNING BY HELPING':p.kind==='shared'?'THE SHARED WORK LEDGER':p.kind==='clock'?'MIRA’S REPAIR BENCH':p.kind==='discovery'?'THINGS WE FOUND TOGETHER':'THE LAKE JOURNAL')}<h2>${p.title}</h2>${pinButton('neighbour:'+p.id)}<p>${p.story&&p.lesson?esc(p.story):''}</p><p>${p.lesson||p.story}</p>${p.kind==='teaching'?teachingSteps(state,p):p.inspection?inspectionMarkup(state,p):''}
     ${p.tools?`<details class="borrowed-tools"><summary>The working tools you are connecting</summary><p>These are your saved restoration functions. They are loaded for this project; you can call them directly.</p>${p.tools.map(id=>`<h4>${esc(id.replaceAll('-',' '))}</h4><pre>${esc(state.restoration.code[id])}</pre>`).join('')}</details>`:''}
     <h3>${p.kind==='teaching'?'3. Mend the code together':'Make the next small connection'}</h3><p>${p.task}</p><label for="neighbour-code">Your Python</label><textarea id="neighbour-code" class="adventure-code" data-gramm="false" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(state.neighbours.drafts[p.id]??state.neighbours.code[p.id]??p.starter)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p>
-    <div class="community-actions">${button('run','Run & check',p.id)}${button('stop','Stop','',true)}${button('reset','Restore starter',p.id)}${done&&p.kind!=='teaching'?button('use','Use my saved tool',p.id):''}</div>
+    <div class="community-actions">${button('run','Run & check',p.id)}${button('stop','Stop','',true)}${button('reset','Restore starter',p.id)}${done&&!['teaching','testing'].includes(p.kind)?button('use','Use my saved tool',p.id):''}</div>
     <details><summary>A gentle hint</summary><p>${p.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(p.solution)}</pre></details>
     <p class="neighbour-note">${done?'First-completion rewards already earned. You can revise and run this as often as you like.':`${p.xp} XP · ${p.coins} coins when you first finish. ${p.kind==='teaching'?'Explain and choose a test before completing the repair.':''}`}</p>
-    <pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here.</pre><div id="neighbour-result"></div><div class="community-actions">${p.kind==='teaching'?button('meet','Back to our conversation',p.npc):button(p.kind==='shelter'?'shelter-book':p.kind==='observatory'?'sky-journal':p.kind==='lake'?'journal':p.kind==='clock'?'clock-ledger':p.kind==='discovery'?'discovery-book':'shared-book','Back to the story')}</div>`;
+    <pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here.</pre><div id="neighbour-result"></div><div class="community-actions">${p.kind==='teaching'?button('meet','Back to our conversation',p.npc):button(p.kind==='testing'?'test-bench':p.kind==='continuing'?'stories-home':p.kind==='shelter'?'shelter-book':p.kind==='observatory'?'sky-journal':p.kind==='lake'?'journal':p.kind==='clock'?'clock-ledger':p.kind==='discovery'?'discovery-book':'shared-book','Back to the story')}</div>`;
 }
 function journalMarkup(state,filter='all'){
   const all=state.neighbours.observations,rows=filter==='all'?all:all.filter(r=>r.weather===filter),summary=lakeSummary(rows),split=splitObservations(all);
@@ -82,6 +86,7 @@ function sharedMarkup(state){
   return `${top('FOUNDERS’ COURT · THE MORNING ROUND')}<h2>Our doors are open. What can we do together?</h2><p>Restoring a building gave it a future. Connecting the work gives the neighbours a reason to visit each other. Your Python joins the greenhouse’s baskets, the bakery’s oven, and the library’s recipe books.</p>${progressList(state,sharedProjects)}<div class="shared-memories">${sharedProjects.filter(p=>state.neighbours.completed.includes(p.id)).map(p=>`<blockquote>${p.outcome}${button('use','See the village use it',p.id)}</blockquote>`).join('')}</div>`;
 }
 function reportMarkup(state,p,r){
+  if(p.kind==='continuing')return continuingReport(p,r);
   if(['shelter','observatory'].includes(p.kind))return havenReport(p,r,state);
   if(['clock','discovery'].includes(p.kind))return clockReport(p,r);
   if(p.kind==='shared'){
@@ -91,7 +96,7 @@ function reportMarkup(state,p,r){
   if(p.id==='lake-predict')return `<div class="working-round"><h3>A fair look at your lake model</h3><p>Your guesser matched <strong>${r.correct}/${r.total}</strong> held-out catches. The overall-most-common baseline matched <strong>${r.baseline_correct}/${r.total}</strong>.</p><p>${r.training_casts} training casts; ${r.test_casts} test casts. Training labels never include the held-out answers.</p><p>Next guess in your selected weather: <strong>${esc(r.next_guess)}</strong>. It is a guess, not a promise.</p><p>${r.correct>r.baseline_correct?'Weather helped on this small sample. Test more conditions before trusting it.':'This model did not beat the simpler baseline on this sample. More features or more representative observations may help.'} Each new cast changes the notebook; run the tool again to refresh this report.</p></div>`;
   return `<div class="working-round"><h3>Your Python, on your own observations</h3><pre>${esc(JSON.stringify(r,null,2))}</pre><p>${p.id==='lake-frequency'?'These fractions describe your sample, not a known probability for every future cast.':'Every quiet cast remains in the counts.'}</p></div>`;
 }
-export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption=()=>{},onLearn=()=>{},onFollowDiscovery=()=>{},runPython,cancelRun,root=document.querySelector('.neighbours-root'),dialog=document.querySelector('#neighbour-dialog')}){
+export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption=()=>{},onLearn=()=>{},onFollowDiscovery=()=>{},onOpen=()=>{},runPython,cancelRun,root=document.querySelector('.neighbours-root'),dialog=document.querySelector('#neighbour-dialog')}){
   let alive=true,busy=false,token=0,active=null;
   let music=null,melody=null;
   const output=text=>{const el=dialog.querySelector('#neighbour-output');if(el)el.textContent=text;};
@@ -116,7 +121,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
     root.addEventListener('click',click);root.addEventListener('change',change);
     if(focused)[...root.querySelectorAll('[data-neighbour]')].find(el=>el.dataset.neighbour===focused.neighbour&&el.dataset.id===focused.id)?.focus({preventScroll:true});
   }
-  function showProject(p){if(!p)return;show(projectMarkup(state,p));if(neighbourUnlocked(state,p))active=p;}
+  function showProject(p){if(!p)return;onOpen('neighbour:'+p.id);show(projectMarkup(state,p));if(neighbourUnlocked(state,p))active=p;}
   async function execute(code,checks,done){
     music?.stop();
     if(busy)return;const mine=++token;busyState(true);output('Warming up Python…');
@@ -128,7 +133,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
     }catch(error){if(alive&&mine===token){busyState(false);output(error.message||'Something went wrong. Your draft is saved.');}}
   }
   function useTool(p,fromExhibition=false){
-    if(!p||!state.neighbours.completed.includes(p.id)||p.kind==='teaching')return;
+    if(!p||!state.neighbours.completed.includes(p.id)||['teaching','testing'].includes(p.kind))return;
     show(`${top('YOUR WORK IN THE WORLD')}<h2>${p.title}</h2><p>${p.story}</p><p>Run the saved Python on ${p.kind==='observatory'?'your current sky observations':p.kind==='shelter'?'the haven’s visiting animals':p.kind==='lake'?'your current observations':p.kind==='clock'?'the repaired mechanism':p.kind==='discovery'?'the note you found together':'the village’s sample morning'}. You can revise the code whenever you like.</p><div class="community-actions">${button('run-use','Run my saved tool',p.id)}${button('stop','Stop','',true)}${button('project','Revisit the code',p.id)}</div><pre id="neighbour-output" class="adventure-output" role="status" aria-live="polite">Ready when you are.</pre><div id="neighbour-result"></div>${fromExhibition?'<a class="exhibition-return" href="#courtyard/exhibition">Back to the makers’ exhibition</a>':''}`);
     melody=null;
     active=p;
@@ -149,6 +154,8 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
     if(action==='review-introduction'){const html=introductionReview(state,id,el.dataset.home);if(html)show(html);return;}
     if(action==='confirm-introduction'){if(arrangeIntroduction(state,id,el.dataset.home)){onSave();repaint();show(animalStory(state,id));}return;}
     if(action==='observe-sky'){if(observeSky(state)){onSave();repaint();root.querySelector('.haven-scene-note')?.classList.add('fresh-catch');}return;}
+    if(action==='test-bench'){show(testBenchLedger(state));return;}
+    if(action==='stories-home'){close();return;}
     if(action==='clock-ledger'){show(clockLedger(state));return;}
     if(action==='discovery-book'){show(discoveryBook(state,companion));return;}
     if(action==='discovery'&&discoveries.some(d=>d.id===id)){show(discoveryMarkup(state,id,companion));return;}
@@ -188,7 +195,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
         output(`${result.output||''}\n${reward.replay?'Your revised Python passed. First-completion rewards already earned.':`Made together. +${reward.xp} XP · +${reward.coins} coins`}\n\n${havenOutcome(state,p)||apprentices.find(a=>a.id===p.npc).voices[confidence(state,p.npc)]}`);
         const area=dialog.querySelector('#neighbour-result');
         const friend=havenCompanions.find(a=>a.helpProject===p.id);
-        if(area)area.innerHTML=p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):`${friend?button('animal',`Visit ${friend.name} · ${state.owned.includes(friend.id)?'your friend':'ready to adopt'}`,friend.id):''}${button('use','See your work in the world',p.id)} <a class="exhibition-return" href="#courtyard/exhibition">Give it a place at the exhibition</a>`;
+        if(area)area.innerHTML=p.kind==='testing'?button('test-bench','Return to Mira’s Test Bench'):p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):`${friend?button('animal',`Visit ${friend.name} · ${state.owned.includes(friend.id)?'your friend':'ready to adopt'}`,friend.id):''}${button('use','See your work in the world',p.id)} <a class="exhibition-return" href="#courtyard/exhibition">Give it a place at the exhibition</a>`;
         if(!reward.replay)onReward(reward);
       });return;
     }
@@ -217,5 +224,5 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
   const cancelled=event=>{if(event.type==='close'&&dialog.open)return;stop();active=null;if(event.type==='close')restoreFocus();};
   root.addEventListener('click',click);root.addEventListener('change',change);
   dialog.addEventListener('click',click);dialog.addEventListener('change',change);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('cancel',cancelled);dialog.addEventListener('close',cancelled);
-  return {openDemo(id,fromExhibition=false){const p=neighbourProject(id);if(p&&({shelter:'shelter',observatory:'observatory',shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries'}[p.kind]===view))useTool(p,fromExhibition);},dispose(){alive=false;close();music?.dispose();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};
+  return {openProject(id){showProject(neighbourProject(id));},openBench(){show(testBenchLedger(state));},openDiscovery(id){if(discoveries.some(d=>d.id===id))show(discoveryMarkup(state,id,companion));},openDemo(id,fromExhibition=false){const p=neighbourProject(id);if(p&&(neighbourPlace(p)===view))useTool(p,fromExhibition);},dispose(){alive=false;close();music?.dispose();root.removeEventListener('click',click);root.removeEventListener('change',change);dialog.removeEventListener('click',click);dialog.removeEventListener('change',change);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',cancelled);dialog.removeEventListener('close',cancelled);}};
 }

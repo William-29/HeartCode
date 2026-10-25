@@ -8,9 +8,11 @@ import { freshWardrobe, normalizeWardrobe } from './wardrobe-model.js';
 import { exhibitCatalog } from './exhibition-model.js';
 import { freshNeighbours, normalizeNeighbours } from './neighbour-model.js';
 import { havenHelpComplete } from './haven-companions.js';
+import { normalizeWorkbench } from './workbench.js';
+import { normalizeThread } from './objective-model.js';
 export const SAVE_KEY = 'hearthcode-save-v1';
 export function freshState() {
-  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), restoration: freshRestoration(), wardrobe: freshWardrobe(), neighbours: freshNeighbours(), villageTime: 'auto', festivalCelebrated: false, sound: false, reducedMotion: false };
+  return { version: 1, name: 'Adventurer', xp: 0, coins: 0, completed: [], owned: ['pip'], equipped: 'pip', achievements: [], daily: [], streak: 0, lastActivity: null, drafts: {}, projects: [], projectCode: {}, metVillagers: [], villagePosition: { x: 500, y: 460 }, home: freshHome(), ambience: normalizeAmbience(), petCare: normalizePetCare(), adventure: freshAdventure(), restoration: freshRestoration(), wardrobe: freshWardrobe(), neighbours: freshNeighbours(), villageTime: 'auto', festivalCelebrated: false, workbench: normalizeWorkbench(), thread: normalizeThread(), sound: false, reducedMotion: false };
 }
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -56,6 +58,8 @@ export function normalizeState(value) {
   s.villageTime = periods.includes(value.villageTime) ? value.villageTime : 'auto';
   s.festivalCelebrated = value.festivalCelebrated === true && festivalProgress(s).ready;
   s.reducedMotion = value.reducedMotion === true;
+  s.workbench = normalizeWorkbench(value.workbench);
+  s.thread = normalizeThread(value.thread);
   if (value.drafts && typeof value.drafts === 'object') for (const key of [...quests.map(q => q.id), ...projects.map(project => project.id), 'practice']) if (typeof value.drafts[key] === 'string') s.drafts[key] = value.drafts[key].slice(0, 30000);
   return s;
 }

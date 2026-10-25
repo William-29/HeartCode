@@ -1,3 +1,4 @@
+import { understandingAchievements } from './understanding-achievements.js';
 import { advancedChapters, advancedQuests } from './advanced-content.js';
 import { frontierChapters, frontierQuests } from './frontier-content.js';
 import { fellowshipChapters, fellowshipQuests } from './fellowship-content.js';
@@ -169,7 +170,8 @@ export const achievements = [
   { id: 'beacon-keeper', name: 'Keeper of the beacon', description: 'Complete the 84-quest beacon trail and assemble a versioned model monitor.', icon: 'trophy', coins: 500, test: s => s.completed.length >= 84, progress: s => [s.completed.length, 84] },
   { id: 'terrace-timekeeper', name: 'A promise for tomorrow', description: 'Reach Quest 92 and test a forecast against the past.', icon: 'clock', coins: 320, test: s => s.completed.length >= 92, progress: s => [s.completed.length, 92] },
   { id: 'foundry-mentor', name: 'Warmth that learns', description: 'Reach Quest 100 and train the greenhouse heater network.', icon: 'flask', coins: 400, test: s => s.completed.length >= 100, progress: s => [s.completed.length, 100] },
-  { id: 'fellowship-wayfarer', name: 'Friend of the fellowship', description: 'Complete the 108-quest trail and plan a journey the village can inspect.', icon: 'trophy', coins: 650, test: s => s.completed.length >= 108, progress: s => [s.completed.length, 108] }
+  { id: 'fellowship-wayfarer', name: 'Friend of the fellowship', description: 'Complete the 108-quest trail and plan a journey the village can inspect.', icon: 'trophy', coins: 650, test: s => s.completed.length >= 108, progress: s => [s.completed.length, 108] },
+  ...understandingAchievements
 ];
 
 export const dailyQuestions = [

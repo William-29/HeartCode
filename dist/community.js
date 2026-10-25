@@ -84,7 +84,7 @@ function openingMarkup(state,id){
   return `${dialogTop('A DOOR OPENS · A STORY CONTINUES')}<div class="opening-scene">${courtyardArt(state, 'opening')}</div><div class="opening-cast">${characterPortrait(b.neighbour,'community-portrait')}${characterPortrait('traveler','community-portrait',state.wardrobe)}</div><h2>Welcome back to ${b.name}.</h2><blockquote class="neighbour-memory">${b.memories[3]}</blockquote><div class="opening-keepsake"><span>${wardrobeSwatch(gift.slot,gift.id)}</span><div><h3>${gift.name}</h3><p>${gift.description}</p><a class="button outline" href="#wardrobe">Try it on in your wardrobe</a></div></div><div class="community-actions">${control('exhibit','See the place at work',restorationProjects.find(p=>p.building===id&&p.stage===3).id,false,'primary')}${control('close','Stay a while in the square')}</div>`;
 }
 
-export function mountCommunity({state,view='court',companion,onSave,onReward,onLearn=()=>{},onOriginalDemo,onNeighbourDemo=()=>{},runPython,cancelRun,root=document.querySelector('.community-root'),dialog=document.querySelector('#community-dialog')}){
+export function mountCommunity({state,view='court',companion,onSave,onReward,onLearn=()=>{},onOriginalDemo,onNeighbourDemo=()=>{},onOpen=()=>{},runPython,cancelRun,root=document.querySelector('.community-root'),dialog=document.querySelector('#community-dialog')}){
   let alive=true,token=0,busy=false,activeProject=null,activeDemo=null,lastDoor=null;
   function status(text){const el=dialog.open?dialog.querySelector('#community-message'):root.querySelector('.community-status');if(el)el.textContent=text;}
   function repaint(){
@@ -113,13 +113,13 @@ export function mountCommunity({state,view='court',companion,onSave,onReward,onL
     }catch(error){if(alive&&mine===token){setBusy(false);output(error.message||'Please try again. Your code is saved.');}}
   }
   function showBuilding(id){
-    const b=buildingById(id);if(!b)return;lastDoor=id;
+    const b=buildingById(id);if(!b)return;onOpen('building:'+id);lastDoor=id;
     const stage=buildingStage(state,id),index=state.restoration.opened.includes(id)?3:Math.min(stage,2);
     remember(state,id,index);save();show(buildingMarkup(state,id));
   }
   function showProject(id){
     const item=restorationById(id);if(!restorationUnlocked(state,item)){status('Finish the earlier repair and the required trail lessons first.');return;}
-    show(projectMarkup(state,item));activeProject=item;
+    onOpen('repair:'+id);show(projectMarkup(state,item));activeProject=item;
   }
   function showExhibit(id){
     const item=exhibitCatalog(state).find(p=>p.id===id);if(!item){status('Finish and save this creation first.');return;}
@@ -184,5 +184,5 @@ export function mountCommunity({state,view='court',companion,onSave,onReward,onL
   }
   const onClose=event=>{if(event.type==='close'&&dialog.open)return;stop();activeProject=null;activeDemo=null;};
   root.addEventListener('click',click);dialog.addEventListener('click',click);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('cancel',onClose);dialog.addEventListener('close',onClose);
-  return {openExhibition(){lastDoor=null;show(exhibitionMarkup(state));},dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',click);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',onClose);dialog.removeEventListener('close',onClose);}};
+  return {openProject(id){showProject(id);},openBuilding(id){showBuilding(id);},openExhibition(){lastDoor=null;show(exhibitionMarkup(state));},dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',click);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('cancel',onClose);dialog.removeEventListener('close',onClose);}};
 }

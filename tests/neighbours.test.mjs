@@ -20,6 +20,9 @@ import { createMusicPlayer } from '../dist/clockwork-ui.js';
 import { shelterProjects, observatoryProjects, shelterAnimals, shelterHomes } from '../dist/haven-content.js';
 import { observeSky, splitSky, arrangeIntroduction, normalizeHaven } from '../dist/haven-model.js';
 import { havenBook, havenReport } from '../dist/haven-ui.js';
+import { testBenchProjects } from '../dist/testbench-content.js';
+import { continuingProjects } from '../dist/continuing-content.js';
+import { projects } from '../dist/projects.js';
 import { exhibitCatalog } from '../dist/exhibition-model.js';
 
 function progressed(n=60){
@@ -163,7 +166,7 @@ test('world scenes retain the existing art and character style, accessible entra
 
 function harness(state=restored(),view='apprentices'){
   const previousDocument=globalThis.document,decode=s=>s.replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#39;',"'").replaceAll('&amp;','&');
-  let pending,rewards=[],saves=0,cancels=0,followed=[],learned=0,adoptions=[];
+  let pending,rewards=[],saves=0,cancels=0,followed=[],learned=0,adoptions=[],opened=[];
   class Element extends EventTarget{
     constructor(dataset={}){super();this.dataset=dataset;this.open=false;this.value='';this.textContent='';this.fields=new Map();this.buttons=[];this.classList={add(){}};}
     set innerHTML(value){
@@ -186,9 +189,9 @@ function harness(state=restored(),view='apprentices'){
   }
   const root=new Element(),dialog=new Element();root.innerHTML=renderNeighbours(state,view);
   globalThis.document={activeElement:null,querySelector:s=>s==='.neighbours-root'?root:dialog};
-  const session=mountNeighbours({state,view,companion:{id:'pip',name:'Pip'},root,dialog,onLearn(){learned++;},onAdoption(result,pet){adoptions.push({result,pet});},onFollowDiscovery(id){followed.push(id);},onSave(){saves++;},onReward(r){rewards.push(r);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
+  const session=mountNeighbours({state,view,companion:{id:'pip',name:'Pip'},root,dialog,onOpen(key){opened.push(key);},onLearn(){learned++;},onAdoption(result,pet){adoptions.push({result,pet});},onFollowDiscovery(id){followed.push(id);},onSave(){saves++;},onReward(r){rewards.push(r);},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(where,action,id,extra={})=>{const el=new Element({neighbour:action,id,...extra});where.buttons.push(el);const event=new Event('click');Object.defineProperty(event,'target',{value:el});where.dispatchEvent(event);};
-  return {state,root,dialog,session,followed,adoptions,learned:()=>learned,click:(...args)=>click(root,...args),work:(...args)=>click(dialog,...args),pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
+  return {state,root,dialog,session,followed,adoptions,opened,learned:()=>learned,click:(...args)=>click(root,...args),work:(...args)=>click(dialog,...args),pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,
     change(where,id,value){const field=where.querySelector('#'+id);field.value=value;const event=new Event('change');Object.defineProperty(event,'target',{value:field});where.dispatchEvent(event);},
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=previousDocument;}};
@@ -209,6 +212,48 @@ test('teaching UI guides explanation, example and real Python, then grows confid
     ui.work('meet','nell');assert.match(ui.dialog.innerHTML,/I tried another name/);
   }finally{ui.dispose();}
 });
+test('Mira’s bench checks real assertions, keeps failed drafts and pays only once',async()=>{
+  const ui=harness(progressed(108),'clockwork');
+  try{
+    ui.session.openBench();assert.match(ui.dialog.innerHTML,/A promise worth checking/);
+    for(const p of testBenchProjects){
+      ui.session.openProject(p.id);assert.equal(ui.opened.at(-1),'neighbour:'+p.id);
+      const field=ui.dialog.querySelector('#neighbour-code');field.value='def test_tool(tool):\n    assert True';
+      const coins=ui.state.coins;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+      assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Still unnoticed/);
+      assert.equal(ui.state.coins,coins);assert.equal(ui.state.neighbours.drafts[p.id],field.value);
+      field.value=p.solution;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+      assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Made together/);
+      assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Return to Mira/);
+      const earned=ui.state.coins;ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+      assert.equal(ui.state.coins,earned);ui.work('test-bench');
+    }
+    assert.equal(ui.rewards().length,4);assert.equal(ui.learned(),8);
+    assert.ok(!exhibitCatalog(ui.state).some(p=>p.id.startsWith('bench-')));
+  }finally{ui.dispose();}
+});
+
+test('all continuing stories complete through the controller and run saved services without replay rewards',async()=>{
+  const s=restored();s.completed=quests.map(q=>q.id);s.projects=projects.map(p=>p.id);
+  const ui=harness(s,'stories');
+  try{
+    for(const p of continuingProjects){
+      ui.session.openProject(p.id);ui.dialog.querySelector('#neighbour-code').value=p.solution;
+      ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);
+      assert.match(ui.dialog.querySelector('#neighbour-output').textContent,/Made together/);
+      assert.ok(ui.root.innerHTML.includes(p.outcome));
+      const coins=s.coins;ui.work('use',p.id);ui.work('run-use');
+      await ui.finish(python([{code:ui.pending().code}])[0]);
+      assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/continuing-report/);
+      assert.ok(ui.dialog.querySelector('#neighbour-result').innerHTML.includes(p.outcome));assert.equal(s.coins,coins);
+      ui.work('project',p.id);assert.equal(ui.dialog.querySelector('#neighbour-code').value,p.solution);
+      ui.work('run');await ui.finish(python([{code:ui.pending().code,checks:ui.pending().checks}])[0]);assert.equal(s.coins,coins);
+      ui.work('stories-home');assert.equal(ui.dialog.open,false);
+    }
+    assert.equal(ui.rewards().length,6);assert.equal(exhibitCatalog(s).filter(p=>p.place==='stories').length,6);
+  }finally{ui.dispose();}
+});
+
 test('shared UI completes projects, shows their village changes, and runs saved tools without repeat rewards',async()=>{
   const ui=harness(restored(),'shared');
   try{
@@ -427,7 +472,9 @@ test('all neighbour project dialogs and place journals have balanced markup and 
   for(const p of clockProjects){prepareClock(s,p);completeNeighbour(s,p.id,p.solution);}
   for(const p of [...sharedProjects,...lakeProjects,...discoveryProjects])completeNeighbour(s,p.id,p.solution);
   finishHaven(s);
-  const pages={},views={teaching:'apprentices',shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries',shelter:'shelter',observatory:'observatory'};
+  s.completed=quests.map(q=>q.id);s.projects=projects.map(p=>p.id);
+  for(const p of [...testBenchProjects,...continuingProjects])assert.equal(completeNeighbour(s,p.id,p.solution).ok,true);
+  const pages={},views={teaching:'apprentices',shared:'shared',lake:'lake',clock:'clockwork',discovery:'discoveries',shelter:'shelter',observatory:'observatory',testing:'clockwork',continuing:'stories'};
   for(const p of neighbourProjects){
     const ui=harness(s,views[p.kind]);
     try{

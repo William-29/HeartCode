@@ -2,6 +2,7 @@ import { freshHaven, normalizeHaven, havenExpression, skyPredictionSource } from
 import { neighbourProjects, neighbourProject, teachingProjects } from './neighbour-content.js';
 import { restorationById } from './restoration-content.js';
 import { discoveries } from './clockwork-content.js';
+import { projects } from './projects.js';
 
 export const weathers=['sun','cloud','rain'];
 export const shores=['reeds','jetty'];
@@ -17,6 +18,7 @@ export function neighbourUnlocked(state,p){
     const prior=teachingProjects.filter(x=>x.npc===p.npc&&x.requires<p.requires);
     if(prior.some(x=>!n.completed.includes(x.id)))return false;
   }
+  if(p.originalProjects?.some(id=>!state.projects.includes(id)))return false;
   if(p.buildings?.some(id=>!state.restoration.opened.includes(id)))return false;
   if(p.tools?.some(id=>!state.restoration.completed.includes(id)||!state.restoration.code[id]?.trim()))return false;
   if(p.skyRows && n.skyObservations.length<p.skyRows)return false;
@@ -27,6 +29,7 @@ export function lockReason(state,p){
   if(state.completed.length<p.requires)return `After ${p.requires} trail quests (${state.completed.length} completed).`;
   if(p.kind==='teaching'&&teachingProjects.some(x=>x.npc===p.npc&&x.requires<p.requires&&!state.neighbours.completed.includes(x.id)))return 'Finish your earlier conversation together first.';
   if(p.previous&&!state.neighbours.completed.includes(p.previous))return 'Finish the earlier project in this story first.';
+  if(p.originalProjects?.some(id=>!state.projects.includes(id)))return 'First help with '+p.originalProjects.filter(id=>!state.projects.includes(id)).map(id=>projects.find(x=>x.id===id)?.title||id).join(', ')+'.';
   if(p.buildings?.some(id=>!state.restoration.opened.includes(id)))return `Reopen the ${p.buildings.join(', ')} in Founders’ Court first.`;
   if(p.tools?.some(id=>!state.restoration.code[id]?.trim()))return 'Revisit the restoration and save the working tools first.';
   if(p.observations&&state.neighbours.observations.length<p.observations)return `Record ${p.observations} casts (${state.neighbours.observations.length} so far).`;

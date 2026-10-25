@@ -68,7 +68,7 @@ function challengeMarkup(state,item) {
 }
 const buttonWork=(action,label,disabled=false)=>`<button class="button ${action==='run'?'primary':'outline'}" data-work="${action}" ${disabled?'disabled':''}>${label}</button>`;
 
-export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,cancelRun,root=document.querySelector('.adventure-hub'),dialog=document.querySelector('#adventure-dialog')}) {
+export function mountAdventures({state,onSave,onReward,onLearn=()=>{},onOpen=()=>{},runPython,cancelRun,root=document.querySelector('.adventure-hub'),dialog=document.querySelector('#adventure-dialog')}) {
   let alive=true, serial=0, current=null, busy=false;
   const save=()=>onSave();
   const message=text=>{const el=root.querySelector('#adventure-message');if(el)el.textContent=text;};
@@ -107,7 +107,7 @@ export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,
   function openChallenge(id){
     const item=adventureById(id);
     if(!ready(state,item)){message('Complete the lesson requirement and activity steps first.');return;}
-    show(challengeMarkup(state,item));current=item;
+    onOpen('adventure:'+id);show(challengeMarkup(state,item));current=item;
   }
   function openCustomer(id) {
     let demo;try{demo=customerSource(state,id);}catch(error){message(error.message);return;}
@@ -180,5 +180,5 @@ export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,
   }
   const onClose=event=>{if(event.type==='close'&&dialog.open)return;stop();const last=current;current=null;focusActivity(last);};
   root.addEventListener('click',click);dialog.addEventListener('click',work);dialog.addEventListener('input',input);dialog.addEventListener('keydown',keydown);dialog.addEventListener('close',onClose);dialog.addEventListener('cancel',onClose);
-  return {dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',work);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('close',onClose);dialog.removeEventListener('cancel',onClose);}};
+  return {openStory(id){const item=adventureById(id);if(!item)return;section=item.area;if(item.area==='mysteries')selectedCase=id;redraw(true);if(ready(state,item))openChallenge(id);},dispose(){alive=false;close();root.removeEventListener('click',click);dialog.removeEventListener('click',work);dialog.removeEventListener('input',input);dialog.removeEventListener('keydown',keydown);dialog.removeEventListener('close',onClose);dialog.removeEventListener('cancel',onClose);}};
 }

@@ -1,4 +1,6 @@
 import { shelterProjects, observatoryProjects } from './haven-content.js';
+import { testBenchProjects } from './testbench-content.js';
+import { continuingProjects } from './continuing-content.js';
 // Teaching, shared work, and observation extend the same learning trail.
 import { clockProjects, discoveryProjects } from './clockwork-content.js';
 export const apprentices = [
@@ -112,5 +114,5 @@ export const lakeProjects=[
     'import copy\nf=scope.get("predict_catch")\nassert callable(f)\nr=[{"weather":"sun","catch":"Perch"},{"weather":"rain","catch":"Tench"},{"weather":"rain","catch":"Tench"},{"weather":"sun","catch":"Minnow"}];before=copy.deepcopy(r)\nassert f(r,"rain")=="Tench"\nassert f(r,"sun")=="Minnow", "Break ties alphabetically."\nassert f(r,"cloud")=="Tench", "Use all training rows for unseen weather."\nassert f([],"sun") is None\nassert r==before',
     {observations:18,previous:'lake-frequency',story:'Kit joins you at the jetty. Together you will keep every fifth observation aside, train on the rest, and compare the guesser with a simple overall-most-common baseline.',outcome:'Your first lake model is ready for an honest test. Being wrong is useful evidence, too.'})
 ];
-export const neighbourProjects=[...teachingProjects,...sharedProjects,...lakeProjects,...clockProjects,...discoveryProjects,...shelterProjects,...observatoryProjects];
+export const neighbourProjects=[...teachingProjects,...sharedProjects,...lakeProjects,...clockProjects,...discoveryProjects,...shelterProjects,...observatoryProjects,...testBenchProjects,...continuingProjects];
 export const neighbourProject=id=>neighbourProjects.find(p=>p.id===id);
