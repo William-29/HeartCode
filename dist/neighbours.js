@@ -1,4 +1,4 @@
-import { renderHaven, havenBook, animalStory, introductionReview, havenReport } from './haven-ui.js';
+import { renderHaven, havenBook, animalStory, introductionReview, havenReport, havenOutcome } from './haven-ui.js';
 import { adoptPet } from './state.js';
 import { pets } from './content.js';
 import { havenCompanions } from './haven-companions.js';
@@ -65,7 +65,7 @@ function projectMarkup(state,p){
   if(!available)return `${top('A PROMISE FOR LATER')}<h2>${p.title}</h2><p>${p.story||p.lesson}</p><p class="neighbour-lock">${icon('lock')} ${esc(lockReason(state,p))}</p><div class="community-actions"><a class="button outline" href="#quests">Visit the learning trail</a><a class="button outline" href="#courtyard">Visit the restoration</a></div>`;
   return `${top(p.kind==='shelter'?'ROWAN’S CARE LEDGER':p.kind==='observatory'?'ELIO’S SKY JOURNAL':p.kind==='teaching'?'LEARNING BY HELPING':p.kind==='shared'?'THE SHARED WORK LEDGER':p.kind==='clock'?'MIRA’S REPAIR BENCH':p.kind==='discovery'?'THINGS WE FOUND TOGETHER':'THE LAKE JOURNAL')}<h2>${p.title}</h2><p>${p.lesson||p.story}</p>${p.kind==='teaching'?teachingSteps(state,p):p.inspection?inspectionMarkup(state,p):''}
     ${p.tools?`<details class="borrowed-tools"><summary>The working tools you are connecting</summary><p>These are your saved restoration functions. They are loaded for this project; you can call them directly.</p>${p.tools.map(id=>`<h4>${esc(id.replaceAll('-',' '))}</h4><pre>${esc(state.restoration.code[id])}</pre>`).join('')}</details>`:''}
-    <h3>${p.kind==='teaching'?'3. Mend the code together':'Make the next small connection'}</h3><p>${p.task}</p><label for="neighbour-code">Your Python</label><textarea id="neighbour-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(state.neighbours.drafts[p.id]??state.neighbours.code[p.id]??p.starter)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p>
+    <h3>${p.kind==='teaching'?'3. Mend the code together':'Make the next small connection'}</h3><p>${p.task}</p><label for="neighbour-code">Your Python</label><textarea id="neighbour-code" class="adventure-code" data-gramm="false" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(state.neighbours.drafts[p.id]??state.neighbours.code[p.id]??p.starter)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p>
     <div class="community-actions">${button('run','Run & check',p.id)}${button('stop','Stop','',true)}${button('reset','Restore starter',p.id)}${done&&p.kind!=='teaching'?button('use','Use my saved tool',p.id):''}</div>
     <details><summary>A gentle hint</summary><p>${p.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(p.solution)}</pre></details>
     <p class="neighbour-note">${done?'First-completion rewards already earned. You can revise and run this as often as you like.':`${p.xp} XP · ${p.coins} coins when you first finish. ${p.kind==='teaching'?'Explain and choose a test before completing the repair.':''}`}</p>
@@ -73,7 +73,7 @@ function projectMarkup(state,p){
 }
 function journalMarkup(state,filter='all'){
   const all=state.neighbours.observations,rows=filter==='all'?all:all.filter(r=>r.weather===filter),summary=lakeSummary(rows),split=splitObservations(all);
-  return `${top('WILLOWMERE · YOUR OBSERVATIONS')}<h2>The days beside the water</h2><p>Every mark is one cast, not one fish. This journal keeps the newest 120 observations. The charts describe your fictional game sample; they are not promises about the next cast.</p><label for="journal-filter">Compare weather <select id="journal-filter"><option value="all">All weather</option>${weathers.map(w=>`<option value="${w}" ${filter===w?'selected':''}>${labelWeather(w)}</option>`).join('')}</select></label><p>${rows.length} casts in this view · ${new Set(rows.map(r=>r.weather)).size} weather conditions · ${new Set(rows.map(r=>r.shore)).size} shore spots</p>
+  return `${top('WILLOWMERE · YOUR OBSERVATIONS')}<h2>The days beside the water</h2><p>Every mark is one cast, not one fish. This journal keeps the newest 120 observations. The charts describe your fictional game sample; they are not promises about the next cast.</p><label for="journal-filter">Compare weather <select id="journal-filter"><option value="all">All weather</option>${weathers.map(w=>`<option value="${w}" ${filter===w?'selected':''}>${labelWeather(w)}</option>`).join('')}</select></label><p>${rows.length} ${rows.length===1?'cast':'casts'} in this view · ${new Set(rows.map(r=>r.weather)).size} weather ${new Set(rows.map(r=>r.weather)).size===1?'condition':'conditions'} · ${new Set(rows.map(r=>r.shore)).size} shore ${new Set(rows.map(r=>r.shore)).size===1?'spot':'spots'}</p>
     <div class="lake-chart" role="img" aria-label="${esc(summary.map(r=>`${r.name}: ${r.count} of ${rows.length}`).join('; '))}">${summary.map(r=>`<div><span>${r.name}</span><i><b style="width:${r.frequency===null?0:r.frequency*100}%"></b></i><strong>${r.count} <small>(${r.frequency===null?'—':(r.frequency*100).toFixed(1)+'%'})</small></strong></div>`).join('')}</div>
     <aside class="lake-insight"><h3>A useful question</h3><p>${rows.length<6?'What changes if you include the casts where nothing bit? Collect a few more before looking for patterns.':new Set(all.map(r=>r.weather)).size<2?'All your observations come from one kind of weather. Try another condition before claiming a weather pattern.':'You chose both the weather and the shore. A difference between groups does not prove that weather caused it. Try balanced samples from both shore spots.'}</p><p>The prediction project keeps every fifth cast aside: ${split.train.length} training and ${split.test.length} test observations. A model that remembers the training data may still guess badly on these other casts.</p></aside>
     <h3>From observations to Python</h3>${progressList(state,lakeProjects)}<details><summary>Read the observation pages (${rows.length} rows)</summary><table class="lake-records"><thead><tr><th>Cast</th><th>Weather</th><th>Shore</th><th>Observation</th></tr></thead><tbody>${rows.slice().reverse().map(r=>`<tr><td>${r.id}</td><td>${labelWeather(r.weather)}</td><td>${r.shore}</td><td>${r.catch}</td></tr>`).join('')}</tbody></table>${!rows.length?'<p>Your first cast will make the first entry.</p>':''}</details>`;
@@ -81,8 +81,8 @@ function journalMarkup(state,filter='all'){
 function sharedMarkup(state){
   return `${top('FOUNDERS’ COURT · THE MORNING ROUND')}<h2>Our doors are open. What can we do together?</h2><p>Restoring a building gave it a future. Connecting the work gives the neighbours a reason to visit each other. Your Python joins the greenhouse’s baskets, the bakery’s oven, and the library’s recipe books.</p>${progressList(state,sharedProjects)}<div class="shared-memories">${sharedProjects.filter(p=>state.neighbours.completed.includes(p.id)).map(p=>`<blockquote>${p.outcome}${button('use','See the village use it',p.id)}</blockquote>`).join('')}</div>`;
 }
-function reportMarkup(p,r){
-  if(['shelter','observatory'].includes(p.kind))return havenReport(p,r);
+function reportMarkup(state,p,r){
+  if(['shelter','observatory'].includes(p.kind))return havenReport(p,r,state);
   if(['clock','discovery'].includes(p.kind))return clockReport(p,r);
   if(p.kind==='shared'){
     const parts=p.id==='shared-herbs'?[['Pick from the greenhouse',r.pick],['Bundles in the basket',r.total]]:p.id==='shared-books'?[['Books packed',r.served],['Waiting their turn',r.waiting],['Copies left',r.stock]]:[['Kit’s oven batches',r.oven?.batches],['Elio’s morning observations',r.garden],['Nell’s book satchel',r.library?.served],['Waiting for a book',r.library?.waiting]];
@@ -185,7 +185,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
         const reward=completeNeighbour(state,p.id,code);if(!reward.ok)throw new Error('Finish the earlier steps first.');
         onLearn(reward);
         onSave();repaint();
-        output(`${result.output||''}\n${reward.replay?'Your revised Python passed. First-completion rewards already earned.':`Made together. +${reward.xp} XP · +${reward.coins} coins`}\n\n${p.outcome||apprentices.find(a=>a.id===p.npc).voices[confidence(state,p.npc)]}`);
+        output(`${result.output||''}\n${reward.replay?'Your revised Python passed. First-completion rewards already earned.':`Made together. +${reward.xp} XP · +${reward.coins} coins`}\n\n${havenOutcome(state,p)||apprentices.find(a=>a.id===p.npc).voices[confidence(state,p.npc)]}`);
         const area=dialog.querySelector('#neighbour-result');
         const friend=havenCompanions.find(a=>a.helpProject===p.id);
         if(area)area.innerHTML=p.kind==='teaching'?button('meet','See how your apprentice is doing',p.npc):`${friend?button('animal',`Visit ${friend.name} · ${state.owned.includes(friend.id)?'your friend':'ready to adopt'}`,friend.id):''}${button('use','See your work in the world',p.id)} <a class="exhibition-return" href="#courtyard/exhibition">Give it a place at the exhibition</a>`;
@@ -197,7 +197,7 @@ export function mountNeighbours({state,view,companion,onSave,onReward,onAdoption
       execute(code,'',result=>{
         const report=workingResult(result.output);output('Your saved Python ran successfully. This visit earns no repeat rewards.');
         if(p.id==='clock-melody')melody=report;
-        dialog.querySelector('#neighbour-result').innerHTML=reportMarkup(p,report);
+        dialog.querySelector('#neighbour-result').innerHTML=reportMarkup(state,p,report);
         if(p.kind==='shared')root.querySelector('.round-courier')?.classList.add('round-delivering');
       });
     }

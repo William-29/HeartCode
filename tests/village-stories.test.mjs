@@ -42,6 +42,9 @@ test('conversations explain locks and reveal each villager story as projects are
   for (const quest of content.quests.slice(0, 20)) stateApi.completeQuest(state, quest.id);
   const second = byId('pantry-ledger');
   assert.match(projectRequirement(state, second), /A little help at the till/);
+  const waitingForFirstGame = renderVillager(state, 'mira');
+  assert.match(waitingForFirstGame, /data-action="project" data-id="project-guessing-game">Begin the earlier project/);
+  assert.doesNotMatch(waitingForFirstGame, /Follow the quest trail/);
   for (const villager of villagers) {
     const own = projects.filter(project => project.npc === villager.id);
     stateApi.completeProject(state, own[0].id, own[0].solution);
@@ -142,13 +145,18 @@ test('quotes, backslashes and Python-looking text stay inert when demo values en
 // The adapter exercises the actual app functions and queued native-dialog close
 // ordering. It deliberately makes no assertions about browser layout or pixels.
 function appHarness(stored = new Map()) {
-  const closeEvents = [], nodes = new Map(), selectors = new Map(), pendingRuns = [], mounted = [], petSessions = [], roomSessions = [];
+  const closeEvents = [], nodes = new Map(), selectors = new Map(), pendingRuns = [], mounted = [], petSessions = [], roomSessions = [], villageWalks = [];
   const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   class Element extends EventTarget {
-    constructor(id = '') { super(); this.id = id; this.open = false; this.isConnected = true; this.children = []; this.nodes = new Map(); this.html = ''; this.textContent = ''; this.value = ''; this.disabled = false; this.hidden = false; this.style = {}; this.classes = new Set(); this.classList = { add: (...items) => items.forEach(item => this.classes.add(item)), remove: (...items) => items.forEach(item => this.classes.delete(item)), toggle: (item, value) => value ? this.classes.add(item) : this.classes.delete(item) }; }
+    constructor(id = '') { super(); this.id = id; this.open = false; this.isConnected = true; this.children = []; this.nodes = new Map(); this.html = ''; this.textContent = ''; this.value = ''; this.disabled = false; this.hidden = false; this.style = {}; this.dataset = {}; this.scrollTop = 0; this.classes = new Set(); this.classList = { add: (...items) => items.forEach(item => this.classes.add(item)), remove: (...items) => items.forEach(item => this.classes.delete(item)), toggle: (item, value) => value ? this.classes.add(item) : this.classes.delete(item) }; }
     set innerHTML(html) {
       for (const node of this.nodes.values()) node.isConnected = false;
       this.html = html; this.nodes = new Map();
+      if (this.id === 'app') {
+        const workspace = new Element();
+        workspace.dataset.route = html.match(/class="workspace" data-route="([^"]+)"/)?.[1];
+        selectors.set('.workspace', workspace);
+      }
       for (const match of html.matchAll(/<(\w+)\b[^>]*\bid="([^"]+)"[^>]*>/g)) {
         const node = new Element(match[2]);
         if (match[1] === 'details') node.open = /\sopen(?:\s|>)/.test(match[0]);
@@ -161,7 +169,7 @@ function appHarness(stored = new Map()) {
     querySelectorAll() { return []; }
     showModal() { this.open = true; }
     close() { if (this.open) { this.open = false; closeEvents.push(() => this.dispatchEvent(new Event('close'))); } }
-    focus() {}
+    focus() { document.activeElement = this; }
     append(child) { this.children.push(child); child.parent = this; }
     prepend(child) { this.children.unshift(child); child.parent = this; }
     remove() { this.isConnected = false; }
@@ -196,7 +204,10 @@ function appHarness(stored = new Map()) {
     setTimeout: () => 1, clearTimeout() {}, matchMedia: () => ({ matches: false }),
     icon: () => '<svg></svg>', sprite: () => '<svg></svg>', bunting: () => '', teaCup: () => '', garden: () => '', rewardChest: () => '',
     showCelebration: (value, options) => ({ parent: options.parent, dispose() {} }),
-    renderVillage: villageMarkup, mountVillage: options => { mounted.push(options); return { pause() {}, dispose() {} }; },
+    renderVillage: villageMarkup, mountVillage: options => {
+      mounted.push(options);
+      return { pause() {}, dispose() {}, followDiscovery(id) { villageWalks.push(id); document.querySelector('.village-viewport').focus(); } };
+    },
     renderWorld, mountWorld: () => ({ dispose() {} }), travelForCompletion: () => null,
     runPython, cancelRun, FormData: class { constructor(form) { this.entries = Object.entries(form.values || {}); } [Symbol.iterator]() { return this.entries[Symbol.iterator](); } }
   };
@@ -210,7 +221,7 @@ function appHarness(stored = new Map()) {
     flushClose: () => { while (closeEvents.length) closeEvents.shift()(); },
     finish: result => { assert.ok(currentRun, 'there is an active Python run'); const run = currentRun; currentRun = null; run.resolve(result); },
     cancelled: () => cancelled,
-    pendingRuns, stored, petSessions, roomSessions,
+    pendingRuns, stored, petSessions, roomSessions, villageWalks,
     click: (action, id, extra = {}) => {
       const button = { dataset: { action, id, ...extra }, disabled: false };
       const event = new Event('click');
@@ -219,6 +230,19 @@ function appHarness(stored = new Map()) {
     }
   };
 }
+
+test('the discovery-to-village handoff keeps movement focus instead of cancelling the companion walk', () => {
+  const app = appHarness();
+  app.evaluate('pendingDiscoveryWalk = "discovery-key"; location.hash = "#village";');
+  app.evaluate('window').dispatchEvent(new Event('hashchange'));
+  assert.deepEqual(app.villageWalks, ['discovery-key']);
+  assert.equal(app.evaluate('pendingDiscoveryWalk'), null);
+  assert.equal(app.evaluate('document.activeElement'), app.selector('.village-viewport'));
+  app.evaluate('location.hash = "#lake";');
+  app.evaluate('window').dispatchEvent(new Event('hashchange'));
+  assert.equal(app.evaluate('document.activeElement'), app.node('main'));
+  assert.deepEqual(app.villageWalks, ['discovery-key']);
+});
 
 test('two app tabs never roll back newer rewards and clean tabs follow storage updates', () => {
   const shared = new Map(), first = appHarness(shared), second = appHarness(shared);
@@ -573,13 +597,19 @@ test('weather and independent sound settings save through the actual settings fo
 test('pet activity completion updates the companion page, persists rewards, and equips the unlocked room bed', () => {
   const app = appHarness(); app.evaluate("route = 'companions'; render()");
   const before = { coins:app.state().coins, xp:app.state().xp };
-  for (const action of ['pet','fetch','train']) app.petSessions.at(-1).onComplete(action);
+  app.node('main').scrollTop = 240;
+  for (const action of ['pet','fetch','train']) {
+    app.petSessions.at(-1).onComplete(action);
+    assert.equal(app.node('main').scrollTop,240,'playing keeps the companion controls at the current reading position');
+  }
   assert.equal(app.state().petCare.pip.points,9); assert.equal(app.state().petCare.pip.bed,'blanket');
   assert.deepEqual([...app.state().petCare.pip.tricks],['hop']);
   app.petSessions.at(-1).onComplete('fetch');assert.equal(app.state().petCare.pip.points,9);
   app.click('pet-bed','none');assert.equal(app.state().petCare.pip.bed,null);
   app.click('pet-bed','blanket');
+  assert.equal(app.node('main').scrollTop,240,'choosing a bed does not jump to the page heading');
   app.evaluate("route = 'room'; render()");
+  assert.equal(app.node('main').scrollTop,0,'a different place starts at its own entrance');
   assert.ok(app.node('app').innerHTML.includes('bed-blanket'));
   assert.equal(stateApi.normalizeState(JSON.parse(app.stored.get(stateApi.SAVE_KEY))).petCare.pip.points,9);
   assert.deepEqual({ coins:app.state().coins, xp:app.state().xp },before);

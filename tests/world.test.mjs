@@ -77,6 +77,7 @@ function mapHarness(run, reduced = false) {
     setPointerCapture() { this.captured = true; }
     hasPointerCapture() { return !!this.captured; }
     releasePointerCapture() { this.captured = false; }
+    getBoundingClientRect() { return { left: 120, top: 80, width: this.clientWidth, height: this.clientHeight }; }
     closest() { return null; }
   }
   const document = new Element(), root = new Element(), viewport = new Element(), canvas = new Element(), actor = new Element(), media = new Element();
@@ -192,3 +193,64 @@ test('zoom controls still respond immediately after dragging at either end of th
     session.dispose();
   },true);
 });
+
+function wheel(viewport, deltaY, properties = {}) {
+  const event = new Event('wheel', { cancelable: true });
+  for (const [key, value] of Object.entries({ deltaY, deltaMode: 0, clientX: 720, clientY: 380, ...properties })) Object.defineProperty(event, key, { value });
+  viewport.dispatchEvent(event);
+  return event;
+}
+
+function camera(canvas) {
+  const [, x, y, zoom] = canvas.style.transform.match(/translate\(([-\d.e]+)px, ([-\d.e]+)px\) scale\(([-\d.e]+)\)/);
+  return { x: Number(x), y: Number(y), zoom: Number(zoom) };
+}
+
+test('wheel zoom keeps the map point under the cursor steady and does not change progress', () => mapHarness(({ viewport, canvas }) => {
+  const state = freshState(); state.completed = quests.slice(0, 40).map(q => q.id);
+  const saved = JSON.stringify(state);
+  const session = mountWorld({ state, reducedMotion: true, onSelect() { assert.fail('Zoom must not select a quest'); } });
+  const before = camera(canvas), point = { x: (600 - before.x) / before.zoom, y: (300 - before.y) / before.zoom };
+  assert.equal(wheel(viewport, -100).defaultPrevented, true);
+  const after = camera(canvas);
+  assert.ok(after.zoom > before.zoom);
+  assert.ok(Math.abs(point.x * after.zoom + after.x - 600) < 1e-8);
+  assert.ok(Math.abs(point.y * after.zoom + after.y - 300) < 1e-8);
+  wheel(viewport, 100);
+  assert.ok(Math.abs(camera(canvas).zoom - before.zoom) < 1e-8);
+  assert.equal(JSON.stringify(state), saved);
+  session.dispose();
+}));
+
+test('wheel units, zoom limits, browser shortcuts and cleanup behave consistently', () => {
+  const scales = [];
+  for (const [deltaY, deltaMode] of [[96, 0], [6, 1], [.16, 2]]) mapHarness(({ viewport, canvas }) => {
+    const session = mountWorld({ state: freshState(), reducedMotion: true, onSelect() {} });
+    const original = canvas.style.transform;
+    for (const properties of [{ ctrlKey: true }, { metaKey: true }]) {
+      assert.equal(wheel(viewport, -100, properties).defaultPrevented, false);
+      assert.equal(canvas.style.transform, original);
+    }
+    assert.equal(wheel(viewport, 0, { deltaX: 100 }).defaultPrevented, false);
+    wheel(viewport, deltaY, { deltaMode }); scales.push(camera(canvas).zoom);
+    for (let i = 0; i < 30; i++) wheel(viewport, -1000);
+    assert.equal(camera(canvas).zoom, 1.5);
+    for (let i = 0; i < 40; i++) wheel(viewport, 1000);
+    assert.equal(camera(canvas).zoom, .125);
+    session.dispose(); const disposed = canvas.style.transform;
+    assert.equal(wheel(viewport, -100).defaultPrevented, false);
+    assert.equal(canvas.style.transform, disposed);
+  });
+  assert.ok(scales.every(scale => Math.abs(scale - scales[0]) < 1e-10));
+});
+
+test('wheel input during a drag does not fight the pointer camera', () => mapHarness(({ viewport, canvas }) => {
+  const session = mountWorld({ state: freshState(), reducedMotion: true, onSelect() {} });
+  const event = new Event('pointerdown');
+  for (const [key, value] of Object.entries({ button: 0, pointerId: 1, clientX: 500, clientY: 200 })) Object.defineProperty(event, key, { value });
+  viewport.dispatchEvent(event);
+  const before = canvas.style.transform;
+  assert.equal(wheel(viewport, -100).defaultPrevented, true);
+  assert.equal(canvas.style.transform, before);
+  session.dispose();
+}));

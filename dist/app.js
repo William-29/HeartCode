@@ -131,9 +131,17 @@ function navigate(next) {
   if ((route === next && !location.hash.includes('/')) || location.hash.replace(/^#/, '') === next) { render(); return; }
   location.hash = next;
 }
-window.addEventListener('hashchange', () => { leaveActivity(); route = routeFromHash(location.hash); render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', () => {
+  leaveActivity(); route = routeFromHash(location.hash); render();
+  // A companion-led walk already owns focus in the village. Keep the player
+  // inside that movement surface instead of cancelling it through focusout.
+  (route === 'village' ? $('.village-viewport') : $('#main'))?.focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+});
 
 function render() {
+  const previousWorkspace = $('.workspace');
+  const retainedScroll = previousWorkspace?.dataset.route === route ? $('#main')?.scrollTop ?? 0 : 0;
   neighbourSession?.dispose(); neighbourSession = null;
   communitySession?.dispose(); communitySession = null;
   adventureSession?.dispose(); adventureSession = null;
@@ -230,6 +238,7 @@ function render() {
     pendingTravel = null;
     worldSession = mountWorld({ state, selectedIndex: mapSelection, travel, reducedMotion: state.reducedMotion, onSelect: index => { mapSelection = index; } });
   }
+  $('#main').scrollTop = retainedScroll;
 }
 
 function saveAdventure() {
@@ -369,7 +378,7 @@ function downloadProject(id) {
   toast('Your Python project is ready to keep.', 'download');
 }
 
-function editorMarkup(code, id) { return `<div class="editor"><div class="editor-toolbar"><span><span class="code-dot"></span> ${id === 'practice-code' ? 'playground.py' : 'your_spell.py'}</span><span>PYTHON 3</span></div><div class="editor-body"><div class="line-numbers" aria-hidden="true">${code.split('\n').map((_, i) => i + 1).join('\n')}</div><textarea id="${id}" class="code-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" maxlength="30000" aria-label="Python code editor">${esc(code)}</textarea></div><div class="editor-footer">Ctrl / ⌘ + Enter to run <span>Tab indents · Esc then Tab to leave</span></div></div>`; }
+function editorMarkup(code, id) { return `<div class="editor"><div class="editor-toolbar"><span><span class="code-dot"></span> ${id === 'practice-code' ? 'playground.py' : 'your_spell.py'}</span><span>PYTHON 3</span></div><div class="editor-body"><div class="line-numbers" aria-hidden="true">${code.split('\n').map((_, i) => i + 1).join('\n')}</div><textarea id="${id}" class="code-input" data-gramm="false" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" maxlength="30000" aria-label="Python code editor">${esc(code)}</textarea></div><div class="editor-footer">Ctrl / ⌘ + Enter to run <span>Tab indents · Esc then Tab to leave</span></div></div>`; }
 const practiceSamples = {
   hello: '# Your own little corner of the tavern.\n# Try changing the name and run your code!\n\nname = "Adventurer"\nprint("Welcome to Hearthcode, " + name + "!")\n',
   loop: 'companions = ["Pip", "Fern", "Ember"]\n\nfor friend in companions:\n    print("Hello, " + friend + "!")',

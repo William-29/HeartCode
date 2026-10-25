@@ -18,7 +18,7 @@ export function renderWorld(state, companion, selectedIndex, receipt) {
     <section class="world-shell" aria-label="The Hearthlands adventure map">
       <div class="world-topline"><span>${icon('map')} THE HEARTHLANDS <span class="world-divider">/</span> <b id="world-location">${regionForStop(current).mood}</b></span><span class="world-weather">${icon('spark')} Always a good day to wander</span></div>
       <div class="world-map-stage">
-      <div class="world-viewport" tabindex="0" role="region" aria-label="Adventure map. Drag to explore; use arrow keys to pan, plus and minus to zoom, or the region selector to jump." aria-describedby="world-instructions">
+      <div class="world-viewport" tabindex="0" role="region" aria-label="Adventure map. Drag to explore; scroll to zoom, use arrow keys to pan, plus and minus to zoom, or the region selector to jump." aria-describedby="world-instructions">
         <div class="world-canvas" style="width:${WORLD_WIDTH}px;height:${WORLD_HEIGHT}px">
           <img class="world-art world-art-original" src="assets/hearthlands.png" alt="" width="1600" height="1067" draggable="false">
           <img class="world-art world-art-expansion" src="assets/guildlands.png" alt="" width="3200" height="1067" draggable="false">
@@ -41,7 +41,7 @@ export function renderWorld(state, companion, selectedIndex, receipt) {
         <div class="world-controls" role="group" aria-label="Map controls"><button data-world="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><span id="world-zoom" aria-live="off">100%</span><button data-world="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><span class="control-divider"></span><button data-world="fit" aria-label="Show the whole world" title="Show the whole world">${icon('map')}</button><button data-world="follow" aria-label="Find my adventurer" title="Find my adventurer">${icon('paw')}</button></div>
         <div class="travel-announcement" role="status" aria-live="polite" hidden><span class="travel-status-dot"></span><span id="travel-message"></span><button data-world="skip">Skip walk ${icon('arrow')}</button><button class="arrival-quest" data-action="${state.completed.length === quests.length ? 'navigate' : 'quest'}" data-route="tavern" data-id="${quests[current].id}" hidden>${state.completed.length === quests.length ? 'Back to the tavern' : 'Begin next quest'} ${icon('arrow')}</button></div>
       </div>
-      <div class="world-bottomline"><span id="world-instructions">Drag to wander <span>·</span> Select a stop to discover its quest</span><div><span class="legend-dot cleared"></span> Explored <span class="legend-dot current"></span> Your next quest <span class="legend-dot locked"></span> Yet to discover</div></div>
+      <div class="world-bottomline"><span id="world-instructions">Drag to wander <span>·</span> Scroll to zoom <span>·</span> Select a stop to discover its quest</span><div><span class="legend-dot cleared"></span> Explored <span class="legend-dot current"></span> Your next quest <span class="legend-dot locked"></span> Yet to discover</div></div>
     </section>
     ${receipt ? renderReceipt(receipt) : ''}
     <div id="world-inspector" aria-live="polite">${renderStop(state, selected)}</div>
@@ -102,11 +102,11 @@ export function mountWorld({ state, selectedIndex, travel, reducedMotion, onSele
     document.querySelector('#world-inspector').innerHTML = renderStop(state, index);
     if (follow) center(stops[index], true);
   }
-  function zoomTo(value) {
+  function zoomTo(value, anchor = { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 }) {
     finishTravel(); cancelAnimationFrame(cameraFrame);
     const next = Math.max(Math.min(.24, viewport.clientWidth / WORLD_WIDTH, viewport.clientHeight / WORLD_HEIGHT), Math.min(1.5, value));
-    const centerPoint = { x: (viewport.clientWidth / 2 - pan.x) / zoom, y: (viewport.clientHeight / 2 - pan.y) / zoom };
-    zoom = next; pan = { x: viewport.clientWidth / 2 - centerPoint.x * zoom, y: viewport.clientHeight / 2 - centerPoint.y * zoom }; paint();
+    const centerPoint = { x: (anchor.x - pan.x) / zoom, y: (anchor.y - pan.y) / zoom };
+    zoom = next; pan = { x: anchor.x - centerPoint.x * zoom, y: anchor.y - centerPoint.y * zoom }; paint();
   }
   function finishTravel() {
     if (!walking || disposed) return;
@@ -132,6 +132,16 @@ export function mountWorld({ state, selectedIndex, travel, reducedMotion, onSele
     if (action === 'skip') finishTravel();
   });
   listen(viewport, 'scroll', () => { if (viewport.scrollLeft || viewport.scrollTop) { viewport.scrollLeft = 0; viewport.scrollTop = 0; } });
+  listen(viewport, 'wheel', event => {
+    // Keep browser zoom shortcuts available, and leave horizontal gestures alone.
+    if (event.ctrlKey || event.metaKey || !Number.isFinite(event.deltaY) || !event.deltaY) return;
+    event.preventDefault();
+    if (drag) return;
+    const bounds = viewport.getBoundingClientRect();
+    const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
+    const amount = Math.max(-240, Math.min(240, pixels));
+    zoomTo(zoom * Math.exp(-amount * .0015), { x: event.clientX - bounds.left, y: event.clientY - bounds.top });
+  }, { passive: false });
   listen(viewport, 'focusin', event => { const node = event.target.closest('.world-node'); if (node && !drag) center(stops[Number(node.dataset.index)], true); });
   listen(viewport, 'pointerdown', event => {
     if (event.button !== 0 || event.target.closest('.world-controls,.travel-announcement')) return;

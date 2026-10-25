@@ -228,7 +228,7 @@ test('lake UI records casts, changes conditions, filters the journal and runs an
   try{
     ui.change(ui.root,'lake-weather','rain');ui.change(ui.root,'lake-shore','reeds');
     ui.click('cast');assert.equal(s.neighbours.observations[0].weather,'rain');assert.equal(s.neighbours.observations[0].shore,'reeds');
-    ui.click('journal');assert.match(ui.dialog.innerHTML,/1 casts in this view/);
+    ui.click('journal');assert.match(ui.dialog.innerHTML,/1 cast in this view · 1 weather condition · 1 shore spot/);
     ui.change(ui.dialog,'journal-filter','sun');assert.match(ui.dialog.innerHTML,/0 casts in this view/);
     observations(s,24);
     for(const p of lakeProjects)completeNeighbour(s,p.id,p.solution);
@@ -406,6 +406,11 @@ test('Haven controller guides help, adoption, free re-equipping and focus back t
     const adoptedCoins=ui.state.coins;ui.work('adopt-companion','moss');assert.equal(ui.state.coins,adoptedCoins);
     ui.work('close');assert.equal(globalThis.document.activeElement.dataset.neighbour,'animal');assert.equal(globalThis.document.activeElement.dataset.id,'moss');
     assert.equal(ui.learned(),1);
+    ui.session.openDemo(p.id,true);ui.work('run-use');
+    await ui.finish(python([{code:ui.pending().code}])[0]);
+    assert.match(ui.dialog.querySelector('#neighbour-result').innerHTML,/Moss has a home with you/);
+    assert.doesNotMatch(ui.dialog.querySelector('#neighbour-result').innerHTML,/to adopt|90 coins/);
+    assert.equal(ui.state.coins,adoptedCoins);
   }finally{ui.dispose();}
 });
 

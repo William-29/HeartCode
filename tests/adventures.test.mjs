@@ -155,11 +155,11 @@ function uiHarness(state=freshState()){
       return new Element();
     }
     querySelectorAll(selector){return (this.buttons||[]).filter(b=>selector==='[data-work]'?b.dataset.work:b.dataset.adventure);}
-    closest(){return this;}contains(el){return this.buttons?.includes(el)||this.fields && [...this.fields.values()].includes(el);}
+    closest(selector){return selector==='main'?main:this;}contains(el){return this.buttons?.includes(el)||this.fields && [...this.fields.values()].includes(el);}
     focus(){globalThis.document.activeElement=this;}
     showModal(){this.open=true;}close(){if(this.open){this.open=false;this.dispatchEvent(new Event('close'));}}
   }
-  const root=new Element(),dialog=new Element();root.innerHTML=renderAdventures(state);
+  const root=new Element(),dialog=new Element(),main=new Element();root.innerHTML=renderAdventures(state);
   globalThis.document={activeElement:null,querySelector:selector=>selector==='.adventure-hub'?root:dialog};
   const session=mountAdventures({state,root,dialog,onLearn(){learned++;},onSave(){saves++;},onReward(){rewards++;},cancelRun(){cancels++;},runPython(code,checks,onPhase){onPhase('running');return new Promise(resolve=>{pending={code,checks,resolve};});}});
   const click=(target,key,value,id,index)=>{
@@ -167,7 +167,7 @@ function uiHarness(state=freshState()){
     if(target===root)root.buttons.push(el);
     const event=new Event('click');Object.defineProperty(event,'target',{value:el});target.dispatchEvent(event);
   };
-  return {state,root,dialog,click:(action,id,index)=>click(root,'adventure',action,id,index),work:action=>click(dialog,'work',action),
+  return {state,root,dialog,main,click:(action,id,index)=>click(root,'adventure',action,id,index),work:action=>click(dialog,'work',action),
     pending:()=>pending,rewards:()=>rewards,saves:()=>saves,cancels:()=>cancels,learned:()=>learned,
     async finish(result){pending.resolve(result);await Promise.resolve();await Promise.resolve();},
     dispose(){session.dispose();globalThis.document=originalDocument;},session};
@@ -215,9 +215,10 @@ test('shop customer UI runs the saved creation, rotates customers and grants no 
 test('train and garden UI support full visit, observation, fitting and planting flows',async()=>{
   const s=progressed(32),ui=uiHarness(s);
   try{
-    ui.click('section','station');ui.click('travel','forest');
+    ui.main.scrollTop=450;ui.click('section','station');assert.equal(ui.main.scrollTop,0);
+    ui.main.scrollTop=600;ui.click('travel','forest');assert.equal(ui.main.scrollTop,0);
     assert.match(ui.root.innerHTML,/YOU HAVE ARRIVED/);assert.match(ui.root.innerHTML,/Fernwood/);
-    ui.click('landmark','forest',0);assert.deepEqual(s.adventure.landmarks,['forest-0']);
+    ui.main.scrollTop=260;ui.click('landmark','forest',0);assert.deepEqual(s.adventure.landmarks,['forest-0']);assert.equal(ui.main.scrollTop,260);
     ui.click('challenge','forest-task');assert.equal(ui.dialog.open,true);ui.work('close');
     ui.click('travel','home');assert.equal(s.adventure.location,'home');
     ui.click('section','garden');gardenBeds.slice(0,4).forEach(b=>ui.click('observe',b.id));

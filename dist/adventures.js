@@ -12,29 +12,18 @@ const lock=(state,item)=>`Complete ${item.requires} trail quests to unlock · ${
 const status=(state,item)=>state.adventure.completed.includes(item.id)?'Finished · revisit any time':available(state,item)?`${item.xp} XP · ${item.coins} coins once`:lock(state,item);
 const portrait=name=>characterPortrait(name==='Rowan'?'rowan':name==='Mira'?'mira':'elio','adventure-portrait');
 
-// Small vector scenes keep destination artwork crisp at every screen size.
+// Keep the railway on the same illustrated journey as the village.
 export function stationScene(place='home') {
-  const snow=place==='snow', forest=place==='forest', sea=place==='seaside';
-  const sky=snow?'#bccbd7':forest?'#a0b9a0':sea?'#f4c6a0':'#e8bc96';
-  const ground=snow?'#e4e6df':forest?'#739275':sea?'#bdc9b0':'#c6ad86';
-  return `<svg class="railway-art" viewBox="0 0 1000 360" role="img" aria-label="${sea?'A seaside station with a lighthouse':snow?'A snowy station with warm windows':forest?'A woodland academy among lantern-lit trees':'A little village railway station at golden hour'}">
-    <defs><linearGradient id="rail-sky" x2="0" y2="1"><stop stop-color="${sky}"/><stop offset="1" stop-color="#ffe5b7"/></linearGradient><radialGradient id="rail-glow"><stop stop-color="#ffecac" stop-opacity=".8"/><stop offset="1" stop-color="#ffce73" stop-opacity="0"/></radialGradient></defs>
-    <rect width="1000" height="360" fill="url(#rail-sky)"/><circle cx="770" cy="70" r="39" fill="#fff1c4" opacity=".7"/>
-    <path d="M0 205Q130 60 300 170T650 150T1000 170V360H0" fill="${snow?'#a3b5bd':'#8fa58a'}"/><path d="M0 235Q200 130 430 205T1000 190V360H0" fill="${ground}"/>
-    ${sea?'<path d="M0 211Q300 190 620 216T1000 205V310H0" fill="#78acb1"/><path d="M20 242H230M570 256H850M80 274H390" stroke="#d4e4d4" stroke-width="3"/><path d="M800 219L814 101H842L858 219" fill="#f9e6c7"/><path d="M812 128H846M809 163H850" stroke="#ae6955" stroke-width="17"/><path d="M805 101L828 77L851 101" fill="#664d42"/>':''}
-    ${(forest?[55,150,275,720,835,940]:[50,135,900,965]).map((x,i)=>`<g transform="translate(${x},${forest?90:150})"><path d="M0 155V-25" stroke="#675d42" stroke-width="15"/><ellipse cy="0" rx="${forest?70:45}" ry="${forest?98:62}" fill="${snow?'#69877f':i%2?'#5e7d60':'#748956'}"/><ellipse cx="-12" cy="-20" rx="30" ry="45" fill="${snow?'#dce4dc':'#8ca16d'}" opacity=".65"/></g>`).join('')}
-    <ellipse cx="490" cy="295" rx="310" ry="23" fill="#584533" opacity=".23"/>
-    <path d="M260 166H644V290H260Z" fill="${snow?'#926d56':forest?'#a6875d':'#bd8d62'}"/><path d="M243 170L286 113H617L663 170Z" fill="#7b4f43"/><path d="M255 155L290 115H615L646 155" fill="${snow?'#f1e9d9':'#995f4b'}"/>
-    <path d="M276 182H630V193H276" stroke="#d7b482" stroke-width="5"/><rect x="424" y="205" width="57" height="85" fill="#4b6053"/>
-    ${[296,352,510,572].map(x=>`<rect x="${x}" y="209" width="35" height="48" rx="2" fill="#ffe2a0"/><path d="M${x+17} 209V257M${x} 233H${x+35}" stroke="#735945" stroke-width="3"/><circle class="station-light" cx="${x+17}" cy="233" r="57" fill="url(#rail-glow)"/>`).join('')}
-    <rect x="375" y="173" width="151" height="26" rx="3" fill="#f4e0b3"/><text x="450" y="191" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#564a3a">${place==='home'?'HEARTHWICK':trainStops.find(s=>s.id===place)?.name.toUpperCase()||''}</text>
-    <path d="M0 318H1000M0 343H1000" stroke="#6a6156" stroke-width="5"/>
-    ${Array.from({length:26},(_,i)=>`<path d="M${i*40} 310L${i*40+12} 354" stroke="#8d735b" stroke-width="7"/>`).join('')}
-    <g class="little-train"><rect x="40" y="275" width="122" height="48" rx="6" fill="#557569"/><rect x="133" y="258" width="42" height="65" rx="3" fill="#7c5043"/><rect x="140" y="264" width="27" height="24" fill="#ffe1a1"/><rect x="62" y="251" width="12" height="27" fill="#5e5246"/><path d="M47 324H181" stroke="#4e4940" stroke-width="8"/><circle cx="70" cy="327" r="12" fill="#4e4940"/><circle cx="146" cy="327" r="12" fill="#4e4940"/><circle cx="68" cy="230" r="12" fill="#fff0d6" opacity=".6"/><circle cx="58" cy="207" r="18" fill="#fff0d6" opacity=".35"/></g>
-    <path d="M690 284H770M698 270V301M762 270V301" stroke="#70563d" stroke-width="8"/><path d="M680 154V294" stroke="#5b5b47" stroke-width="6"/><rect x="669" y="146" width="22" height="32" rx="4" fill="#ffe0a1"/><circle cx="680" cy="164" r="52" fill="url(#rail-glow)"/>
-    ${snow?Array.from({length:22},(_,i)=>`<circle cx="${(i*139)%1000}" cy="${(i*67)%290}" r="2.5" fill="#fff7e5"/>`).join(''):''}
-  </svg>`;
+  const scenes = {
+    home: ['hearthwick', 'A lamplit village station, flower-filled platform and vintage steam train at sunset'],
+    seaside: ['brinehaven', 'Brinehaven harbour, a seaside station, striped awnings and little boats in turquoise water'],
+    snow: ['snowbell', 'Snowbell station, snowy timber cottages, warm windows and lanterns beside the mountain railway'],
+    forest: ['fernwood', 'Fernwood forest academy, ivy-covered study cottages, a glasshouse and a quiet woodland platform']
+  };
+  const [asset, label] = scenes[place] || scenes.home;
+  return `<img class="railway-art" src="assets/${asset}-station-v2.png" width="1536" height="1024" role="img" aria-label="${label}" alt="${label}">`;
 }
+
 function mysteries(state) {
   const item=adventureById(selectedCase)||adventures[0], a=state.adventure;
   const clues=a.clues[item.id]||[], done=a.completed.includes(item.id), unlocked=available(state,item);
@@ -62,18 +51,20 @@ function station(state) {
 }
 function garden(state) {
   const a=state.adventure, model=a.model, plot=a.planting, item=adventureById('garden-fit');
+  const hours=gardenBeds.filter(b=>a.observations.includes(b.id)).map(b=>b.x);
+  const rangeNote=hours.length?`Your recorded sunlight ranges from ${Math.min(...hours)} to ${Math.max(...hours)} hours. Outside that interval, the line is extrapolating into conditions you have not measured.`:'Record observations before choosing a prediction.';
   return `<div class="garden-intro"><div><p class="eyebrow">ELIO'S EXPERIMENT PATCH</p><h2>A garden that learns.</h2><p>Observe fictional sunflowers, fit a line, and compare its predictions with new growth. Collect observations now; the model workshop opens after 20 trail quests.</p></div>${portrait('Elio')}</div>
-    <div class="observation-garden" aria-label="Six sunflower observation beds">${gardenBeds.map((b,i)=>`<button class="observation-bed ${a.observations.includes(b.id)?'observed':''}" data-adventure="observe" data-id="${b.id}" aria-label="${a.observations.includes(b.id)?`Recorded bed ${i+1}: ${b.x} hours, ${b.y} centimetres`:`Observe bed ${i+1}`}"><span class="sunflower" style="--stem:${28+b.y*4}px"><span>✿</span></span><strong>Bed ${i+1}</strong><span>${a.observations.includes(b.id)?`${b.x} h sun · ${b.y} cm`:'Record observation'}</span></button>`).join('')}</div>
+    <div class="observation-garden" aria-label="Six sunflower observation beds">${gardenBeds.map((b,i)=>`<button class="observation-bed ${a.observations.includes(b.id)?'observed':''}" data-adventure="observe" data-id="${b.id}" aria-label="${a.observations.includes(b.id)?`Recorded bed ${i+1}: ${b.x} ${b.x===1?'hour':'hours'}, ${b.y} centimetres`:`Observe bed ${i+1}`}"><span class="sunflower" style="--stem:${28+b.y*4}px"><span>✿</span></span><strong>Bed ${i+1}</strong><span>${a.observations.includes(b.id)?`${b.x} h sun · ${b.y} cm`:'Record observation'}</span></button>`).join('')}</div>
     <div class="garden-workbench"><section><h3>1. Your observation notebook</h3><p>${a.observations.length} / 6 training observations collected. At least four are needed to fit a line.</p>${a.observations.length?`<table><caption>Training data · fictional one-week growth</caption><thead><tr><th>Bed</th><th>Sunlight (h/day)</th><th>Growth (cm)</th></tr></thead><tbody>${gardenBeds.filter(b=>a.observations.includes(b.id)).map(b=>`<tr><td>${b.id.toUpperCase()}</td><td>${b.x}</td><td>${b.y}</td></tr>`).join('')}</tbody></table>`:'<p class="muted">Click a sunflower to measure it.</p>'}<p class="muted">Three separate held-out beds are reserved for evaluation. Their labels never go into your fitting function.</p></section>
     <section><h3>2. Fit, then check</h3><p>${available(state,item)?'Build your fitting function, then run it on the observations in your notebook.':lock(state,item)}</p><div class="adventure-actions">${button('challenge',a.completed.includes(item.id)?'Edit fitting code':'Build the model',item.id,!ready(state,item))}${button('train','Fit & evaluate',item.id,!a.completed.includes(item.id)||a.observations.length<4)}</div>${model?`<div class="model-report"><strong>growth = ${model.slope.toFixed(3)} × sunlight + ${model.intercept.toFixed(3)}</strong><p>Held-out MAE: <b>${model.mae.toFixed(2)} cm</b><br>Training-mean baseline MAE: <b>${model.baselineMae.toFixed(2)} cm</b></p><small>Lower is better. Only ${heldOutBeds.length} held-out examples: this is a small experiment, not proof of a general rule.</small></div>`:'<p class="muted">Collecting another observation or editing your fitting code clears the old model. Fit again to use the new version.</p>'}</section></div>
-    <section class="prediction-patch"><div><h3>3. Plan a new bed</h3><p>Choose sunlight within the observed range. Your fitted line determines the predicted plant height.</p><label>Sunlight hours per day <input id="garden-hours" type="number" min="1" max="6" step="0.5" value="${plot?.hours||4}" ${model?'':'disabled'}></label>${button('plant','Plant with this prediction','',!model)}${plot?`<p>Prediction: <strong>${plot.predicted.toFixed(2)} cm</strong>${plot.revealed?` · Observed growth: <strong>${plot.actual.toFixed(1)} cm</strong><br>Absolute error: ${Math.abs(plot.actual-plot.predicted).toFixed(2)} cm`:' · The real growth is still covered.'}</p>${plot.revealed?'<p class="muted">This simulated new bed is another evaluation, not a training observation.</p>':button('grow','Advance one growing week')}`:''}</div><div class="prediction-plant">${plot?`<div><span class="sunflower predicted" style="--stem:${Math.max(10,Math.min(140,plot.predicted*8))}px"><span>✿</span></span><small>Predicted</small></div>${plot.revealed?`<div><span class="sunflower" style="--stem:${plot.actual*8}px"><span>✿</span></span><small>Observed</small></div>`:''}`:'<span class="empty-pot">A little room to grow.</span>'}</div></section>`;
+    <section class="prediction-patch"><div><h3>3. Plan a new bed</h3><p>Choose 1 to 6 sunlight hours. Your fitted line determines the predicted plant height.</p><p class="muted">${rangeNote}</p><label>Sunlight hours per day <input id="garden-hours" type="number" min="1" max="6" step="0.5" value="${plot?.hours||4}" ${model?'':'disabled'}></label>${button('plant','Plant with this prediction','',!model)}${plot?`<p>Prediction: <strong>${plot.predicted.toFixed(2)} cm</strong>${plot.revealed?` · Observed growth: <strong>${plot.actual.toFixed(1)} cm</strong><br>Absolute error: ${Math.abs(plot.actual-plot.predicted).toFixed(2)} cm`:' · The real growth is still covered.'}</p>${plot.revealed?'<p class="muted">This simulated new bed is another evaluation, not a training observation.</p>':button('grow','Advance one growing week')}`:''}</div><div class="prediction-plant">${plot?`<div><span class="sunflower predicted" style="--stem:${Math.max(10,Math.min(140,plot.predicted*8))}px"><span>✿</span></span><small>Predicted</small></div>${plot.revealed?`<div><span class="sunflower" style="--stem:${plot.actual*8}px"><span>✿</span></span><small>Observed</small></div>`:''}`:'<span class="empty-pot">A little room to grow.</span>'}</div></section>`;
 }
 export function renderAdventures(state) {
   return `<section class="adventure-hub"><header class="adventure-heading"><div><p class="eyebrow">JUST AROUND THE CORNER</p><h1>Hearthwick High Street</h1></div><a href="#village" class="button outline">${icon('home')} Back to the village</a></header><nav class="adventure-tabs" aria-label="High Street places">${Object.entries(sections).map(([key,[label,symbol]])=>`<button data-adventure="section" data-id="${key}" class="${section===key?'active':''}" ${section===key?'aria-current="page"':''}>${icon(symbol)}<span>${label}</span></button>`).join('')}</nav><div id="adventure-place">${({mysteries,shop,station,garden})[section](state)}</div><p id="adventure-message" class="adventure-message" role="status" aria-live="polite"></p></section>`;
 }
 function challengeMarkup(state,item) {
   const code=state.adventure.drafts[item.id]??state.adventure.code[item.id]??item.starter;
-  return `<div class="dialog-top"><span class="eyebrow">${esc(item.voice)} · ${item.xp} XP / ${item.coins} coins once</span><button class="icon-button" data-work="close" aria-label="Close activity">${icon('close')}</button></div><h2>${item.title}</h2><p>${item.lesson}</p><div class="adventure-task">${item.task}</div><label for="adventure-code">Your Python</label><textarea id="adventure-code" class="adventure-code" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(code)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p><div class="adventure-actions">${buttonWork('run','Run & check')}${buttonWork('stop','Stop',true)}${buttonWork('reset','Restore starter')}</div><details><summary>A gentle hint</summary><p>${item.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(item.solution)}</pre><p>Try changing the inputs to explain why this works.</p></details><pre id="adventure-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here. Python may take a moment to load the first time.</pre>`;
+  return `<div class="dialog-top"><span class="eyebrow">${esc(item.voice)} · ${item.xp} XP / ${item.coins} coins once</span><button class="icon-button" data-work="close" aria-label="Close activity">${icon('close')}</button></div><h2>${item.title}</h2><p>${item.lesson}</p><div class="adventure-task">${item.task}</div><label for="adventure-code">Your Python</label><textarea id="adventure-code" class="adventure-code" data-gramm="false" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="30000">${esc(code)}</textarea><p class="editor-keyboard-note">Tab indents · Shift + Tab or Esc then Tab leaves the editor · Ctrl / ⌘ + Enter runs</p><div class="adventure-actions">${buttonWork('run','Run & check')}${buttonWork('stop','Stop',true)}${buttonWork('reset','Restore starter')}</div><details><summary>A gentle hint</summary><p>${item.hint}</p></details><details><summary>Study a worked solution</summary><pre>${esc(item.solution)}</pre><p>Try changing the inputs to explain why this works.</p></details><pre id="adventure-output" class="adventure-output" role="status" aria-live="polite">Your results will appear here. Python may take a moment to load the first time.</pre>`;
 }
 const buttonWork=(action,label,disabled=false)=>`<button class="button ${action==='run'?'primary':'outline'}" data-work="${action}" ${disabled?'disabled':''}>${label}</button>`;
 
@@ -81,11 +72,12 @@ export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,
   let alive=true, serial=0, current=null, busy=false;
   const save=()=>onSave();
   const message=text=>{const el=root.querySelector('#adventure-message');if(el)el.textContent=text;};
-  const redraw=()=>{
+  const redraw=(entrance=false)=>{
     const focus=root.contains(document.activeElement)?document.activeElement?.closest('[data-adventure]')?.dataset:null;
     root.removeEventListener('click',click);
     root.outerHTML=renderAdventures(state);root=document.querySelector('.adventure-hub');root.addEventListener('click',click);
     if(focus) [...root.querySelectorAll('[data-adventure]')].find(el=>el.dataset.adventure===focus.adventure&&el.dataset.id===focus.id&&el.dataset.index===focus.index)?.focus({preventScroll:true});
+    if(entrance){const main=root.closest('main');if(main)main.scrollTop=0;}
   };
   const output=text=>{const el=dialog.querySelector('#adventure-output');if(el)el.textContent=text;};
   function stop(){serial++;if(busy)cancelRun();busy=false;setBusy(false);}
@@ -125,7 +117,7 @@ export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,
   function click(event){
     const el=event.target.closest('[data-adventure]');if(!el||!root.contains(el))return;
     const {adventure:action,id,index}=el.dataset;
-    if(action==='section'){if(!sections[id])return;section=id;redraw();return;}
+    if(action==='section'){if(!sections[id])return;section=id;redraw(true);return;}
     if(action==='case'){selectedCase=id;redraw();return;}
     if(action==='clue'){if(collectClue(state,id,Number(index))){save();redraw();}return;}
     if(action==='theory'){if(chooseTheory(state,id,Number(index))){save();redraw();message('That fits the evidence. Now test your repair in Python.');}else message('That theory does not explain all the clues. Read the notes together and try again.');return;}
@@ -133,7 +125,7 @@ export function mountAdventures({state,onSave,onReward,onLearn=()=>{},runPython,
     if(action==='customer'){openCustomer(id);return;}
     if(action==='travel'){
       if(!travel(state,id)){message('Keep learning to open this railway line.');return;}
-      save();redraw();root.querySelector('.station-scene')?.classList.add('arriving');message(id==='home'?'Welcome home.':`Next stop: ${trainStops.find(s=>s.id===id).name}. You have arrived.`);return;
+      save();redraw(true);root.querySelector('.station-scene')?.classList.add('arriving');message(id==='home'?'Welcome home.':`Next stop: ${trainStops.find(s=>s.id===id).name}. You have arrived.`);return;
     }
     if(action==='landmark'){
       const stop=trainStops.find(s=>s.id===id);
